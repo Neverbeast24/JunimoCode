@@ -779,7 +779,7 @@ class Lexer:
         
         while self.current_char != None:
             
-            if self.current_char == "b":
+            if self.current_char == "b": #BREAK
                 if ident_count == 10:
                     break
                 ident += self.current_char
@@ -810,9 +810,9 @@ class Lexer:
                                 self.advance()
                                 ident_count += 1
                                 if self.current_char == None:
-                                    errors.extend([f'Invalid delimiter for BREAK! Cause: {self.current_char}'])
+                                    errors.extend([f'Invalid delimiter for BREAK! Cause: {self.current_char} Expected: whitespace or $'])
                                     return [], errors
-                                if self.current_char in terminator: #double check this
+                                if self.current_char in terminator + whitespace: #double check this
                                     return Token(BREAK, "BREAK"), errors
                                 elif self.current_char in break_delim:
                                     continue
@@ -820,7 +820,7 @@ class Lexer:
                                     errors.extend([f'Invalid delimiter for BREAK! Cause: {self.current_char}'])
                                     return [], errors
                 
-            elif self.current_char == "c": #else, else if, entity
+            elif self.current_char == "c": #COLLECT
                 ident += self.current_char
                 self.advance()
                 ident_count += 1
@@ -860,7 +860,7 @@ class Lexer:
                                         errors.extend([f'Invalid delimiter for collect! Cause: {self.current_char} Expected: whitespace or ( '])
                                         return [], errors
                 
-            elif self.current_char == "r": #if, COLLECT, intel
+            elif self.current_char == "r": #CRAFT
                 ident += self.current_char
                 self.advance()
                 ident_count += 1 
@@ -887,7 +887,7 @@ class Lexer:
                         errors.extend([f'Invalid delimiter for if! Cause: {self.current_char}. Expected: whitespace " " '])
                         return [], errors
                 
-                elif self.current_char == "r":
+                elif self.current_char == "r": #CROP
                     ident += self.current_char
                     self.advance()
                     ident_count += 1
@@ -910,7 +910,7 @@ class Lexer:
                                 errors.extend([f'Invalid delimiter for COLLECT! Cause: {self.current_char}. Expected: >> '])
                                 return [], errors
                         
-            elif self.current_char == "d": #dew
+            elif self.current_char == "d": #DEW
                 ident += self.current_char
                 self.advance()
                 ident_count += 1
@@ -934,7 +934,7 @@ class Lexer:
                             errors.extend([f'Invalid delimiter for dew! Cause: {self.current_char} Expected: whitespace or ( '])
                             return [], errors
             
-            elif self.current_char == "f": #false, FOR
+            elif self.current_char == "f": #FALSE, FOR
                 ident += self.current_char
                 self.advance()
                 ident_count += 1 
@@ -1005,7 +1005,7 @@ class Lexer:
                                                     errors.extend([f'Invalid delimiter for FARMHOUSE! Cause: {self.current_char}. Expected: whitespace '])
                                                     return [], errors
                     
-                elif self.current_char == "o":
+                elif self.current_char == "o": #FOR
                     ident += self.current_char
                     self.advance()
                     ident_count += 1
@@ -1024,7 +1024,7 @@ class Lexer:
                             errors.extend([f'Invalid delimiter forFOR ! Cause: {self.current_char}. Expected: ('])
                             return [], errors
                         
-            elif self.current_char == "h": #HARVEST, shift, skip, star
+            elif self.current_char == "h": #HARVEST
                 ident += self.current_char
                 self.advance()
                 ident_count += 1
@@ -1063,7 +1063,7 @@ class Lexer:
                                             errors.extend([f'Invalid delimiter for HARVEST! Cause: {self.current_char}. Expected: whitespace, (, $'])                                        
                                             return [], errors
                         
-            elif self.current_char == "p": #PELICAN
+            elif self.current_char == "p": #PELICAN, PERFECTION, PLANTING
                 ident += self.current_char
                 self.advance()
                 ident_count += 1
@@ -1186,7 +1186,7 @@ class Lexer:
                                                 errors.extend([f'Invalid delimiter for PLANTING! Cause: {self.current_char}. Expected: whitespace or $ '])
                                                 return [], errors
                 
-            elif self.current_char == "s": #SHIP
+            elif self.current_char == "s": #SHIP, STAR, STARDEW
                 ident += self.current_char
                 self.advance()
                 ident_count += 1
@@ -1212,7 +1212,7 @@ class Lexer:
                             else:
                                 errors.extend([f'Invalid delimiter for SHIP! Cause: {self.current_char}. Expected: whitespace, (, $ '])
                                 return [], errors
-                elif self.current_char == "t":
+                elif self.current_char == "t": #STAR
                     ident += self.current_char
                     self.advance()
                     ident_count += 1
@@ -1258,7 +1258,7 @@ class Lexer:
                                             return [], errors
                             '''
             
-            elif self.current_char == "t": #PLANTING, trace, true
+            elif self.current_char == "t": #TRUE
                 ident += self.current_char
                 self.advance()
                 ident_count += 1
