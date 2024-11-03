@@ -42,7 +42,7 @@ unary_delim = whitespace + all_letters + terminator
 bool_delim = whitespace + terminator + comma + ')'
 num_delim = arithmetic_ops + '(' + whitespace + comma  + relational_ops + ")]" + terminator
 id_delim = newline + comma + whitespace + "=)[]<>!" + arithmetic_ops
-spacebr_delim = whitespace + '('
+spacepr_delim = whitespace + '('
 break_delim = terminator + whitespace
 
 #errors
@@ -852,7 +852,7 @@ class Lexer:
                                     if self.current_char == None:
                                         errors.extend([f'Invalid delimiter for collect! Cause: {self.current_char} Expected: opening bracket, newline or ( ']) 
                                         return [], errors
-                                    if self.current_char in spacebr_delim + "(":
+                                    if self.current_char in spacepr_delim + "(":
                                         return Token(COLLECT, "collect"), errors
                                     elif self.current_char in alpha_num: #double check this 
                                         continue
@@ -910,7 +910,31 @@ class Lexer:
                                 errors.extend([f'Invalid delimiter for COLLECT! Cause: {self.current_char}. Expected: >> '])
                                 return [], errors
                         
-            elif self.current_char == "f": #false,FOR , CRAFT
+            elif self.current_char == "d": #dew
+                ident += self.current_char
+                self.advance()
+                ident_count += 1
+                if self.current_char == "e":
+                    ident += self.current_char
+                    self.advance()
+                    ident_count += 1
+                    if self.current_char == "w":
+                        ident += self.current_char
+                        self.advance()
+                        ident_count += 1
+                        
+                        if self.current_char == None:
+                            errors.extend([f'Invalid delimiter for dew! Cause: {self.current_char} Expected: whitespace, newline or opening bracket']) 
+                            return [], errors
+                        if self.current_char in dew_delim + "(":
+                            return Token(COLLECT, "collect"), errors
+                        elif self.current_char in alpha_num: #double check this 
+                            continue
+                        else:
+                            errors.extend([f'Invalid delimiter for dew! Cause: {self.current_char} Expected: whitespace or ( '])
+                            return [], errors
+            
+            elif self.current_char == "f": #false, FOR
                 ident += self.current_char
                 self.advance()
                 ident_count += 1 
@@ -940,7 +964,46 @@ class Lexer:
                                 else:
                                     errors.extend([f'Invalid delimiter for false! Cause: {self.current_char}. Expected: \' \', ;, newline or ) '])
                                     return [], errors
-                            
+                                
+                    elif self.current_char == "r": #FARMHOUSE
+                        ident += self.current_char
+                        self.advance()
+                        ident_count += 1
+                        if self.current_char == "m":
+                            ident += self.current_char
+                            self.advance()
+                            ident_count += 1
+                            if self.current_char == "h":
+                                ident += self.current_char
+                                self.advance()
+                                ident_count += 1
+                                if self.current_char == "o":
+                                    ident += self.current_char
+                                    self.advance()
+                                    ident_count += 1
+                                    if self.current_char == "u":
+                                        ident += self.current_char
+                                        self.advance()
+                                        ident_count += 1
+                                        if self.current_char == "s":
+                                            ident += self.current_char
+                                            self.advance()
+                                            ident_count += 1
+                                            if self.current_char == "e":
+                                                ident += self.current_char
+                                                self.advance()
+                                                ident_count += 1
+                                                
+                                                if self.current_char == None:
+                                                    errors.extend([f'Invalid delimiter for FARMHOUSE! Cause: {self.current_char}. Expected: whitespace '])
+                                                    return [], errors
+                                                if self.current_char in whitespace:                                               
+                                                    return Token(FARMHOUSE, "FARMHOUSE"), errors
+                                                elif self.current_char in alpha_num:
+                                                    continue
+                                                else:
+                                                    errors.extend([f'Invalid delimiter for FARMHOUSE! Cause: {self.current_char}. Expected: whitespace '])
+                                                    return [], errors
                     
                 elif self.current_char == "o":
                     ident += self.current_char
@@ -950,7 +1013,30 @@ class Lexer:
                         ident += self.current_char
                         self.advance()
                         ident_count += 1
-                        if self.current_char == "c":
+                        if self.current_char == None:
+                            errors.extend([f'Invalid delimiter forFOR ! Cause: {self.current_char}. Expected: ('])
+                            return [], errors
+                        if self.current_char in spacepr_delim:
+                            return Token(FOR, "FOR"), errors
+                        elif self.current_char in alpha_num:
+                            continue
+                        else:
+                            errors.extend([f'Invalid delimiter forFOR ! Cause: {self.current_char}. Expected: ('])
+                            return [], errors
+                        
+            elif self.current_char == "h": #HARVEST, shift, skip, star
+                ident += self.current_char
+                self.advance()
+                ident_count += 1
+                if self.current_char == "a":
+                    ident += self.current_char
+                    self.advance()
+                    ident_count += 1
+                    if self.current_char == "r":
+                        ident += self.current_char
+                        self.advance()
+                        ident_count += 1
+                        if self.current_char == "v":
                             ident += self.current_char
                             self.advance()
                             ident_count += 1
@@ -958,31 +1044,24 @@ class Lexer:
                                 ident += self.current_char
                                 self.advance()
                                 ident_count += 1
-                                if self.current_char == None:
-                                    errors.extend([f'Invalid delimiter forFOR ! Cause: {self.current_char}. Expected: ('])
-                                    return [], errors
-                                if self.current_char in loop_delim:
-                                    return TokenFOR , FOR ")", errors
-                                elif self.current_char in alpha_num:
-                                    continue
-                                else:
-                                    errors.extend([f'Invalid delimiter forFOR ! Cause: {self.current_char}. Expected: ('])
-                                    return [], errors
-
-                        elif self.current_char == "m":
-                            ident += self.current_char
-                            self.advance()
-                            ident_count += 1
-                            if self.current_char == None:
-                                errors.extend([f'Invalid delimiter for CRAFT! Cause: {self.current_char}. Expected: \' \''])
-                                return [], errors
-                            if self.current_char in space_delim:
-                                return Token(CRAFT, "CRAFT"), errors
-                            elif self.current_char in alpha_num:
-                                continue
-                            else:
-                                errors.extend([f'Invalid delimiter for CRAFT! Cause: {self.current_char}. Expected: \' \''])
-                                return [], errors
+                                if self.current_char == "s":
+                                    ident += self.current_char
+                                    self.advance()
+                                    ident_count += 1
+                                    if self.current_char == "t":
+                                        ident += self.current_char
+                                        self.advance()
+                                        ident_count += 1
+                                        if self.current_char == None:
+                                            errors.extend([f'Invalid delimiter for HARVEST! Cause: {self.current_char}. Expected: whitespace, (, $'])                                        
+                                            return [], errors
+                                        if self.current_char  in spacepr_delim + terminator:
+                                            return Token(HARVEST, "HARVEST"), errors
+                                        elif self.current_char in alpha_num:
+                                            continue
+                                        else:
+                                            errors.extend([f'Invalid delimiter for HARVEST! Cause: {self.current_char}. Expected: whitespace, (, $'])                                        
+                                            return [], errors
                         
             elif self.current_char == "p": #PELICAN
                 ident += self.current_char
@@ -1024,46 +1103,55 @@ class Lexer:
                                         else:                  
                                             errors.extend([f'Invalid delimiter for PELICAN! Cause: {self.current_char}. Expected: \' \' '])
                                             return [], errors
-            elif self.current_char == "l": #PERFECTION, launch
-                ident += self.current_char
-                self.advance()
-                ident_count += 1
-                if self.current_char == "a":
-                    ident += self.current_char
-                    self.advance()
-                    ident_count += 1
-                    if self.current_char == "n":
+                                        
+                    elif self.current_char == "r": #PERFECTION
                         ident += self.current_char
                         self.advance()
                         ident_count += 1
-                        if self.current_char == "d":
+                        if self.current_char == "f":
                             ident += self.current_char
                             self.advance()
                             ident_count += 1
-                            if self.current_char == "i":
+                            if self.current_char == "e":
                                 ident += self.current_char
                                 self.advance()
                                 ident_count += 1
-                                if self.current_char == "n":
+                                if self.current_char == "c":
                                     ident += self.current_char
                                     self.advance()
                                     ident_count += 1
-                                    if self.current_char == "g":
+                                    if self.current_char == "t":
                                         ident += self.current_char
                                         self.advance()
                                         ident_count += 1
-                                        if self.current_char == None:
-                                            errors.extend([f'Invalid delimiter for PERFECTION! Cause: {self.current_char}. Expected: ; '])
-                                            return [], errors
-                                        if self.current_char in lineEnd_delim:
-                                            return Token(PERFECTION, "PERFECTION"), errors
-                                        elif self.current_char in alpha_num:
-                                            continue
-                                        else:
-                                            errors.extend([f'Invalid delimiter for PERFECTION! Cause: {self.current_char}. Expected: ; '])
-                                            return [], errors
-                                    
-                    elif self.current_char == "u": #launch
+                                        if self.current_char == "i":
+                                            ident += self.current_char
+                                            self.advance()
+                                            ident_count += 1
+                                            if self.current_char == "o":
+                                                ident += self.current_char
+                                                self.advance()
+                                                ident_count += 1
+                                                if self.current_char == "n":
+                                                    ident += self.current_char
+                                                    self.advance()
+                                                    ident_count += 1
+                                                    if self.current_char == None:
+                                                        errors.extend([f'Invalid delimiter for PERFECTION! Cause: {self.current_char}. Expected: whitespace or $'])
+                                                        return [], errors
+                                                    if self.current_char in break_delim:
+                                                        return Token(PERFECTION, "PERFECTION"), errors
+                                                    elif self.current_char in alpha_num:
+                                                        continue
+                                                    else:
+                                                        errors.extend([f'Invalid delimiter for PERFECTION! Cause: {self.current_char}. Expected: whitespace or $'])
+                                                        return [], errors
+                        
+                elif self.current_char == "l": #PLANTING
+                    ident += self.current_char
+                    self.advance()
+                    ident_count += 1
+                    if self.current_char == "a":
                         ident += self.current_char
                         self.advance()
                         ident_count += 1
@@ -1071,154 +1159,110 @@ class Lexer:
                             ident += self.current_char
                             self.advance()
                             ident_count += 1
-                            if self.current_char == "c":
+                            if self.current_char == "t":
                                 ident += self.current_char
                                 self.advance()
                                 ident_count += 1
-                                if self.current_char == "h":
+                                if self.current_char == "i":
                                     ident += self.current_char
                                     self.advance()
                                     ident_count += 1
-                                    if self.current_char == None:
-                                        errors.extend([f'Invalid delimiter for launch! Cause: {self.current_char}. Expected: \' \' '])
-                                        return [], errors
-                                    if self.current_char not in space_delim:                                      
-                                        return Token(LAUNCH, "launch"), errors
-                                    elif self.current_char in alpha_num:
-                                        continue
-                                    else:
-                                        errors.extend([f'Invalid delimiter for launch! Cause: {self.current_char}. Expected: \' \' '])
-                                        return [], errors
+                                    if self.current_char == "n":
+                                        ident += self.current_char
+                                        self.advance()
+                                        ident_count += 1
+                                        if self.current_char == "g":
+                                            ident += self.current_char
+                                            self.advance()
+                                            ident_count += 1
+                                            if self.current_char == None:
+                                                errors.extend([f'Invalid delimiter for PLANTING! Cause: {self.current_char}. Expected: whitespace or $ '])
+                                                return [], errors
+                                            if self.current_char in break_delim:
+                                                return Token(PLANTING, "PLANTING"), errors
+                                            elif self.current_char in alpha_num:
+                                                continue
+                                            else:
+                                                errors.extend([f'Invalid delimiter for PLANTING! Cause: {self.current_char}. Expected: whitespace or $ '])
+                                                return [], errors
                 
-            elif self.current_char == "o": #SHIP
+            elif self.current_char == "s": #SHIP
                 ident += self.current_char
                 self.advance()
                 ident_count += 1
-                if self.current_char == "u":
+                if self.current_char == "h":
                     ident += self.current_char
                     self.advance()
                     ident_count += 1
-                    if self.current_char == "t":
+                    if self.current_char == "i":
                         ident += self.current_char
                         self.advance()
                         ident_count += 1
-                        if self.current_char == "e":
+                        if self.current_char == "p":
                             ident += self.current_char
                             self.advance()
                             ident_count += 1
-                            if self.current_char == "r":
-                                ident += self.current_char
-                                self.advance()
-                                ident_count += 1
-                                if self.current_char == None:
-                                    errors.extend([f'Invalid delimiter for SHIP! Cause: {self.current_char}. Expected: << '])
-                                    return [], errors
-                                if self.current_char in SHIP_delim:
-                                    return Token(SHIP, "SHIP"), errors
-                                elif self.current_char in alpha_num:
-                                    continue
-                                else:
-                                    errors.extend([f'Invalid delimiter for SHIP! Cause: {self.current_char}. Expected: << '])
-                                    return [], errors
-                
-            elif self.current_char == "s": #HARVEST, shift, skip, star
-                ident += self.current_char
-                self.advance()
-                ident_count += 1
-                if self.current_char == "a":
+                            if self.current_char == None:
+                                errors.extend([f'Invalid delimiter for SHIP! Cause: {self.current_char}. Expected: whitespace, (, $ '])
+                                return [], errors
+                            if self.current_char in spacepr_delim:
+                                return Token(SHIP, "SHIP"), errors
+                            elif self.current_char in alpha_num:
+                                continue
+                            else:
+                                errors.extend([f'Invalid delimiter for SHIP! Cause: {self.current_char}. Expected: whitespace, (, $ '])
+                                return [], errors
+                elif self.current_char == "t":
                     ident += self.current_char
                     self.advance()
                     ident_count += 1
-                    if self.current_char == "t":
+                    if self.current_char == "a":
                         ident += self.current_char
                         self.advance()
                         ident_count += 1
-                        if self.current_char == "u":
+                        if self.current_char == "r":
                             ident += self.current_char
                             self.advance()
                             ident_count += 1
-                            if self.current_char == "r":
+                            if self.current_char == None:
+                                errors.extend([f'Invalid delimiter for STAR! Cause: {self.current_char}. Expected: whitespace, (, $ '])
+                                return [], errors
+                            if self.current_char in spacepr_delim:
+                                return Token(STAR, "STAR"), errors
+                            elif self.current_char in alpha_num:
+                                continue
+                            else:
+                                errors.extend([f'Invalid delimiter for STAR! Cause: {self.current_char}. Expected: whitespace, (, $ '])
+                                return [], errors
+                            '''elif self.current_char == "d": #inde ko ma-gets paano mapasok tong stardew sa star
                                 ident += self.current_char
                                 self.advance()
                                 ident_count += 1
-                                if self.current_char == "n":
+                                if self.current_char == "e":
                                     ident += self.current_char
                                     self.advance()
                                     ident_count += 1
-                                    if self.current_char == None:
-                                        errors.extend([f'Invalid delimiter for HARVEST! Cause: {self.current_char}. Expected: ;'])                                        
-                                        return [], errors
-                                    if self.current_char  in lineEnd_delim:
-                                        return Token(HARVEST, "HARVEST"), errors
-                                    elif self.current_char in alpha_num:
-                                        continue
-                                    else:
-                                        errors.extend([f'Invalid delimiter for HARVEST! Cause: {self.current_char}. Expected: ;'])                                        
-                                        return [], errors
-
-                elif self.current_char == "k":
-                        ident += self.current_char
-                        self.advance()
-                        ident_count += 1
-                        if self.current_char == "i":
-                            ident += self.current_char
-                            self.advance()
-                            ident_count += 1
-                            if self.current_char == "p":
-                                ident += self.current_char
-                                self.advance()
-                                ident_count += 1
-                                if self.current_char == None:
-                                    errors.extend([f'Invalid delimiter for skip! Cause: {self.current_char}. Expected: ;'])
-                                    return [], errors
-                                if self.current_char in lineEnd_delim:   
-                                    return Token(SKIP, "skip"), errors
-                                elif self.current_char in alpha_num:
-                                    continue
-                                else:
-                                    errors.extend([f'Invalid delimiter for skip! Cause: {self.current_char}. Expected: ;'])
-                                    return [], errors
+                                    if self.current_char == "w":
+                                        ident += self.current_char
+                                        self.advance()
+                                        ident_count += 1
+                                        if self.current_char == None:
+                                            errors.extend([f'Invalid delimiter for STAR! Cause: {self.current_char}. Expected: whitespace, (, $ '])
+                                            return [], errors
+                                        if self.current_char in spacepr_delim:
+                                            return Token(STAR, "STAR"), errors
+                                        elif self.current_char in alpha_num:
+                                            continue
+                                        else:
+                                            errors.extend([f'Invalid delimiter for STAR! Cause: {self.current_char}. Expected: whitespace, (, $ '])
+                                            return [], errors
+                            '''
             
             elif self.current_char == "t": #PLANTING, trace, true
                 ident += self.current_char
                 self.advance()
                 ident_count += 1
-                if self.current_char == "a":
-                    ident += self.current_char
-                    self.advance()
-                    ident_count += 1
-                    if self.current_char == "k":
-                        ident += self.current_char
-                        self.advance()
-                        ident_count += 1
-                        if self.current_char == "e":
-                            ident += self.current_char
-                            self.advance()
-                            ident_count += 1
-                            if self.current_char == "o":
-                                ident += self.current_char
-                                self.advance()
-                                ident_count += 1
-                                if self.current_char == "f":
-                                    ident += self.current_char
-                                    self.advance()
-                                    ident_count += 1
-                                    if self.current_char == "f":
-                                        ident += self.current_char
-                                        self.advance()
-                                        ident_count += 1
-                                        if self.current_char == None:
-                                            errors.extend([f'Invalid delimiter for PLANTING! Cause: {self.current_char}. Expected: ;'])
-                                            return [], errors
-                                        if self.current_char in lineEnd_delim:
-                                            return Token(PLANTING, "PLANTING"), errors
-                                        elif self.current_char in alpha_num:
-                                            continue
-                                        else:
-                                            errors.extend([f'Invalid delimiter for PLANTING! Cause: {self.current_char}. Expected: ;'])
-                                            return [], errors
-                                
-                elif self.current_char == "r":
+                if self.current_char == "r":
                     ident += self.current_char
                     self.advance()
                     ident_count += 1
@@ -1241,49 +1285,6 @@ class Lexer:
                                 errors.extend([f'Invalid delimiter for true! Cause: {self.current_char}. Expected: \' \', ;, newline or ) '])
                                 return [], errors
                 
-            elif self.current_char == "u": #FARMHOUSE
-                ident += self.current_char
-                self.advance()
-                ident_count += 1
-                if self.current_char == "n":
-                    ident += self.current_char
-                    self.advance()
-                    ident_count += 1
-                    if self.current_char == "i":
-                        ident += self.current_char
-                        self.advance()
-                        ident_count += 1
-                        if self.current_char == "v":
-                            ident += self.current_char
-                            self.advance()
-                            ident_count += 1
-                            if self.current_char == "e":
-                                ident += self.current_char
-                                self.advance()
-                                ident_count += 1
-                                if self.current_char == "r":
-                                    ident += self.current_char
-                                    self.advance()
-                                    ident_count += 1
-                                    if self.current_char == "s":
-                                        ident += self.current_char
-                                        self.advance()
-                                        ident_count += 1
-                                        if self.current_char == "e":
-                                            ident += self.current_char
-                                            self.advance()
-                                            ident_count += 1
-                                            if self.current_char == None:
-                                                errors.extend([f'Invalid delimiter for FARMHOUSE! Cause: {self.current_char}. Expected: \' \' '])
-                                                return [], errors
-                                            if self.current_char in space_delim:                                               
-                                                return Token(FARMHOUSE, "FARMHOUSE"), errors
-                                            elif self.current_char in alpha_num:
-                                                continue
-                                            else:
-                                                errors.extend([f'Invalid delimiter for FARMHOUSE! Cause: {self.current_char}. Expected: \' \' '])
-                                                return [], errors
-                
             elif self.current_char == "v": #VOIDEGG
                 ident += self.current_char
                 self.advance()
@@ -1300,37 +1301,29 @@ class Lexer:
                             ident += self.current_char
                             self.advance()
                             ident_count += 1
-                            if self.current_char == None:
-                                errors.extend([f'Invalid delimiter for VOIDEGG! Cause: {self.current_char}. Expected: \' \', ;, newline or ) '])
-                                return [], errors
-                            if self.current_char in bool_delim + ',' + ']':
-                                return Token(VOIDEGG, "VOIDEGG"), errors
-                            elif self.current_char in alpha_num:
-                                continue
-                            else:
-                                errors.extend([f'Invalid delimiter for VOIDEGG! Cause: {self.current_char}. Expected: \' \', ;, newline or ) '])
-                                return [], errors
+                            if self.current_char == "e":
+                                ident += self.current_char
+                                self.advance()
+                                ident_count += 1
+                                if self.current_char == "g":
+                                    ident += self.current_char
+                                    self.advance()
+                                    ident_count += 1
+                                    if self.current_char == "g":
+                                        ident += self.current_char
+                                        self.advance()
+                                        ident_count += 1
+                                        if self.current_char == None:
+                                            errors.extend([f'Invalid delimiter for VOIDEGG! Cause: {self.current_char}. Expected: \' \', ;, newline or ) '])
+                                            return [], errors
+                                        if self.current_char in voidegg_delim + ',' + ']':
+                                            return Token(VOIDEGG, "VOIDEGG"), errors
+                                        elif self.current_char in alpha_num:
+                                            continue
+                                        else:
+                                            errors.extend([f'Invalid delimiter for VOIDEGG! Cause: {self.current_char}. Expected: \' \', ;, newline or ) '])
+                                            return [], errors
                         
-                elif self.current_char == "a":
-                    ident += self.current_char
-                    self.advance()
-                    ident_count += 1
-                    if self.current_char == "r":
-                        ident += self.current_char
-                        self.advance()
-                        ident_count += 1
-                        if self.current_char == None:
-                            errors.extend([f'Invalid delimiter for CROP! Cause: {self.current_char}. Expected: \' \' '])
-                            return [], errors
-                        if self.current_char in space_delim:
-                            return Token(CROP, "CROP"), errors
-                        elif self.current_char in alpha_num:
-                            continue
-                        else:
-                            errors.extend([f'Invalid delimiter for CROP! Cause: {self.current_char}. Expected: \' \' '])
-                            return [], errors
-                  
-                            
             elif self.current_char == "w": #WHILE
                 ident += self.current_char
                 self.advance()
@@ -1352,14 +1345,14 @@ class Lexer:
                                 self.advance()
                                 ident_count += 1
                                 if self.current_char == None:
-                                    errors.extend([f'Invalid delimiter for WHILE! Cause: {self.current_char}. Expected: ('])
+                                    errors.extend([f'Invalid delimiter for WHILE! Cause: {self.current_char}. Expected: whitespace, (, $'])
                                     return [], errors
-                                if self.current_char in loop_delim:
+                                if self.current_char in spacepr_delim:
                                     return Token(WHILE, "WHILE"), errors
                                 elif self.current_char in alpha_num:
                                     continue
                                 else:
-                                    errors.extend([f'Invalid delimiter for WHILE! Cause: {self.current_char}. Expected: ('])
+                                    errors.extend([f'Invalid delimiter for WHILE! Cause: {self.current_char}. Expected: whitespace, (, $'])
                                     return [], errors
             
             # print("ident in end loop: ", ident)
