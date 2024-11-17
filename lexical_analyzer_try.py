@@ -488,8 +488,6 @@ class Lexer:
                         comment += self.current_char
                         print("CURRENT CHAR IN TOKEN: ", self.current_char)
                     tokens.append(Token(COMMENT, f"{comment}"))# for single comet
-
-                    
                 
                 else:
                     
@@ -1539,3 +1537,54 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = LexerGUI(root)
     root.mainloop()
+    
+# NOTEs
+#sINGLE LINE COMMENTS
+                # if self.current_char == "/":
+                #     self.advance()
+                #     if self.current_char == "/":
+                #         self.advance()
+                #         if self.current_char == None:
+                #             tokens.append(Token(MULTILINE_CLOSE, "~{@"))
+                
+#MULTILINE COMMENTS
+# elif self.current_char == '/': #for 
+#                     self.advance()
+#                     if self.current_char == "*":
+#                         tokens.append(Token(MULTILINE_OPEN, "@}~"))
+#                         self.advance()# for multi comment
+#                         comment = ""
+#                         while self.current_char != "*":
+                            
+#                             self.advance()
+#                             if self.current_char == "*":
+#                                 break
+#                             if self.current_char == None:
+#                                 break
+#                             comment += self.current_char
+#                             print("CURRENT CHAR IN TOKEN: ", self.current_char)
+#                         print("CURRENT CHAR AFTER LOOP: ", self.current_char)
+                        
+#                         if self.current_char == "*":
+#                             self.advance()
+#                             if self.current_char == "/":
+#                                 self.advance()
+#                                 if self.current_char == "/":
+#                                     tokens.append(Token(COMMENT, f"{comment}"))# for single comet
+#                                     tokens.append(Token(MULTILINE_CLOSE, "~{@"))# for single comet
+#                                     self.advance()
+#                                 else:
+#                                     continue
+#                             else:
+#                                 continue
+                        
+#                         #tokens.append(Token(COMMENT, f"{comment}"))# for single comet
+#                 elif self.current_char == "*":
+#                     tokens.append(Token(SINGLELINE, "/*"))# for single comet
+#                     #self.advance()
+#                     comment = ""
+#                     while self.current_char != "\n":
+#                         self.advance()
+#                         comment += self.current_char
+#                         print("CURRENT CHAR IN TOKEN: ", self.current_char)
+#                     tokens.append(Token(COMMENT, f"{comment}"))# for single comet
