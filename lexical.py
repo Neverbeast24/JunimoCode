@@ -555,68 +555,68 @@ class Lexer:
                 # Single-line comment (@})
                 if self.current_char == "}":
                     self.advance()
-                    comment_content = ""
 
-                    # Capture the content for the single-line comment
-                    while self.current_char is not None and self.current_char != "\n":  # Stop at newline or EOF
-                        # Validate the character
-                        if not (self.current_char.isascii() or self.current_char in comment1_delim):
-                            errors.append(
-                                f"Invalid character '{self.current_char}' in single-line comment. "
-                                f"Expected only ASCII or {comment1_delim}."
-                            )
-
-                        comment_content += self.current_char
+                    # Check if the next character is also `}` (part of `@}}` for multi-line comment)
+                    if self.current_char == "}":  # Multi-line comment start
                         self.advance()
+                        comment_content = ""
 
-                    # If a newline is found, single-line comments should terminate
-                    if self.current_char == "\n":
-                        errors.append("Lexical error: Newlines are not allowed in single-line comments.")
+                        # Parse until the closing sequence {{@
+                        while self.current_char is not None:
+                            # Check for the closing sequence "{{@"
+                            if self.current_char == "{" and self.peek() == "{" and self.text[self.pos.idx + 2] == "@":
+                                self.advance()  # Advance past '{'
+                                self.advance()  # Advance past '{'
+                                self.advance()  # Advance past '@'
 
-                    # Add tokens for single-line comment
-                    tokens.append(Token("SINGLELINE", "@}"))
-                    tokens.append(Token("COMMENT", comment_content.strip()))
-                    return tokens, errors  # Exit early for single-line comments
+                                # Add tokens for a valid multi-line comment
+                                tokens.append(Token("MULTILINE", "@}}"))
+                                tokens.append(Token("COMMENT", comment_content.strip()))
+                                tokens.append(Token("MULTILINE_CLOSE", "{{@"))
+                                break
 
-                # Multi-line comment (@}} ... {{@)
-                elif self.current_char == "}":  # Handle the second '}' for multi-line comment
-                    self.advance()
-                    comment_content = ""
+                            # Append the current character to the comment content
+                            if not (self.current_char.isascii() or self.current_char in comment2_delim):
+                                errors.append(
+                                    f"Invalid character '{self.current_char}' in multi-line comment. Expected only ASCII or {comment2_delim}."
+                                )
 
-                    # Parse until closing sequence {{@
-                    while self.current_char is not None:
-                        # Check for the closing sequence "{{@"
-                        if self.current_char == "{" and self.peek() == "{" and self.text[self.pos.idx + 2] == "@":
-                            self.advance()  # Advance past '{'
-                            self.advance()  # Advance past '{'
-                            self.advance()  # Advance past '@'
+                            comment_content += self.current_char
+                            self.advance()
 
-                            # Add tokens for a valid multi-line comment
-                            tokens.append(Token("MULTILINE", "@}}"))
+                        # If loop ends without finding {{@, report an error
+                        else:
+                            errors.append("Unclosed multi-line comment. Expected '{{@' to close.")
+                            tokens.append(Token("MULTILINE", "@}}"))  # Include the incomplete multi-line opening
                             tokens.append(Token("COMMENT", comment_content.strip()))
-                            tokens.append(Token("MULTILINE_CLOSE", "{{@"))
-                            break
+                            return tokens, errors  # Exit after adding the incomplete multi-line comment tokens
 
-                        # Append the current character to the comment content
-                        if not (self.current_char.isascii() or self.current_char in comment2_delim):
-                            errors.append(
-                                f"Invalid character '{self.current_char}' in multi-line comment. Expected only ASCII or {comment2_delim}."
-                            )
+                    else:  # Single-line comment
+                        comment_content = ""
 
-                        comment_content += self.current_char
-                        self.advance()
+                        # Capture the content for the single-line comment
+                        while self.current_char is not None and self.current_char != "\n":  # Stop at newline or EOF
+                            # Validate the character
+                            if not (self.current_char.isascii() or self.current_char in comment1_delim):
+                                errors.append(
+                                    f"Invalid character '{self.current_char}' in single-line comment. "
+                                    f"Expected only ASCII or {comment1_delim}."
+                                )
 
-                    # If loop ends without finding {{@, report an error
-                    else:
-                        errors.append("Unclosed multi-line comment. Expected '{{@' to close.")
-                        tokens.append(Token("MULTILINE", "@}}"))  # Include the incomplete multi-line opening
+                            comment_content += self.current_char
+                            self.advance()
+
+                        # Add tokens for single-line comment
+                        tokens.append(Token("SINGLELINE", "@}"))
                         tokens.append(Token("COMMENT", comment_content.strip()))
-                        return tokens, errors  # Exit after adding the incomplete multi-line comment tokens
+                        
+                        # Continue parsing other tokens after the single-line comment ends
+                        continue
 
                 # Handle invalid `@` usage
                 else:
-                    errors.append(f"Invalid use of '@'. Cause: '{self.current_char}'. Expected: '}}' or '@}}'.")
-                    return tokens, errors  # Return tokens and errors instead of exiting silently
+                    errors.append(f"Invalid use of '@'. Cause: '{self.current_char}'. Expected: '}}' for multi-line comment start or '@}}'.")
+                    continue
 
 
             elif self.current_char == '(': #other operator
