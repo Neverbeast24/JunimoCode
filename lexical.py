@@ -36,7 +36,7 @@ COMMA = ','
 SINGLELINE = '@}'
 MULTILINE_OPEN = f'@}}'
 MULTILINE_CLOSE =  f'{{@'
-COMMENTS = SINGLELINE + MULTILINE_CLOSE + MULTILINE_OPEN
+COMMENT = "COMMENT"
 
 
 dew_delim = whitespace + NEWLINE + '{'
@@ -570,9 +570,9 @@ class Lexer:
                                 self.advance()  # Advance past '@'
 
                                 # Add tokens for a valid multi-line comment
-                                tokens.append(Token("MULTILINE", "@}}"))
-                                tokens.append(Token("COMMENT", comment_content.strip()))
-                                tokens.append(Token("MULTILINE_CLOSE", "{{@"))
+                                tokens.append(Token(MULTILINE, "@}}"))
+                                tokens.append(Token(COMMENT, comment_content.strip()))
+                                tokens.append(Token(MULTILINE_CLOSE, "{{@"))
                                 break
 
                             # Append the current character to the comment content
@@ -586,10 +586,10 @@ class Lexer:
 
                         # If loop ends without finding {{@, report an error
                         else:
-                            errors.append("Unclosed multi-line comment. Expected '{{@' to close.")
-                            tokens.append(Token("MULTILINE", "@}}"))  # Include the incomplete multi-line opening
-                            tokens.append(Token("COMMENT", comment_content.strip()))
-                            return tokens, errors  # Exit after adding the incomplete multi-line comment tokens
+                            errors.append(f"Unclosed multi-line comment. Expected '{{@' to close.")
+                            errors.append(f"Invalid Delimiter for Single-line Comment. Expected: {comment1_delim}")
+                            # Do not add tokens for incomplete or invalid multi-line comments
+                            return tokens, errors  # Exit after reporting the errors
 
                     else:  # Single-line comment
                         comment_content = ""
@@ -606,9 +606,13 @@ class Lexer:
                             comment_content += self.current_char
                             self.advance()
 
+                        # If there are errors in the single-line comment, do not add it to the tokens
+                        if errors:
+                            continue
+
                         # Add tokens for single-line comment
-                        tokens.append(Token("SINGLELINE", "@}"))
-                        tokens.append(Token("COMMENT", comment_content.strip()))
+                        tokens.append(Token(SINGLELINE, "@}"))
+                        tokens.append(Token(COMMENT, comment_content.strip()))
                         
                         # Continue parsing other tokens after the single-line comment ends
                         continue
@@ -617,7 +621,6 @@ class Lexer:
                 else:
                     errors.append(f"Invalid use of '@'. Cause: '{self.current_char}'. Expected: '}}' for multi-line comment start or '@}}'.")
                     continue
-
 
             elif self.current_char == '(': #other operator
                 self.advance()
@@ -891,7 +894,7 @@ class Lexer:
                         if self.current_char == None:
                             errors.extend([f'Invalid delimiter for craft! Cause: {self.current_char}. Expected: space " " '])
                             return [], errors
-                        if self.current_char in whitespace:
+                        if self.current_char in whitespace or self.current_char.isspace():
                             return Token(CRAFT, "craft"), errors
                         elif self.current_char in alpha_num:
                             continue
@@ -910,7 +913,7 @@ class Lexer:
                             if self.current_char == None:
                                 errors.extend([f'Invalid delimiter for crop! Cause: {self.current_char}. Expected: space " " '])
                                 return [], errors
-                            if self.current_char in whitespace:
+                            if self.current_char in whitespace or self.current_char.isspace():
                                 return Token(CROP, "crop"), errors
                             elif self.current_char in alpha_num: #double check this
                                 continue
@@ -1020,7 +1023,7 @@ class Lexer:
                                                 if self.current_char == None:
                                                     errors.extend([f'Invalid delimiter for farmhouse! Cause: {self.current_char}. Expected: space '])
                                                     return [], errors
-                                                if self.current_char in whitespace:                                               
+                                                if self.current_char in whitespace or self.current_char.isspace():                                               
                                                     return Token(FARMHOUSE, "farmhouse"), errors
                                                 elif self.current_char in alpha_num:
                                                     continue
