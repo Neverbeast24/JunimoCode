@@ -10,10 +10,11 @@ pygame.mixer.init()
 click_sound = pygame.mixer.Sound(r"Interface\bigSelect.wav")
 
 # Stardew Valley themed colors
+BACKGROUND_COLOR = "#7A5230"  # Brownish
 TEXT_COLOR = "#F4EBD0"        # Light Tan
 BUTTON_COLOR = "#8B7355"      # Wooden Button-like
-TERMINAL_COLOR = "#8B7355"    # Black terminal output
-FONT = ("Courier", 18, "bold")  # Retro typewriter style font
+TERMINAL_COLOR = "#000000"    # Black terminal output
+FONT = ("Courier", 14, "bold")  # Retro typewriter style font
 
 # Background image path
 background_image_path = "stardewbg.jpg"  # Replace this with the path to your Stardew-themed image
@@ -33,7 +34,10 @@ class StardewLexerGUI:
         self.root.columnconfigure(0, weight=1)
 
         # Create main frame with a background image
-        self.setup_background()
+        self.background_image = ctk.CTkImage(Image.open(background_image_path), size=(1280, 720))  # Adjust size as needed
+        self.background_label = ctk.CTkLabel(self.root, image=self.background_image, text="")
+        self.background_label.place(relwidth=1, relheight=1)
+
         self.main_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         self.main_frame.grid(row=0, column=0, sticky="nsew")
         self.main_frame.rowconfigure(1, weight=3)  # Adjust weight for dynamic resizing
@@ -41,27 +45,17 @@ class StardewLexerGUI:
 
         self.setup_widgets()
 
-    def setup_background(self):
-        # Load and display the background image
-        try:
-            background_image = ctk.CTkImage(Image.open(background_image_path), size=(1280, 720))
-            background_label = ctk.CTkLabel(self.root, image=background_image, text="")
-            background_label.image = background_image  # Prevent garbage collection
-            background_label.place(relwidth=1, relheight=1)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Background image not found at '{background_image_path}'. Please check the file path.")
-
     def setup_widgets(self):
         # Heading Label
         title = ctk.CTkLabel(self.main_frame, text="Junimo Lexical Analyzer", 
                              font=("Courier", 24, "bold"), 
-                             text_color="#5E2D10")  # Darker color for visibility
+                             text_color=TEXT_COLOR)
         title.grid(row=0, column=0, pady=10)
 
         # Input box for code
         self.code_input = ctk.CTkTextbox(self.main_frame, font=("Courier", 12),
-                                         fg_color="#FFFFFF", 
-                                         text_color="#000000")
+                                         fg_color=TEXT_COLOR, 
+                                         text_color=BACKGROUND_COLOR)
         self.code_input.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
 
         # Analyze and Clear buttons
