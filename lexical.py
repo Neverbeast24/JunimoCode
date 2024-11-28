@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import scrolledtext
+from tkinter import font
+import pygame
 
 #alphabet
 alpha_capital = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -30,12 +32,12 @@ negative = '~'
 #others
 whitespace = " "
 terminator = "$"
-NEWTAB = '\\t'
-NEWLINE = '\\n'
+NEWTAB = "\t"
+NEWLINE = "\n"
 COMMA = ','
 SINGLELINE = '@}'
-MULTILINE_OPEN = f'@}}'
-MULTILINE_CLOSE =  f'{{@'
+MULTILINE_OPEN = '@}' + '}'
+MULTILINE_CLOSE =  '{' + '{@'
 COMMENT = "COMMENT"
 
 
@@ -230,10 +232,10 @@ class Lexer:
                 errors.extend([f"Invalid symbol: {self.current_char}"])
                 self.advance() """
             if self.current_char in '\t':
-                tokens.append(Token(NEWTAB, "\\t"))
+                tokens.append(Token(NEWTAB, "\t"))
                 self.advance()
             elif self.current_char  == '\n':
-                tokens.append(Token(NEWLINE, "\\n"))
+                tokens.append(Token(NEWLINE, "\n"))
                 self.advance()
             elif self.current_char.isspace():
                 # Handle spaces explicitly
@@ -574,9 +576,9 @@ class Lexer:
                                 self.advance()  # Advance past '@'
 
                                 # Add tokens for a valid multi-line comment
-                                tokens.append(Token(MULTILINE_OPEN, "@}}"))
+                                tokens.append(Token(MULTILINE_OPEN, "@}" + "}"))
                                 tokens.append(Token(COMMENT, comment_content.strip()))
-                                tokens.append(Token(MULTILINE_CLOSE, "{{@"))
+                                tokens.append(Token(MULTILINE_CLOSE, "{"+ "{@"))
                                 break
 
                             # Append the current character to the comment content
@@ -662,23 +664,23 @@ class Lexer:
                     errors.extend([f"Invalid delimiter for ' ] '. Cause: ' {self.current_char} '. Expected: {closesquare_delim} "])
                     continue
                 tokens.append(Token(SRBRACKET, "]"))
+            # Handling '{' (opening curly bracket)
             elif self.current_char == '{':
                 self.advance()
                 if self.current_char == None:
-                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: space or newline "])
+                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline "])
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: space or newline "])
+                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline "])
                     continue
                 tokens.append(Token(CLBRACKET, "{"))
             elif self.current_char == '}':
                 self.advance()
                 if self.current_char == None:
                     tokens.append(Token(CRBRACKET, "}"))
-                    errors.extend([f"Invalid delimiter for 'curly curly bracket'. Cause: ' {self.current_char} '. Expected: space or newline "])
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Invalid delimiter for 'closing curly bracket'. Cause: ' {self.current_char} '. Expected: space or newline "])
+                    errors.extend([f"Invalid delimiter for 'closing curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline "])
                     continue
                 tokens.append(Token(CRBRACKET, "}"))
             
@@ -900,7 +902,7 @@ class Lexer:
                         if self.current_char == None:
                             errors.extend([f'Invalid delimiter for craft! Cause: {self.current_char}. Expected: space " " '])
                             return [], errors
-                        if self.current_char in whitespace or self.current_char.isspace():
+                        if self.current_char in spacepr_delim or self.current_char.isspace():
                             return Token(CRAFT, "craft"), errors
                         elif self.current_char in alpha_num:
                             continue
@@ -1435,15 +1437,15 @@ class Lexer:
         # Ensure the first letter is uppercase
         if not ident[0].isupper():
             print(f"NASA LOOB NG MAKE IDENT YUNG ERROR: {self.current_char}")
-            return None, f"Lexical error: Invalid identifier start: '{ident[0]}'. Word '{ident}' must start with an uppercase letter."
+            return None, f"Invalid identifier start: '{ident[0]}'. Word '{ident}' must start with an uppercase letter."
 
         # Ensure no invalid characters are present
         if not all(c.isalnum() or c == "_" for c in ident):
-            return None, f"Lexical error: Invalid character in word '{ident}'. Identifiers must be alphanumeric or underscores."
+            return None, f" Invalid character in word '{ident}'. Identifiers must be alphanumeric or underscores."
 
         # Ensure the next character is a valid delimiter
         if self.current_char is not None and self.current_char not in id_delim:
-            return None, f"Lexical error: Invalid delimiter after word '{ident}'. Found: '{self.current_char}. Expected: {id_delim}."
+            return None, f"Invalid delimiter after word '{ident}'. Found: '{self.current_char}. Expected: {id_delim}."
 
         return ident, None
 
@@ -1473,39 +1475,84 @@ def run(fn, text):
     
     return tokens, error
 
+        
 class LexerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Junimo Code Lexer")
+
+        # Initialize pygame for audio
+        pygame.mixer.init()
+        self.background_music = pygame.mixer.Sound("BackgroundMusic\ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3")
+        self.background_music.set_volume(0.3)  # Adjust the volume if necessary
+        self.background_music.play(loops=-1, fade_ms=1000)  # Play background music on loop
         
         # Setup GUI layout
         self.setup_widgets()
-        
+
     def setup_widgets(self):
+        # Set background image
+        self.bg_image = tk.PhotoImage(file="sv.png")
+        self.bg_label = tk.Label(self.root, image=self.bg_image)
+        self.bg_label.place(relwidth=1, relheight=1)  # Make background cover the entire window
+        
         # Input box for code
-        self.code_input = scrolledtext.ScrolledText(self.root, wrap=tk.WORD, width=60, height=15)
-        self.code_input.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
+        self.code_input = scrolledtext.ScrolledText(self.root, wrap=tk.WORD, width=60, height=15, font=("Courier New", 12))
+        self.code_input.grid(row=0, column=0, padx=10, pady=10, columnspan=3, sticky="nsew")
 
         # Analyze Button
-        self.analyze_button = tk.Button(self.root, text="Analyze Code", command=self.analyze_code)
-        self.analyze_button.grid(row=1, column=0, padx=10, pady=10)
+        self.analyze_button = tk.Button(self.root, text="Analyze Code", command=self.analyze_code, font=("Arial", 12, "bold"), bg="#4C9D4A", fg="white")
+        self.analyze_button.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+
+        # Clear Input Button
+        self.clear_button = tk.Button(self.root, text="Clear Input", command=self.clear_input, font=("Arial", 12, "bold"), bg="#4C9D4A", fg="white")
+        self.clear_button.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
+
+        # Undo Button
+        self.undo_button = tk.Button(self.root, text="Undo", command=self.undo_input, font=("Arial", 12, "bold"), bg="#4C9D4A", fg="white")
+        self.undo_button.grid(row=1, column=2, padx=10, pady=10, sticky="ew")
 
         # Treeview for tokens and lexemes (with row numbering)
-        self.token_tree = ttk.Treeview(self.root, columns=("Row", "Lexeme", "Token"), show='headings')
-        self.token_tree.heading("Row")
-        self.token_tree.heading("Lexeme", text="Lexeme")
-        self.token_tree.heading("Token", text="Token")
-        self.token_tree.column("Row", width=50, anchor="center")  # Set column width for row numbers
-        self.token_tree.column("Lexeme", width=200)
-        self.token_tree.column("Token", width=200)
-        self.token_tree.grid(row=2, column=0, padx=10, pady=10, columnspan=2)
+        self.token_tree = ttk.Treeview(self.root, columns=("Row", "Lexeme", "Token"), show='headings', height=8)
+        
+        # Setting the font and colors for the header
+        self.token_tree.heading("Row", text="Row", anchor="center")
+        self.token_tree.heading("Lexeme", text="Lexeme", anchor="center")
+        self.token_tree.heading("Token", text="Token", anchor="center")
+        
+        # Custom column widths
+        self.token_tree.column("Row", width=50, anchor="center")
+        self.token_tree.column("Lexeme", width=250, anchor="center")
+        self.token_tree.column("Token", width=250, anchor="center")
 
-        # Error display
-        self.error_output = scrolledtext.ScrolledText(self.root, wrap=tk.WORD, width=60, height=5, fg="red")
-        self.error_output.grid(row=3, column=0, padx=10, pady=10, columnspan=2)
+        # Styling for the column headers (Green and white for Stardew Valley theme)
+        self.token_tree.tag_configure("header", font=("Arial", 12, "bold"), background="#4C9D4A", foreground="white")  
+        self.token_tree.tag_configure("odd", background="#f0f8f0")  # Light mint green for odd rows
+        self.token_tree.tag_configure("even", background="#e0f5e0")  # Slightly darker mint green for even rows
+
+        # Apply header style to column headings
+        self.token_tree.heading("Row")
+        self.token_tree.heading("Lexeme")
+        self.token_tree.heading("Token")
+
+        # Enable grid lines for better structure
+        self.token_tree.grid(row=2, column=0, padx=10, pady=10, columnspan=3, sticky="nsew")
+
+        # Error display area with red font for errors
+        self.error_output = scrolledtext.ScrolledText(self.root, wrap=tk.WORD, width=60, height=5, fg="red", font=("Courier New", 12))
+        self.error_output.grid(row=3, column=0, padx=10, pady=10, columnspan=3, sticky="nsew")
         self.error_output.insert(tk.END, "Errors will be displayed here...\n")
         self.error_output.config(state=tk.DISABLED)
 
+        # Make the entire window resizable
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_rowconfigure(1, weight=0)
+        self.root.grid_rowconfigure(2, weight=1)
+        self.root.grid_rowconfigure(3, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+        self.root.grid_columnconfigure(2, weight=1)
+            
     def analyze_code(self):
         # Clear previous tokens and errors
         for row in self.token_tree.get_children():
@@ -1513,9 +1560,9 @@ class LexerGUI:
         self.error_output.config(state=tk.NORMAL)
         self.error_output.delete("1.0", tk.END)
 
-        # Get code from input box
-        code = self.code_input.get("1.0", tk.END)
-
+        # Get code from input box and remove the trailing newline (but keep spaces)
+        code = self.code_input.get("1.0", tk.END).rstrip('\n')  # Remove only the last newline
+        
         # Do not strip the code; keep all spaces intact
         lexer = Lexer("<input>", code)
         tokens, errors = lexer.make_tokens()
@@ -1530,11 +1577,22 @@ class LexerGUI:
 
         # Display errors
         if errors:
-            self.error_output.insert(tk.END, "\n".join(errors) + "\n")
+            self.error_output.insert(tk.END, f"\n".join(errors) + f"\n")
         else:
             self.error_output.insert(tk.END, "No errors found.\n")
 
         self.error_output.config(state=tk.DISABLED)
+        
+    def clear_input(self):
+        """Clear the code input box"""
+        self.code_input.delete("1.0", tk.END)
+
+    def undo_input(self):
+        """Undo the last action in the code input box"""
+        current_text = self.code_input.get("1.0", tk.END)
+        if len(current_text) > 1:  # Check if there's any text to undo
+            self.code_input.delete("1.0", tk.END)
+            self.code_input.insert("1.0", current_text[:-2])  # Remove the last character (including newline)
 
 
 # Example usage with GUI
