@@ -32,8 +32,9 @@ negative = '~'
 #others
 whitespace = " "
 terminator = "$"
-NEWTAB = "\t"
-NEWLINE = "\n"
+NEWTAB = '\\t'
+newline_delim = '\n'
+NEWLINE = "\\n"
 COMMA = ','
 SINGLELINE = '@}'
 MULTILINE_OPEN = '@}' + '}'
@@ -41,9 +42,9 @@ MULTILINE_CLOSE =  '{' + '{@'
 COMMENT = "COMMENT"
 
 
-dew_delim = whitespace + NEWLINE + '{'
+dew_delim = whitespace + newline_delim + '{'
 comma_delim = whitespace + alpha_num + '"'
-string1_delim = whitespace + ascii_string + NEWLINE + '"'
+string1_delim = whitespace + ascii_string + newline_delim + '"'
 string2_delim = whitespace + COMMA + '+' + ')'
 string_delim = string1_delim + string2_delim
 delim0 = whitespace + alpha_num + negative + '(' + '['
@@ -54,18 +55,18 @@ delim3 = whitespace + all_numbers + '('
 unary_delim = whitespace + all_letters + terminator
 bool_delim = whitespace + terminator + COMMA + ')' + ']'
 num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relational_ops + terminator
-id_delim = NEWLINE + COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + terminator
+id_delim = newline_delim + COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + terminator
 spacepr_delim = whitespace + '('
 break_delim = terminator + whitespace
 openparenthesis_delim = whitespace + alpha_num + negative + '(' + '[' + '"' + ')'
 closingparenthesis_delim = whitespace  + ')' + ']' + '{' + '&' + '|' + terminator + arithmetic_ops + relational_ops
-end_delim = whitespace + NEWLINE
+end_delim = whitespace + newline_delim
 opensquare_delim = whitespace + all_numbers + '(' + '"' + ']'
 closesquare_delim = whitespace + terminator + ')' 
 negative_delim = alpha_capital + all_numbers + '('
 
 comment1_delim = whitespace + ascii_comment
-comment2_delim = whitespace + NEWLINE + ascii
+comment2_delim = whitespace + newline_delim + ascii
 
 #errors
 error = []
@@ -232,10 +233,10 @@ class Lexer:
                 errors.extend([f"Invalid symbol: {self.current_char}"])
                 self.advance() """
             if self.current_char in '\t':
-                tokens.append(Token(NEWTAB, "\t"))
+                tokens.append(Token(NEWTAB, "\\t"))
                 self.advance()
             elif self.current_char  == '\n':
-                tokens.append(Token(NEWLINE, "\n"))
+                tokens.append(Token(NEWLINE, "\\n"))
                 self.advance()
             elif self.current_char.isspace():
                 # Handle spaces explicitly
@@ -601,7 +602,7 @@ class Lexer:
                         comment_content = ""
 
                         # Capture the content for the single-line comment
-                        while self.current_char is not None and self.current_char != "\n":  # Stop at newline or EOF
+                        while self.current_char is not None and self.current_char != "\n":  # Stop at newline_delim or EOF
                             # Validate the character
                             if not (self.current_char.isascii() or self.current_char in comment1_delim):
                                 errors.append(
@@ -668,10 +669,10 @@ class Lexer:
             elif self.current_char == '{':
                 self.advance()
                 if self.current_char == None:
-                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline "])
+                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline_delim "])
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline "])
+                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline_delim "])
                     continue
                 tokens.append(Token(CLBRACKET, "{"))
             elif self.current_char == '}':
@@ -680,7 +681,7 @@ class Lexer:
                     tokens.append(Token(CRBRACKET, "}"))
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Invalid delimiter for 'closing curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline "])
+                    errors.extend([f"Invalid delimiter for 'closing curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline_delim "])
                     continue
                 tokens.append(Token(CRBRACKET, "}"))
             
@@ -708,7 +709,7 @@ class Lexer:
                     tokens.append(Token(terminator, "$"))
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Invalid delimiter for ' $ '. Cause: ' {self.current_char} '. Expected: space or newline "])
+                    errors.extend([f"Invalid delimiter for ' $ '. Cause: ' {self.current_char} '. Expected: space or newline_delim "])
                     continue
                 tokens.append(Token(terminator, "$"))
             else:
@@ -1560,8 +1561,8 @@ class LexerGUI:
         self.error_output.config(state=tk.NORMAL)
         self.error_output.delete("1.0", tk.END)
 
-        # Get code from input box and remove the trailing newline (but keep spaces)
-        code = self.code_input.get("1.0", tk.END).rstrip('\n')  # Remove only the last newline
+        # Get code from input box and handle any extra newline at the end
+        code = self.code_input.get("1.0", tk.END).rstrip("\n")  # Remove the trailing newline
         
         # Do not strip the code; keep all spaces intact
         lexer = Lexer("<input>", code)
@@ -1572,12 +1573,18 @@ class LexerGUI:
         for token in tokens:
             if isinstance(token, Token):  # Ensure it's a valid token object
                 lexeme = token.value if token.value is not None else token.token
+                # Check for spaces as errors
+                if token.token == "SPACE":
+                    self.error_output.insert(tk.END, f"Error: Unexpected whitespace at line {row_number}\n")
+                # Check for newlines as tokens
+                elif token.token == "NEWLINE":
+                    lexeme = "\\n"  # Display as "\n" in the table for clarity
                 self.token_tree.insert("", tk.END, values=(row_number, lexeme, token.token))
                 row_number += 1
 
         # Display errors
         if errors:
-            self.error_output.insert(tk.END, f"\n".join(errors) + f"\n")
+            self.error_output.insert(tk.END, "\n".join(errors) + "\n")
         else:
             self.error_output.insert(tk.END, "No errors found.\n")
 
@@ -1592,7 +1599,7 @@ class LexerGUI:
         current_text = self.code_input.get("1.0", tk.END)
         if len(current_text) > 1:  # Check if there's any text to undo
             self.code_input.delete("1.0", tk.END)
-            self.code_input.insert("1.0", current_text[:-2])  # Remove the last character (including newline)
+            self.code_input.insert("1.0", current_text[:-2])  # Remove the last character (including newline_delim)
 
 
 # Example usage with GUI
