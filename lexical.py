@@ -1438,7 +1438,7 @@ class Lexer:
         # Ensure the first letter is uppercase
         if not ident[0].isupper():
             print(f"NASA LOOB NG MAKE IDENT YUNG ERROR: {self.current_char}")
-            return None, f"Invalid identifier start: '{ident[0]}'. Word '{ident}' must start with an uppercase letter."
+            return None, f"Invalid identifier start: '{ident[0]}'. Cause: '{ident}'. Identifier must start with an uppercase letter."
 
         # Ensure no invalid characters are present
         if not all(c.isalnum() or c == "_" for c in ident):
@@ -1502,7 +1502,7 @@ class LexerGUI:
         self.code_input.grid(row=0, column=0, padx=10, pady=10, columnspan=3, sticky="nsew")
 
         # Analyze Button
-        self.analyze_button = tk.Button(self.root, text="Analyze Code", command=self.analyze_code, font=("Arial", 12, "bold"), bg="#4C9D4A", fg="white")
+        self.analyze_button = tk.Button(self.root, text="Lexer", command=self.analyze_code, font=("Arial", 12, "bold"), bg="#4C9D4A", fg="white")
         self.analyze_button.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
 
         # Clear Input Button
