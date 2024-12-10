@@ -1611,6 +1611,32 @@ class StardewLexerGUI:
         self.terminal_output.insert(tk.END, "Errors will be displayed here...\n")
         self.terminal_output.pack(padx=10, pady=5)
 
+    def place_widgets(self):
+        # Dynamically position widgets
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+
+        self.canvas.config(width=width, height=height)
+        self.bg_photo = ImageTk.PhotoImage(self.bg_image.resize((width, height), Image.LANCZOS))
+        self.canvas.itemconfig(self.bg, image=self.bg_photo)
+
+        # Input code frame
+        self.code_frame.place(relx=0.05, rely=0.1, relwidth=0.4, relheight=0.5)
+
+        # Buttons
+        self.image_analyze_button.place(relx=0.05, rely=0.7, relwidth=0.1, relheight=0.05)
+        self.image_clear_button.place(relx=0.17, rely=0.7, relwidth=0.1, relheight=0.05)
+        self.image_undo_button.place(relx=0.29, rely=0.7, relwidth=0.1, relheight=0.05)
+
+        # Token table
+        self.token_frame.place(relx=0.5, rely=0.1, relwidth=0.45, relheight=0.5)
+
+        # Terminal output
+        self.terminal_frame.place(relx=0.05, rely=0.8, relwidth=0.9, relheight=0.15)
+
+    def on_resize(self, event):
+        self.place_widgets()
+
     def analyze_code_with_sound(self):
         mixer.Sound.play(click_sound)
         self.analyze_code()
