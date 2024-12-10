@@ -47,11 +47,11 @@ number = '123456789'
 all_numbers = zero + number
 
 #alphanumeric and special symbols
-punctuation_symbols = "!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
+punctuation_symbols = "~!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
 alpha_num = all_letters + all_numbers
 ascii = all_letters + punctuation_symbols + all_numbers
 ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+~" + all_letters + all_numbers
-ascii_comment = all_letters + all_numbers + "!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
+ascii_comment = all_letters + all_numbers + "~!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
 #operators
 arithmetic_ops = "+-*/%"
 relational_ops = '><==!<=>=!='
@@ -73,9 +73,8 @@ MULTILINE_OPEN = '@}' + '}'
 MULTILINE_CLOSE =  '{' + '{@'
 COMMENT = "COMMENT"
 
-
-dew_delim = whitespace + newline_delim + '{'
 comma_delim = whitespace + alpha_num + '"'
+dew_delim = whitespace + newline_delim + '{'
 string1_delim = whitespace + ascii_string + newline_delim + '"'
 string2_delim = whitespace + COMMA + '+' + ')'
 string_delim = string1_delim + string2_delim
@@ -90,10 +89,10 @@ num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relati
 id_delim = newline_delim + COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + terminator
 spacepr_delim = whitespace + '('
 break_delim = terminator + whitespace
-openparenthesis_delim = whitespace + alpha_num + negative + '(' + '[' + '"' + ')'
-closingparenthesis_delim = whitespace  + ')' + ']' + '{' + '&' + '|' + terminator + arithmetic_ops + relational_ops
+openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')'
+closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + terminator + arithmetic_ops + relational_ops
 end_delim = whitespace + newline_delim
-opensquare_delim = whitespace + all_numbers + '(' + '"' + ']'
+opensquare_delim = whitespace + all_numbers + '"' + ']'
 closesquare_delim = whitespace + terminator + ')'
 negative_delim = alpha_capital + all_numbers + '('
 
@@ -607,7 +606,10 @@ class Lexer:
                                 self.advance()  # Advance past '{'
                                 self.advance()  # Advance past '{'
                                 self.advance()  # Advance past '@'
-
+                                
+                                # Remove leading and trailing whitespaces and newlines
+                                comment_content = comment_content.replace("\n", "").replace("\r", "")
+                                
                                 # Add tokens for a valid multi-line comment
                                 tokens.append(Token(MULTILINE_OPEN, "@}" + "}"))
                                 tokens.append(Token(COMMENT, comment_content.strip()))
