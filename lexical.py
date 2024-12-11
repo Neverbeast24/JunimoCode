@@ -1484,9 +1484,9 @@ class LexerGUI:
 
         # Initialize pygame for audio
         pygame.mixer.init()
-        self.background_music = pygame.mixer.Sound("BackgroundMusic\ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3")
-        self.background_music.set_volume(0.3)  # Adjust the volume if necessary
-        self.background_music.play(loops=-1, fade_ms=1000)  # Play background music on loop
+        # self.background_music = pygame.mixer.Sound("BackgroundMusic\ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3")
+        # self.background_music.set_volume(0.3)  # Adjust the volume if necessary
+        # self.background_music.play(loops=-1, fade_ms=1000)  # Play background music on loop
         
         # Setup GUI layout
         self.setup_widgets()

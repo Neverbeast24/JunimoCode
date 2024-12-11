@@ -48,7 +48,7 @@ all_numbers = zero + number
 
 #alphanumeric and special symbols
 punctuation_symbols = "~!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
-alpha_num = all_letters + all_numbers
+alpha_num = all_letters + all_numbers 
 ascii = all_letters + punctuation_symbols + all_numbers
 ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+~" + all_letters + all_numbers
 ascii_comment = all_letters + all_numbers + "~!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
@@ -83,11 +83,11 @@ delim1 = whitespace + alpha_num + '"' + '(' + '['+  negative
 delim2 = whitespace + alpha_num + '"' + '(' + negative
 delim3 = whitespace + all_numbers + '('
 
-unary_delim = whitespace + all_letters + terminator
+unary_delim = whitespace + all_letters + terminator + ')'
 bool_delim = whitespace + terminator + COMMA + ')' + ']'
 num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relational_ops + terminator
 id_delim = newline_delim + COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + terminator
-spacepr_delim = whitespace + '('
+spacepr_delim = whitespace
 break_delim = terminator + whitespace
 openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')'
 closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + terminator + arithmetic_ops + relational_ops
@@ -332,18 +332,18 @@ class Lexer:
                 if self.current_char == '=':
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' == '. Cause: ' {self.current_char} '. Expected: {delim1} "])
+                        errors.extend([f"Invalid delimiter for ' == '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
                     if self.current_char not in (delim1):
-                        errors.extend([f"Invalid delimiter for ' == '. Cause: ' {self.current_char} '. Expected: {delim1} "])
+                        errors.extend([f"Invalid delimiter for ' == '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
                     tokens.append(Token(E_EQUAL, "==")) #for == symbol
                 else:
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' = '. Cause: ' {self.current_char} '. Expected: {delim1} "])
+                        errors.extend([f"Invalid delimiter for ' = '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
                     if self.current_char not in delim1:
-                        errors.extend([f"Invalid delimiter for ' = '. Cause: ' {self.current_char} '. Expected: {delim1}"])
+                        errors.extend([f"Invalid delimiter for ' = '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
                     tokens.append(Token(EQUAL, "=")) #for == symbol
 
@@ -361,18 +361,18 @@ class Lexer:
                 if self.current_char == '=':
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' <= '. Cause: ' {self.current_char} '. Expected:  {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' <= '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in delim0:
-                        errors.extend([f"Invalid delimiter for ' <= '. Cause: ' {self.current_char} '. Expected:  {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' <= '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(LESS_THAN_EQUAL, "<=")) #for == symbol
                 else:
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' < '. Cause: ' {self.current_char} '. Expected:  {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' < '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in (delim0):
-                        errors.extend([f"Invalid delimiter for ' < '. Cause: ' {self.current_char} '. Expected:  {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' < '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(LESS_THAN, "<"))
 
@@ -382,18 +382,18 @@ class Lexer:
                 if self.current_char == '=':
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' >= '. Cause: ' {self.current_char} '. {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' >= '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in delim0:
-                        errors.extend([f"Invalid delimiter for ' >= '. Cause: ' {self.current_char} '. {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' >= '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(GREATER_THAN_EQUAL, ">="))
                 else:
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' > '. Cause: ' {self.current_char} '. {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' > '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in delim0:
-                        errors.extend([f"Invalid delimiter for ' > '. Cause: ' {self.current_char} '. {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' > '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(GREATER_THAN, ">"))
 
@@ -403,30 +403,30 @@ class Lexer:
                 if self.current_char == '=': #for += symbol
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' += '. Cause: ' {self.current_char} '. Expected:  {delim3}"])
+                        errors.extend([f"Invalid delimiter for ' += '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
                     if self.current_char not in (delim3):
-                        errors.extend([f"Invalid delimiter for ' += '. Cause: ' {self.current_char} '. Expected:  {delim3}"])
+                        errors.extend([f"Invalid delimiter for ' += '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
                     tokens.append(Token(PLUS_EQUAL, "+=")) #for == symbol
 
                 elif self.current_char == '+': #for ++ incre
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for '++'. Cause: ' {self.current_char} '. Expected: {unary_delim} "])
+                        errors.extend([f"Invalid delimiter for ' ++ '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, terminator, ) "])
                         continue
-                    if self.current_char not in (unary_delim):
-                        errors.extend([f"Invalid delimiter for '++'. Cause: ' {self.current_char} '. Expected:  {unary_delim} "])
+                    if self.current_char not in (unary_delim) or self.current_char.isspace():
+                        errors.extend([f"Invalid delimiter for ' ++ '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, terminator, ) "])
                         continue
                     tokens.append(Token(INCRE, "++")) #for == symbol
                 else:
 
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' + ' ! Cause: {self.current_char}. Expected: {delim1}"])
+                        errors.extend([f"Invalid delimiter for ' + '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
 
                     if self.current_char not in (delim1):
-                        errors.extend([f"Invalid delimiter for ' + ' ! Cause: {self.current_char}. Expected: {delim1}"])
+                        errors.extend([f"Invalid delimiter for ' + '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
 
                     tokens.append(Token(PLUS, "+")) #for == symbol
@@ -438,28 +438,28 @@ class Lexer:
                 if self.current_char == '=': #for -=symbol
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' -= '. Cause: ' {self.current_char} '. Expected:  {delim3} "])
+                        errors.extend([f"Invalid delimiter for ' -= '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
                     if self.current_char not in delim3:
-                        errors.extend([f"Invalid delimiter for ' -= '. Cause: ' {self.current_char} '. Expected:  {delim3} "])
+                        errors.extend([f"Invalid delimiter for ' -= '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
                     tokens.append(Token(MINUS_EQUAL, "-="))
                 elif self.current_char == '-': #for -- decre
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. Expected: {unary_delim} "])
+                        errors.extend([f"Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, terminator, ) "])
                         continue
                     if self.current_char not in (unary_delim):
-                        errors.extend([f"Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. Expected:  {unary_delim} "])
+                        errors.extend([f"Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, terminator, ) "])
                         continue
                     tokens.append(Token(DECRE, "--"))
 
                 else:
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' - '. Cause: ' {self.current_char} ' Expected:  {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' - '. Cause: ' {self.current_char} ' . Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in delim0:
-                        errors.extend([f"Invalid delimiter for ' - '. Cause: ' {self.current_char} ' Expected:  {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' - '. Cause: ' {self.current_char} ' . Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(MINUS, "-"))
 
@@ -468,17 +468,17 @@ class Lexer:
                 if self.current_char == "=":
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' *= '. Cause: ' {self.current_char} '. Expected:  {delim3} "])
+                        errors.extend([f"Invalid delimiter for ' *= '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                     if self.current_char not in delim3:
-                        errors.extend([f"Invalid delimiter for ' *= '. Cause: ' {self.current_char} '. Expected:  {delim3} "])
+                        errors.extend([f"Invalid delimiter for ' *= '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
                     tokens.append(Token(MUL_EQUAL, "*="))
                 else:
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' * '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' * '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in delim0:
-                        errors.extend([f"Invalid delimiter for ' * '. Cause: ' {self.current_char} ' Expected:  {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' * '. Cause: ' {self.current_char} ' . Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(MUL, "*"))
 
@@ -490,18 +490,18 @@ class Lexer:
 
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' /= '. Cause: ' {self.current_char} '. Expected:  {delim3} "])
+                        errors.extend([f"Invalid delimiter for ' /= '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
                     if self.current_char not in delim3:
-                        errors.extend([f"Invalid delimiter for ' /= '. Cause: ' {self.current_char} '. Expected:  {delim3} "])
+                        errors.extend([f"Invalid delimiter for ' /= '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
                     tokens.append(Token(DIV_EQUAL, "/="))
                 else:
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' / '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' / '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in delim0:
-                        errors.extend([f"Invalid delimiter for ' / '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' / '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(DIV, "/"))
 
@@ -509,11 +509,11 @@ class Lexer:
                 self.advance()
                 pos_start = self.pos.copy()
                 if self.current_char == None:
-                    errors.extend([f"Invalid delimiter for ' % '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                    errors.extend([f"Invalid delimiter for ' % '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                     continue
                 if self.current_char not in delim0:
 
-                    errors.extend([f"Invalid delimiter for ' % '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                    errors.extend([f"Invalid delimiter for ' % '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
 
 
                     continue
@@ -526,11 +526,11 @@ class Lexer:
                     self.advance()
                     pos_start = self.pos.copy()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' != '. Cause: ' {self.current_char} '. Expected: {delim2} "])
+                        errors.extend([f"Invalid delimiter for ' != '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", ( "])
                         continue
                     if self.current_char not in delim2:
                         # errors.extend([DelimiterError(pos_start, self.pos, self.current_char, '!=' )])
-                        errors.extend([f"Invalid delimiter for ' != '. Cause: ' {self.current_char} '. Expected: {delim2} "])
+                        errors.extend([f"Invalid delimiter for ' != '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", ( "])
 
                         continue
                     print("appending !=: ", self.current_char)
@@ -539,11 +539,11 @@ class Lexer:
                 else:
                     if self.current_char == None:
                         # errors.extend([DelimiterError(pos_start, self.pos, self.current_char, '!')])
-                        errors.extend([f"Invalid delimiter for ' ! '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' ! '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in delim0:
                         # errors.extend([DelimiterError(pos_start, self.pos, self.current_char, '!')])
-                        errors.extend([f"Invalid delimiter for ' ! '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' ! '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(NOT_OP, "!"))
 
@@ -552,10 +552,10 @@ class Lexer:
                 if self.current_char == '&':
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' && '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' && '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in delim0:
-                        errors.extend([f"Invalid delimiter for ' && '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' && '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(AND_OP, "&&"))
 
@@ -567,10 +567,10 @@ class Lexer:
                 if self.current_char == '|':
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Invalid delimiter for ' || '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' || '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     if self.current_char not in delim0:
-                        errors.extend([f"Invalid delimiter for ' || '. Cause: ' {self.current_char} '. Expected: {delim0} "])
+                        errors.extend([f"Invalid delimiter for ' || '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
                     tokens.append(Token(OR_OP, "||"))
                 else:
@@ -579,10 +579,10 @@ class Lexer:
             elif self.current_char == '"': #string 1 and string 2 delim conflict # added str1 and 2 = string_delim
                 self.advance()
                 if self.current_char == None:
-                    errors.extend([f"Invalid delimiter for ' \" '. Cause: ' {self.current_char} '. Expected: {string_delim} "])
+                    errors.extend([f"Invalid delimiter for ' \" '. Cause: ' {self.current_char} '. Expected: whitespace, comma, +, ), alphanumeric, negative operator, (, [ "])
                     continue
                 if self.current_char not in string_delim:
-                    errors.extend([f"Invalid delimiter for ' \" '. Cause: ' {self.current_char} '. Expected: {string_delim} "])
+                    errors.extend([f"Invalid delimiter for ' \" '. Cause: ' {self.current_char} '. Expected: whitespace, comma, +, ), alphanumeric, negative operator, (, [ "])
                     continue
                 tokens.append(Token(STRING, "\" \""))
             # add closing ' " ' for string
@@ -684,29 +684,29 @@ class Lexer:
             elif self.current_char == '[':
                 self.advance()
                 if self.current_char == None:
-                    errors.extend([f"Invalid delimiter for ' [ '. Cause: ' {self.current_char} '. Expected: {opensquare_delim} "])
+                    errors.extend([f"Invalid delimiter for ' [ '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, quotation mark, close square bracket"])
                     continue
                 if self.current_char not in opensquare_delim:
-                    errors.extend([f"Invalid delimiter for ' [ '. Cause: ' {self.current_char} '. Expected: {opensquare_delim} "])
+                    errors.extend([f"Invalid delimiter for ' [ '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, quotation mark, close square bracket"])
                     continue
                 tokens.append(Token(SLBRACKET, "["))
             elif self.current_char == ']':
                 self.advance()
                 if self.current_char == None:
-                    errors.extend([f"Invalid delimiter for ' ] '. Cause: ' {self.current_char} '. Expected: {closesquare_delim} "])
+                    errors.extend([f"Invalid delimiter for ' ] '. Cause: ' {self.current_char} '. Expected: terminator, whitespace, close parenthesis"])
                     continue
                 if self.current_char not in closesquare_delim:
-                    errors.extend([f"Invalid delimiter for ' ] '. Cause: ' {self.current_char} '. Expected: {closesquare_delim} "])
+                    errors.extend([f"Invalid delimiter for ' ] '. Cause: ' {self.current_char} '. Expected: terminator, whitespace, close parenthesis "])
                     continue
                 tokens.append(Token(SRBRACKET, "]"))
             # Handling '{' (opening curly bracket)
             elif self.current_char == '{':
                 self.advance()
                 if self.current_char == None:
-                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline_delim "])
+                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline_delim "])
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline_delim "])
+                    errors.extend([f"Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline_delim "])
                     continue
                 tokens.append(Token(CLBRACKET, "{"))
             elif self.current_char == '}':
@@ -715,7 +715,7 @@ class Lexer:
                     tokens.append(Token(CRBRACKET, "}"))
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Invalid delimiter for 'closing curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 or newline_delim "])
+                    errors.extend([f"Invalid delimiter for 'closing curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline_delim "])
                     continue
                 tokens.append(Token(CRBRACKET, "}"))
 
@@ -827,14 +827,14 @@ class Lexer:
                             self.advance()
                             ident_count += 1
                             if self.current_char == None:
-                                errors.extend([f'Invalid delimiter for add! Cause: {self.current_char}. Expected: ('])
+                                errors.extend([f'Invalid delimiter for add! Cause: {self.current_char}. Expected: open parenthesis'])
                                 return [], errors
                             if self.current_char in '(':
                                 return Token(ADD, "add"), errors
                             elif self.current_char in alpha_num: #double check this
                                 continue
                             else:
-                                errors.extend([f'Invalid delimiter for add! Cause: {self.current_char}. Expected: ('])
+                                errors.extend([f'Invalid delimiter for add! Cause: {self.current_char}. Expected: open parenthesis'])
                                 return [], errors
 
             elif self.current_char == "b": #BREAK
@@ -868,14 +868,14 @@ class Lexer:
                                 self.advance()
                                 ident_count += 1
                                 if self.current_char == None:
-                                    errors.extend([f'Invalid delimiter for break! Cause: {self.current_char} Expected: {break_delim}'])
+                                    errors.extend([f'Invalid delimiter for break! Cause: {self.current_char} Expected: terminator, whitespace'])
                                     return [], errors
                                 if self.current_char in break_delim: #double check this
                                     return Token(BREAK, "break"), errors
                                 elif self.current_char in break_delim:
                                     continue
                                 else:
-                                    errors.extend([f'Invalid delimiter for break! Cause: {self.current_char} Expected: {break_delim}'])
+                                    errors.extend([f'Invalid delimiter for break! Cause: {self.current_char} Expected: terminator, whitespace'])
                                     return [], errors
 
             elif self.current_char == "c": #COLLECT
@@ -908,14 +908,14 @@ class Lexer:
                                         ident_count += 1
 
                                     if self.current_char == None:
-                                        errors.extend([f'Invalid delimiter for collect! Cause: {self.current_char} Expected: ('])
+                                        errors.extend([f'Invalid delimiter for collect! Cause: {self.current_char} Expected: open parenthesis'])
                                         return [], errors
                                     if self.current_char in '(':
                                         return Token(COLLECT, "collect"), errors
                                     elif self.current_char in alpha_num: #double check this
                                         continue
                                     else:
-                                        errors.extend([f'Invalid delimiter for collect! Cause: {self.current_char} Expected: ('])
+                                        errors.extend([f'Invalid delimiter for collect! Cause: {self.current_char} Expected: open parenthesis'])
                                         return [], errors
 
                 elif self.current_char == "r": #CRAFT
@@ -978,14 +978,14 @@ class Lexer:
                         ident_count += 1
 
                         if self.current_char == None:
-                            errors.extend([f'Invalid delimiter for dew! Cause: {self.current_char} Expected: {dew_delim}'])
+                            errors.extend([f'Invalid delimiter for dew! Cause: {self.current_char} Expected: whitespace, newline, open curly bracket '])
                             return [], errors
                         if self.current_char in dew_delim:
                             return Token(DEW, "dew"), errors
                         elif self.current_char in alpha_num: #double check this
                             continue
                         else:
-                            errors.extend([f'Invalid delimiter for dew! Cause: {self.current_char} Expected: {dew_delim}'])
+                            errors.extend([f'Invalid delimiter for dew! Cause: {self.current_char} Expected: whitespace, newline, open curly bracket '])
                             return [], errors
 
             elif self.current_char == "f": #FALSE, FOR
@@ -1009,14 +1009,14 @@ class Lexer:
                                 self.advance()
                                 ident_count += 1
                                 if self.current_char == None:
-                                    errors.extend([f'Invalid delimiter for false! Cause: {self.current_char}. Expected: {dew_delim} '])
+                                    errors.extend([f'Invalid delimiter for false! Cause: {self.current_char}. Expected: whitespace, newline, open curly bracket  '])
                                     return [], errors
                                 if self.current_char in bool_delim:
                                     return Token(FALSE, "false"), errors
                                 elif self.current_char in alpha_num:
                                     continue
                                 else:
-                                    errors.extend([f'Invalid delimiter for false! Cause: {self.current_char}. Expected: {dew_delim} '])
+                                    errors.extend([f'Invalid delimiter for false! Cause: {self.current_char}. Expected: whitespace, newline, open curly bracket  '])
                                     return [], errors
 
                         elif self.current_char == "l": #FOR = FALL
@@ -1024,14 +1024,14 @@ class Lexer:
                             self.advance()
                             ident_count += 1
                             if self.current_char == None:
-                                errors.extend([f'Invalid delimiter for fall! Cause: {self.current_char}. Expected: {spacepr_delim}'])
+                                errors.extend([f'Invalid delimiter for fall! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
                                 return [], errors
                             if self.current_char in spacepr_delim:
                                 return Token(FALL, "fall"), errors
                             elif self.current_char in alpha_num:
                                 continue
                             else:
-                                errors.extend([f'Invalid delimiter for fall! Cause: {self.current_char}. Expected: {spacepr_delim}'])
+                                errors.extend([f'Invalid delimiter for fall! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
                                 return [], errors
 
                     elif self.current_char == "r": #FARMHOUSE
@@ -1103,14 +1103,14 @@ class Lexer:
                                         self.advance()
                                         ident_count += 1
                                         if self.current_char == None:
-                                            errors.extend([f'Invalid delimiter for harvest! Cause: {self.current_char}. Expected: {spacepr_delim + terminator}'])
+                                            errors.extend([f'Invalid delimiter for harvest! Cause: {self.current_char}. Expected: whitespace, open parenthesis, terminator'])
                                             return [], errors
                                         if self.current_char  in spacepr_delim + terminator:
                                             return Token(HARVEST, "harvest"), errors
                                         elif self.current_char in alpha_num:
                                             continue
                                         else:
-                                            errors.extend([f'Invalid delimiter for harvest! Cause: {self.current_char}. Expected: {spacepr_delim + terminator}'])
+                                            errors.extend([f'Invalid delimiter for harvest! Cause: {self.current_char}. Expected: whitespace, open parenthesis, terminator'])
                                             return [], errors
 
             elif self.current_char == "p": #PELICAN, PERFECTION, PLANTING
@@ -1143,14 +1143,14 @@ class Lexer:
                                         ident_count += 1
 
                                         if self.current_char == None:
-                                            errors.extend([f'Invalid delimiter for pelican! Cause: {self.current_char}. Expected: ( '])
+                                            errors.extend([f'Invalid delimiter for pelican! Cause: {self.current_char}. Expected: open parenthesis '])
                                             return [], errors
                                         if self.current_char in '(':
                                             return Token(PELICAN, "pelican"), errors
                                         elif self.current_char in alpha_num:
                                             continue
                                         else:
-                                            errors.extend([f'Invalid delimiter for pelican! Cause: {self.current_char}. Expected: ( '])
+                                            errors.extend([f'Invalid delimiter for pelican! Cause: {self.current_char}. Expected: open parenthesis '])
                                             return [], errors
 
                     elif self.current_char == "r": #PERFECTION
@@ -1186,14 +1186,14 @@ class Lexer:
                                                     self.advance()
                                                     ident_count += 1
                                                     if self.current_char == None:
-                                                        errors.extend([f'Invalid delimiter for perfection! Cause: {self.current_char}. Expected: {break_delim}'])
+                                                        errors.extend([f'Invalid delimiter for perfection! Cause: {self.current_char}. Expected: terminator, whitespace'])
                                                         return [], errors
                                                     if self.current_char in break_delim:
                                                         return Token(PERFECTION, "perfection"), errors
                                                     elif self.current_char in alpha_num:
                                                         continue
                                                     else:
-                                                        errors.extend([f'Invalid delimiter for perfection! Cause: {self.current_char}. Expected: {break_delim}'])
+                                                        errors.extend([f'Invalid delimiter for perfection! Cause: {self.current_char}. Expected: terminator, whitespace'])
                                                         return [], errors
 
                 elif self.current_char == "l": #PLANTING
@@ -1225,14 +1225,14 @@ class Lexer:
                                             self.advance()
                                             ident_count += 1
                                             if self.current_char == None:
-                                                errors.extend([f'Invalid delimiter for planting! Cause: {self.current_char}. Expected: {break_delim} '])
+                                                errors.extend([f'Invalid delimiter for planting! Cause: {self.current_char}. Expected: terminator, whitespace '])
                                                 return [], errors
                                             if self.current_char in break_delim:
                                                 return Token(PLANTING, "planting"), errors
                                             elif self.current_char in alpha_num:
                                                 continue
                                             else:
-                                                errors.extend([f'Invalid delimiter for planting! Cause: {self.current_char}. Expected: {break_delim} '])
+                                                errors.extend([f'Invalid delimiter for planting! Cause: {self.current_char}. Expected: terminator, whitespace '])
                                                 return [], errors
                     elif self.current_char == "u":
                         ident += self.current_char
@@ -1247,14 +1247,14 @@ class Lexer:
                                 self.advance()
                                 ident_count += 1
                                 if self.current_char == None:
-                                    errors.extend([f'Invalid delimiter for pluck! Cause: {self.current_char}. Expected: ('])
+                                    errors.extend([f'Invalid delimiter for pluck! Cause: {self.current_char}. Expected: open parenthesis'])
                                     return [], errors
                                 if self.current_char in '(':
                                     return Token(PLUCK, "pluck"), errors
                                 elif self.current_char in alpha_num:
                                     continue
                                 else:
-                                    errors.extend([f'Invalid delimiter for pluck! Cause: {self.current_char}. Expected: ('])
+                                    errors.extend([f'Invalid delimiter for pluck! Cause: {self.current_char}. Expected: open parenthesis'])
                                     return [], errors
 
             elif self.current_char == "s": #SHIP, STAR, STARDEW
@@ -1274,14 +1274,14 @@ class Lexer:
                             self.advance()
                             ident_count += 1
                             if self.current_char == None:
-                                errors.extend([f'Invalid delimiter for ship! Cause: {self.current_char}. Expected: ('])
+                                errors.extend([f'Invalid delimiter for ship! Cause: {self.current_char}. Expected: open parenthesis'])
                                 return [], errors
                             if self.current_char in '(':
                                 return Token(SHIP, "ship"), errors
                             elif self.current_char in alpha_num:
                                 continue
                             else:
-                                errors.extend([f'Invalid delimiter for ship! Cause: {self.current_char}. Expected: ('])
+                                errors.extend([f'Invalid delimiter for ship! Cause: {self.current_char}. Expected: open parenthesis'])
 
                 elif self.current_char == "t": #STAR
                     ident += self.current_char
@@ -1296,7 +1296,7 @@ class Lexer:
                             self.advance()
                             ident_count += 1
                             if self.current_char == None:
-                                errors.extend([f'Invalid delimiter for star! Cause: {self.current_char}. Expected: space or ('])
+                                errors.extend([f'Invalid delimiter for star! Cause: {self.current_char}. Expected: space, open parenthesis'])
                                 return [], errors
                             if self.current_char in spacepr_delim:
                                 return Token(STAR, "star"), errors
@@ -1315,17 +1315,17 @@ class Lexer:
                                         self.advance()
                                         ident_count += 1
                                         if self.current_char == None:
-                                            errors.extend([f'Invalid delimiter for stardew! Cause: {self.current_char}. Expected: {spacepr_delim} '])
+                                            errors.extend([f'Invalid delimiter for stardew! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
                                             return [], errors
                                         if self.current_char in spacepr_delim:
                                             return Token(STARDEW, "stardew"), errors
                                         elif self.current_char in alpha_num:
                                             continue
                                         else:
-                                            errors.extend([f'Invalid delimiter for stardew! Cause: {self.current_char}. Expected: {spacepr_delim}'])
+                                            errors.extend([f'Invalid delimiter for stardew! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
                                             return [], errors
                             else:
-                                errors.extend([f'Invalid delimiter for star! Cause: {self.current_char}. Expected: space or ('])
+                                errors.extend([f'Invalid delimiter for star! Cause: {self.current_char}. Expected: space, open parenthesis'])
                                 return [], errors
 
             elif self.current_char == "t": #TRUE
@@ -1345,14 +1345,14 @@ class Lexer:
                             self.advance()
                             ident_count += 1
                             if self.current_char == None:
-                                errors.extend([f'Invalid delimiter for true! Cause: {self.current_char}. Expected: {bool_delim} '])
+                                errors.extend([f'Invalid delimiter for true! Cause: {self.current_char}. Expected: whitespace, terminator, close parenthesis, comma, close square bracket'])
                                 return [], errors
                             if self.current_char in bool_delim:
                                 return Token(TRUE, "true"), errors
                             elif self.current_char in alpha_num:
                                 continue
                             else:
-                                errors.extend([f'Invalid delimiter for true! Cause: {self.current_char}. Expected: {bool_delim} '])
+                                errors.extend([f'Invalid delimiter for true! Cause: {self.current_char}. Expected: whitespace, terminator, close parenthesis, comma, close square bracket'])
                                 return [], errors
 
             elif self.current_char == "v": #VOIDEGG
@@ -1384,14 +1384,14 @@ class Lexer:
                                         self.advance()
                                         ident_count += 1
                                         if self.current_char == None:
-                                            errors.extend([f'Invalid delimiter for voidegg! Cause: {self.current_char}. Expected: {bool_delim} '])
+                                            errors.extend([f'Invalid delimiter for voidegg! Cause: {self.current_char}. Expected: whitespace, terminator, close parenthesis, comma, close square bracket '])
                                             return [], errors
                                         if self.current_char in bool_delim:
                                             return Token(VOIDEGG, "voidegg"), errors
                                         elif self.current_char in alpha_num:
                                             continue
                                         else:
-                                            errors.extend([f'Invalid delimiter for voidegg! Cause: {self.current_char}. Expected: {bool_delim}'])
+                                            errors.extend([f'Invalid delimiter for voidegg! Cause: {self.current_char}. Expected: whitespace, terminator, close parenthesis, comma, close square bracket'])
                                             return [], errors
 
             elif self.current_char == "w": #WHILE
@@ -1419,14 +1419,14 @@ class Lexer:
                                     self.advance()
                                     ident_count += 1
                                     if self.current_char == None:
-                                        errors.extend([f'Invalid delimiter for winter! Cause: {self.current_char}. Expected: {spacepr_delim}'])
+                                        errors.extend([f'Invalid delimiter for winter! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
                                         return [], errors
                                     if self.current_char in spacepr_delim:
                                         return Token(WINTER, "winter"), errors
                                     elif self.current_char in alpha_num:
                                         continue
                                     else:
-                                        errors.extend([f'Invalid delimiter for winter! Cause: {self.current_char}. Expected: {spacepr_delim}'])
+                                        errors.extend([f'Invalid delimiter for winter! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
                                         return [], errors
 
 
@@ -1514,10 +1514,9 @@ class StardewLexerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Junimo Code Lexical Analyzer")
-        self.root.geometry("1920x1080")
+        self.root.geometry("1920x1200")
         self.root.configure(bg=BACKGROUND_COLOR)
-        self.root.attributes('-fullscreen', True)
-        self.root.bind('<Escape>', lambda e: root.attributes('-fullscreen', False))
+
 
         # Play background music
         mixer.music.load(background_music)
@@ -1535,11 +1534,11 @@ class StardewLexerGUI:
     def setup_background(self):
         # Load and stretch the background image
         bg_image = Image.open(background_image_path)
-        bg_image = bg_image.resize((1920, 1080), Image.LANCZOS)
+        bg_image = bg_image.resize((1920, 1200), Image.LANCZOS)
         self.bg_photo = ImageTk.PhotoImage(bg_image)
 
         # Place the background image on canvas
-        self.canvas = tk.Canvas(self.root, width=1920, height=1080, highlightthickness=0, bg=BACKGROUND_COLOR)
+        self.canvas = tk.Canvas(self.root, width=1920, height=1200, highlightthickness=0, bg=BACKGROUND_COLOR)
         self.canvas.pack(fill="both", expand=True)
         self.bg = self.canvas.create_image(0, 0, anchor="nw", image=self.bg_photo)
 
@@ -1547,7 +1546,7 @@ class StardewLexerGUI:
         # Input box for code
         self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10)
         self.code_frame.place(x=100, y=140)
-        self.code_input = ctk.CTkTextbox(self.code_frame, width=800, height=550,
+        self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=550,
                                          font=PIXEL_FONT,
                                          fg_color="#ffe9db",
                                          text_color=TEXT_COLOR,
@@ -1563,53 +1562,53 @@ class StardewLexerGUI:
         self.resize_analyze_button = self.analyze_button.resize((200,50))
         self.analyze_button_picture = ImageTk.PhotoImage(self.resize_analyze_button)
         self.image_analyze_button = tk.Button(image=self.analyze_button_picture, borderwidth=0, command=self.analyze_code_with_sound)
-        self.image_analyze_button.place(x=160, y=730)
+        self.image_analyze_button.place(x=190, y=920)
 
         #image for Clear Analyzer Button/Button
         self.semantic_button = Image.open("Clear.png")
         self.resize_semantic_button = self.semantic_button.resize((200,50))
         self.semantic_button_picture = ImageTk.PhotoImage(self.resize_semantic_button)
         self.image_semantic_button = tk.Button(image=self.semantic_button_picture, borderwidth=0, command=self.clear_input_with_sound)
-        self.image_semantic_button.place(x=400, y=730)
+        self.image_semantic_button.place(x=450, y=920)
 
         #image for Undo Button/Button
         self.syntax_button = Image.open("Undo.png")
         self.resize_syntax_button = self.syntax_button.resize((200,50))
         self.syntax_button_picture = ImageTk.PhotoImage(self.resize_syntax_button)
         self.image_syntax_button = tk.Button(image=self.syntax_button_picture, borderwidth=0, command=self.undo_input_with_sound)
-        self.image_syntax_button.place(x=650, y=730)
+        self.image_syntax_button.place(x=710, y=920)
 
 
         #Style
         style = ttk.Style()
         style.theme_use("default")
-        style.configure("Treeview", font=("Verdana", 12), fieldbackground="#ffe9db")  # Change font for Treeview
-        style.configure("Treeview.Heading", font=("Verdana", 13), background="#d88e41", foreground="#ffe9db")  # Change font for headings
+        style.configure("Treeview", font=("Verdana", 14), fieldbackground="#ffe9db", rowheight=25)  # Change font for Treeview
+        style.configure("Treeview.Heading", font=("Verdana", 16), background="#d88e41", foreground="#ffe9db")  # Change font for headings
 
         # Token Table
         self.token_frame = ctk.CTkFrame(self.root, fg_color="#8f3901", corner_radius=10)
-        self.token_frame.place(x=980, y=140)
+        self.token_frame.place(x=830, y=50)
 
         self.token_tree = ttk.Treeview(self.token_frame, columns=("Index", "Lexeme", "Token"), show='headings',
                                        height=40)
         self.token_tree.heading("Index", text="Index")
         self.token_tree.heading("Lexeme", text="Lexeme")
         self.token_tree.heading("Token", text="Token")
-        self.token_tree.column("Index", width=150, anchor="center")
-        self.token_tree.column("Lexeme", width=420, anchor="center")
-        self.token_tree.column("Token", width=290, anchor="center")
+        self.token_tree.column("Index", width=120, anchor="center")
+        self.token_tree.column("Lexeme", width=440, anchor="center")
+        self.token_tree.column("Token", width=230, anchor="center")
         self.token_tree.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Terminal Output
-        self.terminal_frame = ctk.CTkFrame(self.root, width=200, height=200, fg_color="#8f3901", corner_radius=10)
-        self.terminal_frame.place(x=100, y=820)
-        self.terminal_output = ctk.CTkTextbox(self.terminal_frame, width=800, height=150,
+        self.terminal_frame = ctk.CTkFrame(self.root, width=200, height=100, fg_color="#8f3901", corner_radius=10)
+        self.terminal_frame.place(x=100, y=800)
+        self.terminal_output = ctk.CTkTextbox(self.terminal_frame, width=650, height=85,
                                               font=PIXEL_FONT,
                                               fg_color="#ffe9db",
                                               text_color="red",
                                               wrap="word")
         self.terminal_output.insert(tk.END, "Errors will be displayed here...\n")
-        self.terminal_output.pack(padx=10, pady=5)
+        self.terminal_output.pack(padx=10, pady=2)
 
     def place_widgets(self):
         # Dynamically position widgets
