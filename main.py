@@ -1562,23 +1562,40 @@ class StardewLexerGUI:
         # Align the font size with the code_input
         self.line_numbers.configure(font=("Verdana", 16))  # Set font and size
 
+        # Adjust spacing to add margin or padding
+        self.line_numbers.configure(spacing1=3)  # Default spacing for all lines
+        self.line_numbers.tag_configure("first_line", spacing1=22)  # Adjust first-line spacing
+
+        # Apply custom alignment for the first line
+        self.line_numbers.tag_add("first_line", "1.0", "1.end")
+        self.line_numbers.tag_configure("center", justify="center")  # Center-align numbers
+        self.line_numbers.tag_add("center", "1.0", "end")
+
         # Update the scroll synchronization
         self.line_numbers.yview_moveto(self.code_input.yview()[0])
         self.code_input.configure(font=("Verdana", 16))  # Match font size
+ # Match font size
+    # Match font size
            
     def sync_scrollbars(self, *args):
-        self.line_numbers.yview(*args)
-        self.code_input.yview(*args)
+        try:
+            # Synchronize the scroll position of the line numbers with the code input
+            self.line_numbers.yview_moveto(self.code_input.yview()[0])
+            self.code_input.yview(*args)
+        except Exception as e:
+            print(f"Error syncing scrollbars: {e}")
+
 
     def setup_widgets(self):
         # Input box for code
         self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10)
-        self.code_frame.place(x=75, y=140)
+        self.code_frame.place(x=100, y=140)
         self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=550,
                                          font=PIXEL_FONT,
                                          fg_color="#ffe9db",
                                          text_color=TEXT_COLOR,
                                          wrap="word")
+        self.code_input.configure(spacing1=2)
         # Insert placeholder text
         self.placeholder_text = "Code will be placed here...\n"
         self.code_input.insert(tk.END, self.placeholder_text)
@@ -1639,7 +1656,7 @@ class StardewLexerGUI:
         # Terminal Output
         self.terminal_frame = ctk.CTkFrame(self.root, width=200, height=100, fg_color="#8f3901", corner_radius=10)
         self.terminal_frame.place(x=100, y=800)
-        self.terminal_output = ctk.CTkTextbox(self.terminal_frame, width=650, height=85,
+        self.terminal_output = ctk.CTkTextbox(self.terminal_frame, width=700, height=85,
                                               font=PIXEL_FONT,
                                               fg_color="#ffe9db",
                                               text_color="red",
