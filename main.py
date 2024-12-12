@@ -28,7 +28,7 @@ TERMINAL_COLOR = "#F5F5DC"  # Softer beige for terminal
 
 # Font settings
 TITLE_FONT = ("Stardew Valley Regular", 48)  # Large title font
-PIXEL_FONT = ("Verdana", 16)  # Font for other UI elements
+PIXEL_FONT = ("Verdana", 12, "bold" )  # Font for other UI elements
 
 # Paths for assets
 background_image_path = "background.jpg"
@@ -1560,11 +1560,11 @@ class StardewLexerGUI:
         self.line_numbers.configure(state=tk.DISABLED)
 
         # Align the font size with the code_input
-        self.line_numbers.configure(font=("Verdana", 16))  # Set font and size
+        self.line_numbers.configure(font=("Verdana", 15))  # Set font and size
 
         # Adjust spacing to add margin or padding
-        self.line_numbers.configure(spacing1=3)  # Default spacing for all lines
-        self.line_numbers.tag_configure("first_line", spacing1=22)  # Adjust first-line spacing
+        self.line_numbers.configure(spacing1=1)  # Default spacing for all lines
+        self.line_numbers.tag_configure("first_line", spacing1=25)  # Adjust first-line spacing
 
         # Apply custom alignment for the first line
         self.line_numbers.tag_add("first_line", "1.0", "1.end")
@@ -1590,8 +1590,8 @@ class StardewLexerGUI:
         # Input box for code
         self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10)
         self.code_frame.place(x=100, y=140)
-        self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=550,
-                                         font=PIXEL_FONT,
+        self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=500,
+                                         font=("Verdana", 10),
                                          fg_color="#ffe9db",
                                          text_color=TEXT_COLOR,
                                          wrap="word")
