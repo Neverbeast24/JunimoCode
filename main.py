@@ -1573,7 +1573,7 @@ class StardewLexerGUI:
     def setup_widgets(self):
         # Input box for code
         self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10)
-        self.code_frame.place(x=100, y=140)
+        self.code_frame.place(x=75, y=140)
         self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=550,
                                          font=PIXEL_FONT,
                                          fg_color="#ffe9db",
