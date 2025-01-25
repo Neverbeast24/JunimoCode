@@ -73,6 +73,7 @@ SINGLELINE = '@}'
 MULTILINE_OPEN = '@}' + '}'
 MULTILINE_CLOSE =  '{' + '{@'
 COMMENT = "COMMENT"
+DOLLARSIGN ="$"
 
 comma_delim = whitespace + alpha_num + '"'
 dew_delim = whitespace + newline_delim + '{'
@@ -284,16 +285,16 @@ class Lexer:
                 errors.extend([f"Invalid symbol: {self.current_char}"])
                 self.advance() """
             if self.current_char in '\t':
-                tokens.append(Token(NEWTAB, "\\t"))
+                tokens.append(Token(NEWTAB, "\\t", pos_start = self.pos))
                 self.advance()
             elif self.current_char  == '\n':
-                tokens.append(Token(NEWLINE, "\\n"))
+                tokens.append(Token(NEWLINE, "\\n", pos_start = self.pos))
                 self.advance()
             elif self.current_char.isspace():
                 # Handle spaces explicitly
                 while self.current_char is not None and self.current_char.isspace():
                     if self.current_char == " ":
-                        tokens.append(Token(SPACE, "\" \""))
+                        tokens.append(Token(SPACE, "\" \"", pos_start = self.pos))
                     self.advance()
             elif self.current_char in alpha:
                 result, error = self.make_word()
@@ -314,7 +315,7 @@ class Lexer:
                 # Validate identifier or reserved word
                 result, error = self.make_ident(ident)
                 if result:
-                    tokens.append(Token(IDENTIFIER, result))
+                    tokens.append(Token(IDENTIFIER, result, pos_start = self.pos))
                 else:
                     # If it's neither a reserved word nor a valid identifier, it's invalid
                     errors.append(f"Error at line: {self.pos.ln + 1}. Invalid word: '{ident}' - Not a reserved word or a valid identifier.")
@@ -341,7 +342,7 @@ class Lexer:
                 string, error = self.make_string()
                 errors.extend(error)
                 if string:
-                    tokens.append(Token(STRING, string))  # Append the full string as a token
+                    tokens.append(Token(STRING, string, pos_start = self.pos))  # Append the full string as a token
                 else:
                     # Handle unknown/invalid characters
                     errors.append(f"Error at line: {self.pos.ln + 1}. Unrecognized character: {self.current_char}")
@@ -357,7 +358,7 @@ class Lexer:
                     if self.current_char not in (delim1):
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' == '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
-                    tokens.append(Token(E_EQUAL, "==")) #for == symbol
+                    tokens.append(Token(E_EQUAL, "==", pos_start = self.pos)) #for == symbol
                 else:
                     if self.current_char == None:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' = '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
@@ -365,13 +366,13 @@ class Lexer:
                     if self.current_char not in delim1:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' = '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
-                    tokens.append(Token(EQUAL, "=")) #for == symbol
+                    tokens.append(Token(EQUAL, "=", pos_start = self.pos)) #for == symbol
 
             elif self.current_char == '~':
                 self.advance()
                 if self.current_char is not None and self.current_char in negative_delim:
                     result, error = self.make_number()
-                    result = Token(result.token, "~" + str(result.value))
+                    result = Token(result.token, "~" + str(result.value), pos_start = self.pos)
                     tokens.append(result)
                 else:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ~ '. Cause: ' {self.current_char} '. Expected:  {number}"])
@@ -386,7 +387,7 @@ class Lexer:
                     if self.current_char not in delim0:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' <= '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(LESS_THAN_EQUAL, "<=")) #for == symbol
+                    tokens.append(Token(LESS_THAN_EQUAL, "<=", pos_start = self.pos)) #for == symbol
                 else:
                     if self.current_char == None:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' < '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
@@ -394,7 +395,7 @@ class Lexer:
                     if self.current_char not in (delim0):
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' < '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(LESS_THAN, "<"))
+                    tokens.append(Token(LESS_THAN, "<", pos_start = self.pos))
 
 
             elif self.current_char == '>':
@@ -407,7 +408,7 @@ class Lexer:
                     if self.current_char not in delim0:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' >= '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(GREATER_THAN_EQUAL, ">="))
+                    tokens.append(Token(GREATER_THAN_EQUAL, ">=", pos_start = self.pos))
                 else:
                     if self.current_char == None:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' > '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
@@ -415,7 +416,7 @@ class Lexer:
                     if self.current_char not in delim0:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' > '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(GREATER_THAN, ">"))
+                    tokens.append(Token(GREATER_THAN, ">", pos_start = self.pos))
 
 
             elif self.current_char == '+': #mathematical operator (+, -, *, /, %)
@@ -428,7 +429,7 @@ class Lexer:
                     if self.current_char not in (delim3):
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' += '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
-                    tokens.append(Token(PLUS_EQUAL, "+=")) #for == symbol
+                    tokens.append(Token(PLUS_EQUAL, "+=", pos_start = self.pos)) #for == symbol
 
                 elif self.current_char == '+': #for ++ incre
                     self.advance()
@@ -438,7 +439,7 @@ class Lexer:
                     if self.current_char not in (unary_delim) or self.current_char.isspace():
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ++ '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, terminator, ) "])
                         continue
-                    tokens.append(Token(INCRE, "++")) #for == symbol
+                    tokens.append(Token(INCRE, "++", pos_start = self.pos)) #for == symbol
                 else:
 
                     if self.current_char == None:
@@ -449,7 +450,7 @@ class Lexer:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' + '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
 
-                    tokens.append(Token(PLUS, "+")) #for == symbol
+                    tokens.append(Token(PLUS, "+", pos_start = self.pos)) #for == symbol
 
 
 
@@ -463,7 +464,7 @@ class Lexer:
                     if self.current_char not in delim3:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -= '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
-                    tokens.append(Token(MINUS_EQUAL, "-="))
+                    tokens.append(Token(MINUS_EQUAL, "-=", pos_start = self.pos))
                 elif self.current_char == '-': #for -- decre
                     self.advance()
                     if self.current_char == None:
@@ -472,7 +473,7 @@ class Lexer:
                     if self.current_char not in (unary_delim):
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, terminator, ) "])
                         continue
-                    tokens.append(Token(DECRE, "--"))
+                    tokens.append(Token(DECRE, "--", pos_start = self.pos))
 
                 else:
                     if self.current_char == None:
@@ -481,7 +482,7 @@ class Lexer:
                     if self.current_char not in delim0:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' - '. Cause: ' {self.current_char} ' . Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(MINUS, "-"))
+                    tokens.append(Token(MINUS, "-", pos_start = self.pos))
 
             elif self.current_char == '*':
                 self.advance()
@@ -492,7 +493,7 @@ class Lexer:
                     if self.current_char not in delim3:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' *= '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
-                    tokens.append(Token(MUL_EQUAL, "*="))
+                    tokens.append(Token(MUL_EQUAL, "*=", pos_start = self.pos))
                 else:
                     if self.current_char == None:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' * '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
@@ -500,7 +501,7 @@ class Lexer:
                     if self.current_char not in delim0:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' * '. Cause: ' {self.current_char} ' . Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(MUL, "*"))
+                    tokens.append(Token(MUL, "*", pos_start = self.pos))
 
 
 
@@ -515,7 +516,7 @@ class Lexer:
                     if self.current_char not in delim3:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' /= '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, ( "])
                         continue
-                    tokens.append(Token(DIV_EQUAL, "/="))
+                    tokens.append(Token(DIV_EQUAL, "/=", pos_start = self.pos))
                 else:
                     if self.current_char == None:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' / '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
@@ -523,7 +524,7 @@ class Lexer:
                     if self.current_char not in delim0:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' / '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(DIV, "/"))
+                    tokens.append(Token(DIV, "/", pos_start = self.pos))
 
             elif self.current_char == '%':
                 self.advance()
@@ -532,12 +533,9 @@ class Lexer:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' % '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                     continue
                 if self.current_char not in delim0:
-
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' % '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
-
-
                     continue
-                tokens.append(Token(MODULUS, "%"))
+                tokens.append(Token(MODULUS, "%", pos_start = self.pos))
 
             elif self.current_char == '!': #logical operators (!, &&, ||)
                 self.advance()
@@ -551,11 +549,9 @@ class Lexer:
                     if self.current_char not in delim2:
                         # errors.extend([DelimiterError(pos_start, self.pos, self.current_char, '!=' )])
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' != '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", ( "])
-
                         continue
                     print("appending !=: ", self.current_char)
-
-                    tokens.append(Token(NOT_EQUAL, "!=")) #for != symbol
+                    tokens.append(Token(NOT_EQUAL, "!=", pos_start = self.pos)) #for != symbol
                 else:
                     if self.current_char == None:
                         # errors.extend([DelimiterError(pos_start, self.pos, self.current_char, '!')])
@@ -565,7 +561,7 @@ class Lexer:
                         # errors.extend([DelimiterError(pos_start, self.pos, self.current_char, '!')])
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ! '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(NOT_OP, "!"))
+                    tokens.append(Token(NOT_OP, "!", pos_start = self.pos))
 
             elif self.current_char == '&': #return error
                 self.advance()
@@ -577,7 +573,7 @@ class Lexer:
                     if self.current_char not in delim0:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' && '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(AND_OP, "&&"))
+                    tokens.append(Token(AND_OP, "&&", pos_start = self.pos))
 
                 else:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Please enter a valid symbol! User typed: & .Did you mean && ?"])
@@ -592,7 +588,7 @@ class Lexer:
                     if self.current_char not in delim0:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' || '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, (, [ "])
                         continue
-                    tokens.append(Token(OR_OP, "||"))
+                    tokens.append(Token(OR_OP, "||", pos_start = self.pos))
                 else:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Please enter a valid symbol! User typed: & .Did you mean && ?"])
 
@@ -604,7 +600,7 @@ class Lexer:
                 if self.current_char not in string_delim:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' \" '. Cause: ' {self.current_char} '. Expected: whitespace, comma, +, ), alphanumeric, negative operator, (, [ "])
                     continue
-                tokens.append(Token(STRING, "\" \""))
+                tokens.append(Token(STRING, "\" \"", pos_start = self.pos))
             # add closing ' " ' for string
 
             elif self.current_char == "@":
@@ -631,9 +627,9 @@ class Lexer:
                                 comment_content = comment_content.replace("\n", "").replace("\r", "")
                                 
                                 # Add tokens for a valid multi-line comment
-                                tokens.append(Token(MULTILINE_OPEN, "@}" + "}"))
-                                tokens.append(Token(COMMENT, comment_content.strip()))
-                                tokens.append(Token(MULTILINE_CLOSE, "{"+ "{@"))
+                                tokens.append(Token(MULTILINE_OPEN, "@}" + "}", pos_start = self.pos))
+                                tokens.append(Token(COMMENT, comment_content.strip(), pos_start = self.pos))
+                                tokens.append(Token(MULTILINE_CLOSE, "{"+ "{@", pos_start = self.pos))
                                 break
 
                             # Append the current character to the comment content
@@ -672,8 +668,8 @@ class Lexer:
                             continue
 
                         # Add tokens for single-line comment
-                        tokens.append(Token(SINGLELINE, "@}"))
-                        tokens.append(Token(COMMENT, comment_content.strip()))
+                        tokens.append(Token(SINGLELINE, "@}", pos_start = self.pos))
+                        tokens.append(Token(COMMENT, comment_content.strip(), pos_start = self.pos))
 
                         # Continue parsing other tokens after the single-line comment ends
                         continue
@@ -691,7 +687,7 @@ class Lexer:
                 if self.current_char not in openparenthesis_delim:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ( '. Cause: ' {self.current_char} '. Expected: {openparenthesis_delim}"])
                     continue
-                tokens.append(Token(LPAREN, "("))
+                tokens.append(Token(LPAREN, "(", pos_start = self.pos))
             elif self.current_char == ')':
                 self.advance()
                 if self.current_char == None:
@@ -700,7 +696,7 @@ class Lexer:
                 if self.current_char not in closingparenthesis_delim:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ) '. Cause: ' {self.current_char} '. Expected: {closingparenthesis_delim} "])
                     continue
-                tokens.append(Token(RPAREN, ")"))
+                tokens.append(Token(RPAREN, ")", pos_start = self.pos))
             elif self.current_char == '[':
                 self.advance()
                 if self.current_char == None:
@@ -709,7 +705,7 @@ class Lexer:
                 if self.current_char not in opensquare_delim:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' [ '. Cause: ' {self.current_char} '. Expected: whitespace, all numbers, quotation mark, close square bracket"])
                     continue
-                tokens.append(Token(SLBRACKET, "["))
+                tokens.append(Token(SLBRACKET, "[", pos_start = self.pos))
             elif self.current_char == ']':
                 self.advance()
                 if self.current_char == None:
@@ -718,7 +714,7 @@ class Lexer:
                 if self.current_char not in closesquare_delim:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ] '. Cause: ' {self.current_char} '. Expected: terminator, whitespace, close parenthesis "])
                     continue
-                tokens.append(Token(SRBRACKET, "]"))
+                tokens.append(Token(SRBRACKET, "]", pos_start = self.pos))
             # Handling '{' (opening curly bracket)
             elif self.current_char == '{':
                 self.advance()
@@ -728,20 +724,20 @@ class Lexer:
                 if self.current_char not in end_delim:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline_delim "])
                     continue
-                tokens.append(Token(CLBRACKET, "{"))
+                tokens.append(Token(CLBRACKET, "{", pos_start = self.pos))
             elif self.current_char == '}':
                 self.advance()
                 if self.current_char == None:
-                    tokens.append(Token(CRBRACKET, "}"))
+                    tokens.append(Token(CRBRACKET, "}", pos_start = self.pos))
                     continue
                 if self.current_char not in end_delim:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for 'closing curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline_delim "])
                     continue
-                tokens.append(Token(CRBRACKET, "}"))
+                tokens.append(Token(CRBRACKET, "}", pos_start = self.pos))
 
             elif self.current_char == "\"":
                 string, error = self.make_string()
-                tokens.append(Token(STRING, f"{string}"))
+                tokens.append(Token(STRING, f"{string}", pos_start = self.pos))
                 self.advance()
 
                 errors.extend(error)
@@ -754,7 +750,7 @@ class Lexer:
                 if self.current_char not in comma_delim:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' , '. Cause: ' {self.current_char} '. Expected: {comma_delim} "])
                     continue
-                tokens.append(Token(COMMA, ","))
+                tokens.append(Token(COMMA, ",", pos_start = self.pos))
 
             elif self.current_char == "$":
 
@@ -765,7 +761,7 @@ class Lexer:
                 if self.current_char not in end_delim:
                     errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' $ '. Cause: ' {self.current_char} '. Expected: space or newline_delim "])
                     continue
-                tokens.append(Token(terminator, "$"))
+                tokens.append(Token(terminator, "$", pos_start = self.pos))
             else:
                 errors.append(f"Error at line: {self.pos.ln + 1}. Illegal character: {self.current_char}")
                 self.advance()
@@ -1666,7 +1662,7 @@ class Parser:
                     if self.current_tok.token == EOF:
                         break
                 self.advance()
-
+                
             if self.current_tok.token != SINGLELINE and self.current_tok.token != EOF and self.current_tok.token != NEWLINE and self.current_tok.token != SINGLELINE and self.current_tok.token != FARMHOUSE and self.current_tok.token != CRAFT and self.current_tok.token != PELICAN and self.current_tok.token != MULTILINE_OPEN and self.current_tok.token != MULTILINE_CLOSE and self.current_tok.token != PERFECTION and self.current_tok.token !=  COMMENT:
                 if self.is_pelican == True:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected perfection!"))
@@ -1692,13 +1688,13 @@ class Parser:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please declare global variables before pelican!"))
                     break
                 else:
-
-                    self.advance()          
+                    self.advance() 
+                
                     if self.current_tok.token in CROP: 
                         self.in_farmhouse = True
-                        var, var_error = self.var_dec()
-                        if var_error:
-                            error.extend(var_error)
+                        crop, crop_error = self.crop_dec()
+                        if crop_error:
+                            error.extend(crop_error)
                             break
                         #res.append(var)
                         #self.advance()
@@ -1710,6 +1706,7 @@ class Parser:
                             self.in_farmhouse = False
                             res.append(["SUCCESS from global declaration!"])
                     else:
+                        print("check", self.current_tok)
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid global variable declaration!"))
                         break
 
@@ -1726,14 +1723,14 @@ class Parser:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please declare craft before pelican!"))
                     break
                 else:
-                    form_res, form_error = self.init_form()
+                    craft_res, craft_error = self.init_craft()
 
-                    if form_error:
-                        for err in form_error:
+                    if craft_error:
+                        for err in craft_error:
                             error.append(err)
                         return res, error
                     else:
-                        res.extend(form_res)
+                        res.extend(craft_res)
 
             # -- this is the main body of our function! 
             # * also i call body() here
@@ -1743,7 +1740,7 @@ class Parser:
                     return res, error
 
                 self.is_pelican = True
-                g_res, g_error = self.galaxy()
+                g_res, g_error = self.pelican()
 
                 if g_error:
                     for err in g_error:
@@ -1784,7 +1781,7 @@ class Parser:
         return res, error
     
     #* controls what happens when the compiler encounters the galaxy token
-    def galaxy(self):
+    def pelican(self):
         res = []
         error = []
         self.advance()
@@ -1803,14 +1800,14 @@ class Parser:
                     while self.current_tok.token == NEWLINE:
                         self.advance()
                     # -- okay so here we call body
-                    form_res, form_error = self.body()
+                    craft_res, craft_error = self.body()
                     
-                    if form_error:
-                        for err in form_error:
+                    if craft_error:
+                        for err in craft_error:
                             error.append(err)
                         return [], error
                     else:
-                        for f_res in form_res:
+                        for f_res in craft_res:
                             res.extend(f_res)
                             
                         
@@ -1867,15 +1864,15 @@ class Parser:
                     self.advance()
                     #-- if it's a function call
                     if self.current_tok.token == LPAREN:
-                        c_form, call_form_error = self.call_form()
+                        c_craft, call_craft_error = self.call_craft()
                         #self.advance()
-                        if call_form_error:
-                            error.extend(call_form_error)
+                        if call_craft_error:
+                            error.extend(call_craft_error)
                             break
                         else:
                             self.advance()
                             if self.current_tok.token in terminator:
-                                res.append(c_form)
+                                res.append(c_craft)
                                 self.advance()
                             else:
                                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign in call craft!"))
@@ -1899,7 +1896,7 @@ class Parser:
                                     else:
                                         #self.advance()
                                         if self.current_tok.token != terminator:
-                                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign! from init var"))
+                                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign! from init crop"))
                                             return res, error
                                         else:
                                             res.append(assign)
@@ -1916,7 +1913,7 @@ class Parser:
                     # so this is a = 1+3; 
                     elif self.current_tok.token == EQUAL or self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
 
-                        assign, a_error = self.init_var()
+                        assign, a_error = self.init_crop()
                         
                          
                         if a_error:
@@ -1979,10 +1976,10 @@ class Parser:
                 if self.current_tok.token in FALL:
                     
                     self.advance()
-                    fall_res, star_error = self.fall_stmt()
+                    fall_res, fall_error = self.fall_stmt()
 
-                    if star_error:
-                        error.extend(star_error)
+                    if fall_error:
+                        error.extend(fall_error)
                         break
                     else:
                         for fres in fall_res:
@@ -2051,20 +2048,6 @@ class Parser:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "next not in valid scope!"))
                         self.advance()
 
-                if self.current_tok.token in SHIP: # incorrect
-                    outer_res, ship_error = self.ship_stmt()
-                    #self.advance()
-                    if ship_error:
-                        error.extend(ship_error)
-                        break
-                    else:
-                        if self.current_tok.token  != terminator:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign in ship!"))
-                            return res, error
-                        else:  
-                            res.append(["SUCCESS from collect"])
-                            self.advance()
-
                 #CONDITIONAL
                 if self.current_tok.token in STAR:
                     self.in_condition = True
@@ -2094,25 +2077,44 @@ class Parser:
                 
 
                 #INPUT OUTPUT #change
-                if self.current_tok.token in INNER:
-                    inner_res, inner_error = self.inner_stmt()
-                    if inner_error:
-                        error.extend(inner_error)
+                
+                if self.current_tok.token in SHIP: 
+                    ship_res, ship_error = self.ship_stmt() # fix this
+                    #self.advance()
+                    if ship_error:
+                        error.extend(ship_error)
                         break
                     else:
+                        print('SHIP!: ', self.current_tok)
+                        
+                        if self.current_tok.token  != terminator:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign in ship!"))
+                            return res, error
+                        else:  
+                            res.append(["SUCCESS from SHIP"])
+                            self.advance()
+                            
+                if self.current_tok.token in COLLECT:
+                    print("pumasok dito sa collect")
+                    collect_res, collect_error = self.collect_stmt() 
+                    if collect_error:
+                        error.extend(collect_error)
+                        break
+                    else:
+                        print('COLLECT!: ', self.current_tok)
                         if self.current_tok.token  != terminator:
                             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected terminator in collect!"))
                             return res, error
                         else:  
-                            res.append(["SUCCESS from inner"])
+                            res.append(["SUCCESS from collect"])
                             self.advance()
 
                         
                 # VAR DECLARATION            
                 if self.current_tok.token in CROP: 
-                    var, var_error = self.var_dec()
-                    if var_error:
-                        error.extend(var_error)
+                    var, crop_error = self.crop_dec()
+                    if crop_error:
+                        error.extend(crop_error)
                         break
                     #res.append(var)
                     #self.advance()
@@ -2136,7 +2138,7 @@ class Parser:
                         break
                     else:
                         # self.advance()
-                        saturn, err = self.assign_val()
+                        harvest, err = self.assign_val()
                         if err:
                             for e in err:
                                 #error.append(err)
@@ -2144,7 +2146,7 @@ class Parser:
                                 return res, error
                             
                         else:
-                            # res.append("SUCCESS from saturn")
+                            # res.append("SUCCESS from harvest")
                             # return res, error
                             if self.current_tok.token != terminator:
                                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
@@ -2152,11 +2154,11 @@ class Parser:
                             else:
                                 print("is pelican?: ", self.is_pelican)
                                 if self.is_pelican == True:
-                                    print("in saturn body")
+                                    print("in harvest body")
                                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Can't call harvest in pelican!"))
                                     return res, error
                                 else:
-                                    res.append(["SUCCESS! from saturn"])
+                                    res.append(["SUCCESS! from harvest"])
                                     self.advance()
                         
                 if self.current_tok.token == PERFECTION:
@@ -2166,7 +2168,7 @@ class Parser:
                         #self.advance()
                         return res, error
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Semicolon expected for 'perfection'!"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Dollar sign expected for 'perfection'!"))
 
                 if self.current_tok.token == CRBRACKET:
                     break
@@ -2176,7 +2178,7 @@ class Parser:
                     break
             
             else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected var, inner, outer, identifier, if, ++, --, , do, whirl"))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, collect, outer, identifier, if, ++, --, winter"))
                 break
 
 
@@ -2184,13 +2186,13 @@ class Parser:
     
     # * checks if the current token's a valid statement in body
     def is_statement(self):
-        if self.current_tok.token == BREAK or self.current_tok.token == SINGLELINE or self.current_tok.token == COMMENT or self.current_tok.token == NEWLINE or self.current_tok.token in INTEGER or self.current_tok.token == IDENTIFIER or self.current_tok.token in FALL or self.current_tok.token in WINTER or self.current_tok.token in WINTER or self.current_tok.token in INNER or self.current_tok.token in STAR or self.current_tok.token in DEW or self.current_tok.token in INNER or self.current_tok.token in CROP or self.current_tok.token in HARVEST or self.current_tok.token in CRAFT or self.current_tok.token in CRBRACKET or self.current_tok.token in EOF or self.current_tok.token == INCRE or self.current_tok.token == DECRE  or self.current_tok.token == COMMENT or self.current_tok.token == MULTILINE_OPEN or self.current_tok.token == MULTILINE_CLOSE or self.current_tok.token ==PERFECTION:
+        if self.current_tok.token == BREAK or self.current_tok.token == SINGLELINE or self.current_tok.token == COMMENT or self.current_tok.token == NEWLINE or self.current_tok.token in INTEGER or self.current_tok.token == IDENTIFIER or self.current_tok.token in FALL or self.current_tok.token in WINTER or self.current_tok.token in WINTER or self.current_tok.token in SHIP or self.current_tok.token in STAR or self.current_tok.token in DEW or self.current_tok.token in COLLECT or self.current_tok.token in CROP or self.current_tok.token in HARVEST or self.current_tok.token in CRAFT or self.current_tok.token in CRBRACKET or self.current_tok.token in EOF or self.current_tok.token == INCRE or self.current_tok.token == DECRE  or self.current_tok.token == COMMENT or self.current_tok.token == MULTILINE_OPEN or self.current_tok.token == MULTILINE_CLOSE or self.current_tok.token ==PERFECTION:
             return True
         else:
             return False
 
     #* initialize a variable
-    def init_var(self):
+    def init_crop(self):
         
         res = []
         error = []
@@ -2230,7 +2232,7 @@ class Parser:
         return res, error
     
     #*declare a variable
-    def var_dec(self):
+    def crop_dec(self):
         res = []
         error = []
         # -- token when entering this function is 'var'
@@ -2253,7 +2255,7 @@ class Parser:
                     else:
                         #self.advance()
                         if self.current_tok.token == COMMA:
-                            comma, c_error = self.var_dec()
+                            comma, c_error = self.crop_dec()
                             
                             if c_error:
                                 for err in c_error:
@@ -2264,7 +2266,7 @@ class Parser:
                     
                 elif self.current_tok.token == COMMA:
                     if self.in_star == False:
-                        comma, c_error = self.var_dec()
+                        comma, c_error = self.crop_dec()
                         
                         if c_error:
                             for err in c_error:
@@ -2403,13 +2405,13 @@ class Parser:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot call form in farmhouse declaration/initialization!"))
                         return res, error
                     # print("we assigned a function call to a variable")
-                    c_form, call_form_error = self.call_form()
+                    c_form, call_craft_error = self.call_craft()
                     # print("token after call form in assign val: ", self.current_tok.token)
                     #self.advance()
                     # print('call form result in assign val:', c_form)
-                    if call_form_error:
+                    if call_craft_error:
                         print("ERROR IN VALL FORM")
-                        for err in call_form_error:
+                        for err in call_craft_error:
                             error.append(err)
                         
                     else:
@@ -2600,7 +2602,7 @@ class Parser:
           
 
     #* DECLARING A FORM
-    def init_form(self):
+    def init_craft(self): #here//
         res = []
         error = []
         self.advance()
@@ -2613,7 +2615,7 @@ class Parser:
                 self.advance()
                 # print("TOKEN AFTER LEFT PAREN: ", self.current_tok)
                 if self.current_tok.token == CROP:
-                    print("found var")
+                    print("found crop")
                     self.advance()
                     if self.current_tok.token == IDENTIFIER:
                         #self.advance()
@@ -2668,7 +2670,7 @@ class Parser:
                                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Form definition missing!"))
                                 self.advance()
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after var!"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after crop!"))
                         self.advance()
                 elif self.current_tok.token == RPAREN:
                     self.advance()
@@ -2698,7 +2700,7 @@ class Parser:
                                 res.append("SUCCESS from form!")
                                 self.advance()
                 else:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected var before id!"))
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop before id!"))
                     
             #form add(a, b)
             else:
@@ -2752,7 +2754,7 @@ class Parser:
         return res, error
     
     #* CALLING A FORM
-    def call_form(self):
+    def call_craft(self):
         res = []
         error = []
         
@@ -2843,9 +2845,9 @@ class Parser:
         #TODO create 
         if self.current_tok.token == LPAREN:
             self.advance()
-            var, var_error = self.if_first_condition()
-            if var_error:
-                error.extend(var_error)
+            crop, crop_error = self.if_first_condition()
+            if crop_error:
+                error.extend(crop_error)
                 return res, error
             else:
                 #self.advance()
@@ -2909,8 +2911,7 @@ class Parser:
                                 else:
                                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid  scope!"))
         return res, error
-#alden = []
-#alden.$
+
     # -- need a function for the var dec of 
     def if_crop_dec(self):
         res = []
@@ -2951,11 +2952,11 @@ class Parser:
         return res, error
     
     #-- need ng init function for  lang
-    def if_init_var(self):
+    def fall_init_crop(self):
         res = []
         error = []
         if self.current_tok.token == EQUAL:
-            print("in init var")
+            print("in init crop")
             self.advance()
             assign, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
             print("assign: ", err)
@@ -2982,9 +2983,9 @@ class Parser:
         error = []
         if self.current_tok.token == CROP:
             # print("this is a var token")
-            var, var_error = self.if_crop_dec()
-            if var_error:
-                error.extend(var_error)
+            crop, crop_error = self.if_crop_dec()
+            if crop_error:
+                error.extend(crop_error)
                 return res, error
             #res.append(var)
             #self.advance()
@@ -2997,7 +2998,7 @@ class Parser:
                 res.append([" first condition"])
         elif self.current_tok.token == IDENTIFIER:
             self.advance()
-            init_res, init_err = self.fall_init_var()
+            init_res, init_err = self.fall_init_crop()
             if init_err:
                 error.extend(init_err)
             else:
@@ -3069,7 +3070,7 @@ class Parser:
             #-- if we assign a value to it but not declaring it           
             if self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
                 print("initialize the variable")
-                assign, a_error = self.init_var()
+                assign, a_error = self.init_crop()
 
                 if a_error:
                     error.extend(a_error)
@@ -3115,67 +3116,11 @@ class Parser:
 
         return res, error
 
-        
-    
-    def do_whirl(self):
+
+    def winter(self):
         res = []
         error = []
-        self.in_loop = True
-        if self.in_condition == True:
-            self.in_condition = False
-        if self.current_tok.token == CLBRACKET:
-            self.advance()
-            do_res, do_error = self.body()
-            print("do res: ", res)
-            if do_error:
-                print("THERES  AN ERROR INSIDE THE DO SCOPE")
-                for err in do_error:
-                    error.append(err)
-                return [], error
-            else:
-                
-                print("successful do!")
-                for d_res in do_res:
-                    res.extend([d_res])
-                print("do res: ", do_res)
-                
-                print("token  after  success do: ", self.current_tok)
-
-                if self.current_tok.token == CRBRACKET:
-                    #return [], error
-                    self.advance()
-                    if self.current_tok.token == WINTER:
-                        self.advance()
-                        #TODO connect whirl here
-                        if self.current_tok.token != LPAREN:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ( !"))
-                            return res, error
-
-                        w_res, w_error = self.if_winter_condition()
-                        print("token after whirl:", self.current_tok)
-                        if w_error:
-                            for err in w_error:
-                                error.extend(err)
-                            return [], error
-                        else:
-                            #self.advance()
-                            print("token after whirl in do whirl: ", self.current_tok)
-                            if self.current_tok.token == terminator:
-                                res.append(["SUCCESS from do whirl"])
-                            else:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected semicolon in do whirl!"))
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected whirl condition!"))
-
-                else:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing curly bracket!"))
-                
-        return res, error
-
-    def whirl(self):
-        res = []
-        error = []
-        print("first token in whirl: ", self.current_tok)
+        print("first token in winter: ", self.current_tok)
         
         if self.current_tok.token == LPAREN:
             self.advance()
@@ -3186,94 +3131,357 @@ class Parser:
                     if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER or self.current_tok.token == STRING:
                         self.advance()
                         if self.current_tok.token == RPAREN:
-                            res.append('SUCCESS from whirl!')
+                            res.append('SUCCESS from winter!')
                         else:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis! whirl"))
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis! winter"))
 
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier! whirl"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier! winter"))
                         
                 else:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected relational operator!"))
 
             else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier for whirl!"))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier for winter!"))
 
         else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected condition for whirl!"))
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected condition for winter!"))
 
         return res, error
     
     #* INPUT OUTPUT STATEMENTS
-    def inner_stmt(self):
-        res = []
-        error = []
-        self.advance()
+    # def collect_stmt(self):
+    #     res = []
+    #     error = []
+    #     self.advance()
 
-        # Check if the next token is the inner delimiter ">>"
-        if self.current_tok.token != ">>":
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid Syntax, expected '>>'"))
-        else:
-            self.advance()
-            # Check if the next token is an identifier
-            if self.current_tok.token != IDENTIFIER:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected Identifier"))
-                self.advance()
-                return [], error
-            else:
-                self.advance()
-        # Check if the next token is a semicolon
-                if self.current_tok.token != terminator:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign"))
+    #     if self.current_tok.token != IDENTIFIER:
+    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected Identifier"))
+    #         self.advance()
+    #         return [], error
+    #     else:
+    #         self.advance()
+    #     # Check if the next token is a semicolon
+    #         if self.current_tok.token != DOLLARSIGN:
+    #             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign"))
 
-                else:
-                    res.append(["SUCCESS from inner!"])
+    #         else:
+    #             res.append(["SUCCESS from collect!"])
 
-        return res, error
+    #     return res, error
     
-    def ship_stmt(self): #here
-        res = []
-        error = []
-        self.advance()
-        if self.current_tok.token != OUT:
-            print("no <<")
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' symbol!"))
-        else: 
+    # def ship_stmt(self): #here
+    #     res = []
+    #     error = []
+    #     self.advance()
+    #     if self.current_tok.token != LPAREN:
+    #         print("no <<", self.current_tok)
+            
+    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' symbol!"))
+    #     else: 
 
-            while self.current_tok.token == OUT:
-                self.advance()
-                # print("outer tok: ", self.current_tok)
-                if self.current_tok.token in (INTEGER, IDENTIFIER, FLOAT, STRING, LPAREN):
-                    outer, err = self.assign_val()
-                    # print("outer: ", self.current_tok)
-                    if err:
-                        # print("error in assign val outer: ", self.current_tok)
-                        #error.append(err)
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or string! assign val err"))
-                        return res, error
+    #         while self.current_tok.token == RPAREN:
+    #             self.advance()
+    #             # print("outer tok: ", self.current_tok)
+    #             if self.current_tok.token in (INTEGER, IDENTIFIER, FLOAT, STRING, LPAREN):
+    #                 outer, err = self.assign_val()
+    #                 # print("outer: ", self.current_tok)
+    #                 if err:
+    #                     # print("error in assign val outer: ", self.current_tok)
+    #                     #error.append(err)
+    #                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or string! assign val err"))
+    #                     return res, error
                         
-                elif self.current_tok.token in (TRUE, FALSE):
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or string!"))
+    #             elif self.current_tok.token in (TRUE, FALSE):
+    #                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or string!"))
                     
 
-                else:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or string! outer srmt"))
+    #             else:
+    #                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or string! outer srmt"))
 
                         
-                # if self.current_tok.token != STRING and self.current_tok.token != IDENTIFIER and self.current_tok.token != INTEGER and self.current_tok.token != FLOAT:
-                #     print("no string")
-                #     print("current tok from outer: ", self.current_tok.token)
-                #     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected literal or identifier!"))
-                #     #self.advance()
-                # else: 
-                #     self.advance()
-                #     if self.current_tok.token != SEMICOLON:
-                #         print("no semicolon")
-                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Missing Semicolon!"))
-                #     else:
-                #         res.append(["SUCCESS from outer"])
+    #             # if self.current_tok.token != STRING and self.current_tok.token != IDENTIFIER and self.current_tok.token != INTEGER and self.current_tok.token != FLOAT:
+    #             #     print("no string")
+    #             #     print("current tok from outer: ", self.current_tok.token)
+    #             #     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected literal or identifier!"))
+    #             #     #self.advance()
+    #             # else: 
+    #             #     self.advance()
+    #             #     if self.current_tok.token != SEMICOLON:
+    #             #         print("no semicolon")
+    #             #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Missing Semicolon!"))
+    #             #     else:
+    #             #         res.append(["SUCCESS from outer"])
         
+    # #     return res, error
+
+    def ship_stmt(self):
+        res = []
+        error = []
+
+        # Debugging: Print current token
+        print(f"[DEBUG] Starting ship_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
+
+        # Step 1: Check for '(' after 'ship'
+        self.advance()
+        print(f"[DEBUG] After advancing, token: {self.current_tok.token if self.current_tok else 'None'}")
+
+        if not self.current_tok or self.current_tok.token != "(":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected '(' after 'ship'!"
+            ))
+            return res, error
+
+        res.append(self.current_tok.token)  # Add the '('
+        self.advance()
+
+        # Step 2: Parse the content inside parentheses
+        expecting_value = True
+        while self.current_tok:
+            print(f"[DEBUG] Looping, current token: {self.current_tok.token if self.current_tok else 'None'}")
+
+            if expecting_value:
+                # Accept a value (StrLit, IDENTIFIER, etc.)
+                if self.current_tok.token in ("StrLit", "Identifier", "IntLit", "FloatLit"):
+                    res.append(self.current_tok.token)
+                    print(f"[DEBUG] Valid token added: {self.current_tok.token}")
+                    self.advance()
+                    expecting_value = False  # After a value, expect a comma or closing parenthesis
+                else:
+                    error.append(InvalidSyntaxError(
+                        getattr(self.current_tok, 'pos_start', "Unknown"),
+                        getattr(self.current_tok, 'pos_end', "Unknown"),
+                        f"Expected a valid value inside 'ship', but got '{self.current_tok.token}'!"
+                    ))
+                    return res, error
+            else:
+                # Accept a comma or a closing parenthesis
+                if self.current_tok.token == ",":
+                    res.append(self.current_tok.token)
+                    print(f"[DEBUG] Comma found: {self.current_tok.token}")
+                    self.advance()
+                    print(f"[DEBUG] Advanced to token: {self.current_tok.token if self.current_tok else 'None'}")
+                    expecting_value = True  # After a comma, expect another value
+                elif self.current_tok.token == ")":
+                    print(f"[DEBUG] Closing parenthesis found.")
+                    res.append(self.current_tok.token)  # Add the ')'
+                    self.advance()
+                    break  # Exit loop if closing parenthesis is found
+                else:
+                    error.append(InvalidSyntaxError(
+                        getattr(self.current_tok, 'pos_start', "Unknown"),
+                        getattr(self.current_tok, 'pos_end', "Unknown"),
+                        f"Expected ',' or ')' but got '{self.current_tok.token}'!"
+                    ))
+                    return res, error
+
+        # Step 3: Ensure closing parenthesis ')'
+        if not res or res[-1] != ")":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected ')' to close 'ship' statement!"
+            ))
+            return res, error
+
+        print(f"[DEBUG] Completed parsing ship statement: {res}")
         return res, error
+
+    
+    # def ship_stmt(self):
+    #     res = []
+    #     error = []
+
+    #     # Debugging: Print current token
+    #     print(f"[DEBUG] Starting ship_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
+
+    #     # Advance to check '(' after 'ship'
+    #     self.advance()
+    #     print(f"[DEBUG] After advancing, token: {self.current_tok.token if self.current_tok else 'None'}")
+
+    #     # Ensure opening parenthesis '('
+    #     if not self.current_tok or self.current_tok.token != "(":
+    #         error.append(InvalidSyntaxError(
+    #             getattr(self.current_tok, 'pos_start', "Unknown"),
+    #             getattr(self.current_tok, 'pos_end', "Unknown"),
+    #             "Expected '(' after 'ship'!"
+    #         ))
+    #         return res, error
+
+    #     self.advance()
+    #     print(f"[DEBUG] After checking '(', token: {self.current_tok.token if self.current_tok else 'None'}")
+
+    #     # Parse content inside parentheses
+    #     while self.current_tok and self.current_tok.token not in (")", None):
+    #         if self.current_tok.token in ("StrLit", "IDENTIFIER", "INTEGER", "FLOAT"):
+    #             res.append(self.current_tok.token)  # Add valid token
+    #             print(f"[DEBUG] Valid token added: {self.current_tok.token}")
+    #             self.advance()
+
+    #             # Check for comma or concatenation operators
+    #             if self.current_tok and self.current_tok.token in ("COMMA", "PLUS"):
+    #                 res.append(self.current_tok.token)
+    #                 print(f"[DEBUG] Operator added: {self.current_tok.token}")
+    #                 self.advance()
+    #         else:
+    #             error.append(InvalidSyntaxError(
+    #                 getattr(self.current_tok, 'pos_start', "Unknown"),
+    #                 getattr(self.current_tok, 'pos_end', "Unknown"),
+    #                 "Invalid content inside 'ship' statement. Expected a valid value or expression!"
+    #             ))
+    #             return res, error
+
+    #     # Ensure closing parenthesis ')'
+    #     if not self.current_tok or self.current_tok.token != ")":
+    #         error.append(InvalidSyntaxError(
+    #             getattr(self.current_tok, 'pos_start', "Unknown"),
+    #             getattr(self.current_tok, 'pos_end', "Unknown"),
+    #             "Expected ')' to close 'ship' statement!"
+    #         ))
+    #         return res, error
+
+    #     self.advance()
+    #     print(f"[DEBUG] After checking ')', token: {self.current_tok.token if self.current_tok else 'None'}")
+
+    #     # Ensure dollar sign '$' at the end
+    #     if not self.current_tok or self.current_tok.token != "$":
+    #         error.append(InvalidSyntaxError(
+    #             getattr(self.current_tok, 'pos_start', "Unknown"),
+    #             getattr(self.current_tok, 'pos_end', "Unknown"),
+    #             "Expected dollar sign '$' at the end of 'ship' statement!"
+    #         ))
+    #         return res, error
+
+    #     res.append("SUCCESS from ship statement")
+    #     print(f"[DEBUG] Ship statement completed successfully.")
+    #     self.advance()
+
+    #     return res, error
+
+    
+    def collect_stmt(self):
+        res = []
+        error = []
+
+        # Debugging: Print current token
+        print(f"[DEBUG] Starting collect_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
+
+        # Check for variable declaration
+        if not self.current_tok or self.current_tok.token != "IDENTIFIER":
+            # error.append(InvalidSyntaxError(
+            #     getattr(self.current_tok, 'pos_start', "Unknown"),
+            #     getattr(self.current_tok, 'pos_end', "Unknown"),
+            #     "Expected variable identifier for 'collect' statement!"
+            # ))
+            return res, error
+
+        var_name = self.current_tok.token
+        print(f"[DEBUG] Variable name identified: {var_name}")
+        self.advance()
+        print(f"[DEBUG] After advancing, token: {self.current_tok.token if self.current_tok else 'None'}")
+
+        # Check for assignment operator '='
+        if not self.current_tok or self.current_tok.token != "=":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected '=' after variable name in 'collect' statement!"
+            ))
+            return res, error
+
+        self.advance()
+        print(f"[DEBUG] After checking '=', token: {self.current_tok.token if self.current_tok else 'None'}")
+
+        # Check for 'collect' keyword
+        if not self.current_tok or self.current_tok.token != "collect":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected 'collect' keyword for input statement!"
+            ))
+            return res, error
+
+        self.advance()
+        print(f"[DEBUG] After checking 'collect', token: {self.current_tok.token if self.current_tok else 'None'}")
+
+        # Ensure opening parenthesis '('
+        if not self.current_tok or self.current_tok.token != "(":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected '(' after 'collect'!"
+            ))
+            return res, error
+
+        self.advance()
+        print(f"[DEBUG] After checking '(', token: {self.current_tok.token if self.current_tok else 'None'}")
+
+        # Check for prompt string
+        if not self.current_tok or self.current_tok.token != "STRING":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected a prompt string inside 'collect' statement!"
+            ))
+            return res, error
+
+        prompt_message = self.current_tok.token
+        print(f"[DEBUG] Prompt message identified: {prompt_message}")
+        self.advance()
+
+        # Ensure closing parenthesis ')'
+        if not self.current_tok or self.current_tok.token != ")":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected ')' to close 'collect' statement!"
+            ))
+            return res, error
+
+        self.advance()
+        print(f"[DEBUG] After checking ')', token: {self.current_tok.token if self.current_tok else 'None'}")
+
+        # Ensure dollar sign '$'
+        if not self.current_tok or self.current_tok.token != "$":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected dollar sign '$' at the end of 'collect' statement!"
+            ))
+        else:
+            res.append(f"User input collected for variable '{var_name}' with prompt: {prompt_message}")
+            print(f"[DEBUG] Successfully processed 'collect' statement")
+            self.advance()
+
+        return res, error
+
+    # def inner_stmt(self):
+    #     res = []
+    #     error = []
+    #     self.advance()
+
+    #     if self.current_tok.token != "(":
+    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' symbol!"))
+    #         return res, error
+
+    #     self.advance()
+
+    #     self.advance()
+
+    #     if self.current_tok.token != "IDENTIFIER":
+    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after '>>'!"))
+    #     else:
+    #         res.append(self.current_tok.token)
+    #         self.advance()
+
+    #     if self.current_tok.token != "$":
+    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected terminator '$'!"))
+    #     else:
+    #         self.advance()
+
+    #     return res, error
     
     #*CONDITIONAL
     #FUNC FOR IF, ELSE, ELSEIF
@@ -3298,7 +3506,7 @@ class Parser:
                         star_res, star_error = self.body()
                         # print("if res: ", res)
                         if star_error:
-                            print("THERES  AN ERROR INSIDE THE IF SCOPE")
+                            print("THERES  AN ERROR INSIDE THE STAR SCOPE")
                             for err in star_error:
                                 error.append(err)
                             return [], error
@@ -3713,7 +3921,7 @@ def run(fn, text):
     tokens, error = lexer.make_tokens()
     
     for item in tokens:
-        if isinstance(item, list):
+        if isinstance(item, list) or item.token == SPACE:
             tokens.remove(item)
 
     parser = Parser(tokens)
