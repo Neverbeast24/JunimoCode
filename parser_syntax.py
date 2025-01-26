@@ -2103,10 +2103,10 @@ class Parser:
                     else:
                         print('COLLECT!: ', self.current_tok)
                         if self.current_tok.token  != terminator:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected terminator in collect!"))
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign in collect!"))
                             return res, error
                         else:  
-                            res.append(["SUCCESS from collect"])
+                            res.append(["SUCCESS from COLLECT"])
                             self.advance()
 
                         
@@ -2329,6 +2329,51 @@ class Parser:
             self.advance()
             return res, error
         elif self.current_tok.token == FALSE:
+            self.advance()
+            return res, error
+        
+        
+        # Check for collect statement
+        elif self.current_tok.token == COLLECT:
+            print(f"[DEBUG] Collect statement detected.")
+            self.advance()
+
+            # Ensure opening parenthesis
+            if not self.current_tok or self.current_tok.token != "(":
+                error.append(InvalidSyntaxError(
+                    getattr(self.current_tok, 'pos_start', "Unknown"),
+                    getattr(self.current_tok, 'pos_end', "Unknown"),
+                    "Expected '(' after 'collect'!"
+                ))
+                return res, error
+
+            self.advance()
+            print(f"[DEBUG] Opening parenthesis detected: {self.current_tok.token}")
+            # Ensure string prompt
+            if not self.current_tok or self.current_tok.token != "StrLit":
+                error.append(InvalidSyntaxError(
+                    getattr(self.current_tok, 'pos_start', "Unknown"),
+                    getattr(self.current_tok, 'pos_end', "Unknown"),
+                    "Expected a prompt string inside 'collect'!"
+                ))
+                return res, error
+
+            prompt_message = self.current_tok.token
+            print(f"[DEBUG] Prompt message identified: {prompt_message}")
+            res.append(f"Collect statement with prompt: {prompt_message}")
+            
+            self.advance()
+
+            # Ensure closing parenthesis
+            if not self.current_tok or self.current_tok.token != ")":
+                error.append(InvalidSyntaxError(
+                    getattr(self.current_tok, 'pos_start', "Unknown"),
+                    getattr(self.current_tok, 'pos_end', "Unknown"),
+                    "Expected ')' to close 'collect' statement!"
+                ))
+                return res, error
+            
+            print(f"[DEBUG] Closing parenthesis detected: {self.current_tok.token}")
             self.advance()
             return res, error
         
@@ -3149,72 +3194,7 @@ class Parser:
 
         return res, error
     
-    #* INPUT OUTPUT STATEMENTS
-    # def collect_stmt(self):
-    #     res = []
-    #     error = []
-    #     self.advance()
-
-    #     if self.current_tok.token != IDENTIFIER:
-    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected Identifier"))
-    #         self.advance()
-    #         return [], error
-    #     else:
-    #         self.advance()
-    #     # Check if the next token is a semicolon
-    #         if self.current_tok.token != DOLLARSIGN:
-    #             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign"))
-
-    #         else:
-    #             res.append(["SUCCESS from collect!"])
-
-    #     return res, error
-    
-    # def ship_stmt(self): #here
-    #     res = []
-    #     error = []
-    #     self.advance()
-    #     if self.current_tok.token != LPAREN:
-    #         print("no <<", self.current_tok)
-            
-    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' symbol!"))
-    #     else: 
-
-    #         while self.current_tok.token == RPAREN:
-    #             self.advance()
-    #             # print("outer tok: ", self.current_tok)
-    #             if self.current_tok.token in (INTEGER, IDENTIFIER, FLOAT, STRING, LPAREN):
-    #                 outer, err = self.assign_val()
-    #                 # print("outer: ", self.current_tok)
-    #                 if err:
-    #                     # print("error in assign val outer: ", self.current_tok)
-    #                     #error.append(err)
-    #                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or string! assign val err"))
-    #                     return res, error
-                        
-    #             elif self.current_tok.token in (TRUE, FALSE):
-    #                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or string!"))
-                    
-
-    #             else:
-    #                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or string! outer srmt"))
-
-                        
-    #             # if self.current_tok.token != STRING and self.current_tok.token != IDENTIFIER and self.current_tok.token != INTEGER and self.current_tok.token != FLOAT:
-    #             #     print("no string")
-    #             #     print("current tok from outer: ", self.current_tok.token)
-    #             #     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected literal or identifier!"))
-    #             #     #self.advance()
-    #             # else: 
-    #             #     self.advance()
-    #             #     if self.current_tok.token != SEMICOLON:
-    #             #         print("no semicolon")
-    #             #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Missing Semicolon!"))
-    #             #     else:
-    #             #         res.append(["SUCCESS from outer"])
-        
-    # #     return res, error
-
+    # INPUT AND OUTPUT STATEMENT
     def ship_stmt(self):
         res = []
         error = []
@@ -3237,7 +3217,7 @@ class Parser:
         res.append(self.current_tok.token)  # Add the '('
         self.advance()
 
-        # Step 2: Parse the content inside parentheses
+        # CONTENTS OF 'SHIP' STATEMENT
         expecting_value = True
         while self.current_tok:
             print(f"[DEBUG] Looping, current token: {self.current_tok.token if self.current_tok else 'None'}")
@@ -3277,7 +3257,7 @@ class Parser:
                     ))
                     return res, error
 
-        # Step 3: Ensure closing parenthesis ')'
+        # CLOSING 
         if not res or res[-1] != ")":
             error.append(InvalidSyntaxError(
                 getattr(self.current_tok, 'pos_start', "Unknown"),
@@ -3288,78 +3268,7 @@ class Parser:
 
         print(f"[DEBUG] Completed parsing ship statement: {res}")
         return res, error
-
     
-    # def ship_stmt(self):
-    #     res = []
-    #     error = []
-
-    #     # Debugging: Print current token
-    #     print(f"[DEBUG] Starting ship_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
-
-    #     # Advance to check '(' after 'ship'
-    #     self.advance()
-    #     print(f"[DEBUG] After advancing, token: {self.current_tok.token if self.current_tok else 'None'}")
-
-    #     # Ensure opening parenthesis '('
-    #     if not self.current_tok or self.current_tok.token != "(":
-    #         error.append(InvalidSyntaxError(
-    #             getattr(self.current_tok, 'pos_start', "Unknown"),
-    #             getattr(self.current_tok, 'pos_end', "Unknown"),
-    #             "Expected '(' after 'ship'!"
-    #         ))
-    #         return res, error
-
-    #     self.advance()
-    #     print(f"[DEBUG] After checking '(', token: {self.current_tok.token if self.current_tok else 'None'}")
-
-    #     # Parse content inside parentheses
-    #     while self.current_tok and self.current_tok.token not in (")", None):
-    #         if self.current_tok.token in ("StrLit", "IDENTIFIER", "INTEGER", "FLOAT"):
-    #             res.append(self.current_tok.token)  # Add valid token
-    #             print(f"[DEBUG] Valid token added: {self.current_tok.token}")
-    #             self.advance()
-
-    #             # Check for comma or concatenation operators
-    #             if self.current_tok and self.current_tok.token in ("COMMA", "PLUS"):
-    #                 res.append(self.current_tok.token)
-    #                 print(f"[DEBUG] Operator added: {self.current_tok.token}")
-    #                 self.advance()
-    #         else:
-    #             error.append(InvalidSyntaxError(
-    #                 getattr(self.current_tok, 'pos_start', "Unknown"),
-    #                 getattr(self.current_tok, 'pos_end', "Unknown"),
-    #                 "Invalid content inside 'ship' statement. Expected a valid value or expression!"
-    #             ))
-    #             return res, error
-
-    #     # Ensure closing parenthesis ')'
-    #     if not self.current_tok or self.current_tok.token != ")":
-    #         error.append(InvalidSyntaxError(
-    #             getattr(self.current_tok, 'pos_start', "Unknown"),
-    #             getattr(self.current_tok, 'pos_end', "Unknown"),
-    #             "Expected ')' to close 'ship' statement!"
-    #         ))
-    #         return res, error
-
-    #     self.advance()
-    #     print(f"[DEBUG] After checking ')', token: {self.current_tok.token if self.current_tok else 'None'}")
-
-    #     # Ensure dollar sign '$' at the end
-    #     if not self.current_tok or self.current_tok.token != "$":
-    #         error.append(InvalidSyntaxError(
-    #             getattr(self.current_tok, 'pos_start', "Unknown"),
-    #             getattr(self.current_tok, 'pos_end', "Unknown"),
-    #             "Expected dollar sign '$' at the end of 'ship' statement!"
-    #         ))
-    #         return res, error
-
-    #     res.append("SUCCESS from ship statement")
-    #     print(f"[DEBUG] Ship statement completed successfully.")
-    #     self.advance()
-
-    #     return res, error
-
     
     def collect_stmt(self):
         res = []
@@ -3368,45 +3277,7 @@ class Parser:
         # Debugging: Print current token
         print(f"[DEBUG] Starting collect_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
 
-        # Check for variable declaration
-        if not self.current_tok or self.current_tok.token != "IDENTIFIER":
-            # error.append(InvalidSyntaxError(
-            #     getattr(self.current_tok, 'pos_start', "Unknown"),
-            #     getattr(self.current_tok, 'pos_end', "Unknown"),
-            #     "Expected variable identifier for 'collect' statement!"
-            # ))
-            return res, error
-
-        var_name = self.current_tok.token
-        print(f"[DEBUG] Variable name identified: {var_name}")
-        self.advance()
-        print(f"[DEBUG] After advancing, token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Check for assignment operator '='
-        if not self.current_tok or self.current_tok.token != "=":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected '=' after variable name in 'collect' statement!"
-            ))
-            return res, error
-
-        self.advance()
-        print(f"[DEBUG] After checking '=', token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Check for 'collect' keyword
-        if not self.current_tok or self.current_tok.token != "collect":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected 'collect' keyword for input statement!"
-            ))
-            return res, error
-
-        self.advance()
-        print(f"[DEBUG] After checking 'collect', token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Ensure opening parenthesis '('
+        # Step 1: Ensure opening parenthesis '('
         if not self.current_tok or self.current_tok.token != "(":
             error.append(InvalidSyntaxError(
                 getattr(self.current_tok, 'pos_start', "Unknown"),
@@ -3415,11 +3286,12 @@ class Parser:
             ))
             return res, error
 
+        res.append(self.current_tok.token)  # Add '('
         self.advance()
         print(f"[DEBUG] After checking '(', token: {self.current_tok.token if self.current_tok else 'None'}")
 
-        # Check for prompt string
-        if not self.current_tok or self.current_tok.token != "STRING":
+        # Step 2: Check for prompt string
+        if not self.current_tok or self.current_tok.token != "StrLit":
             error.append(InvalidSyntaxError(
                 getattr(self.current_tok, 'pos_start', "Unknown"),
                 getattr(self.current_tok, 'pos_end', "Unknown"),
@@ -3429,9 +3301,10 @@ class Parser:
 
         prompt_message = self.current_tok.token
         print(f"[DEBUG] Prompt message identified: {prompt_message}")
+        res.append(prompt_message)  # Add prompt message
         self.advance()
 
-        # Ensure closing parenthesis ')'
+        # Step 3: Ensure closing parenthesis ')'
         if not self.current_tok or self.current_tok.token != ")":
             error.append(InvalidSyntaxError(
                 getattr(self.current_tok, 'pos_start', "Unknown"),
@@ -3440,48 +3313,15 @@ class Parser:
             ))
             return res, error
 
+        res.append(self.current_tok.token)  # Add ')'
         self.advance()
         print(f"[DEBUG] After checking ')', token: {self.current_tok.token if self.current_tok else 'None'}")
 
-        # Ensure dollar sign '$'
-        if not self.current_tok or self.current_tok.token != "$":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected dollar sign '$' at the end of 'collect' statement!"
-            ))
-        else:
-            res.append(f"User input collected for variable '{var_name}' with prompt: {prompt_message}")
-            print(f"[DEBUG] Successfully processed 'collect' statement")
-            self.advance()
+        print(f"[DEBUG] Successfully processed 'collect' statement")
+        res.append(f"Processed collect statement: collect({prompt_message})")
 
         return res, error
 
-    # def inner_stmt(self):
-    #     res = []
-    #     error = []
-    #     self.advance()
-
-    #     if self.current_tok.token != "(":
-    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' symbol!"))
-    #         return res, error
-
-    #     self.advance()
-
-    #     self.advance()
-
-    #     if self.current_tok.token != "IDENTIFIER":
-    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after '>>'!"))
-    #     else:
-    #         res.append(self.current_tok.token)
-    #         self.advance()
-
-    #     if self.current_tok.token != "$":
-    #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected terminator '$'!"))
-    #     else:
-    #         self.advance()
-
-    #     return res, error
     
     #*CONDITIONAL
     #FUNC FOR IF, ELSE, ELSEIF
