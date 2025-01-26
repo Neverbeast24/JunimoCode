@@ -1514,7 +1514,7 @@ class StardewLexerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Junimo Code Lexical Analyzer")
-        self.root.geometry("1920x1200")
+        self.root.geometry("1920x1200") #edit to your pc resolution to run the gui properly
         self.root.configure(bg=BACKGROUND_COLOR)
 
 
