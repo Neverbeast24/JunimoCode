@@ -51,7 +51,7 @@ delim1 = whitespace + alpha_num + '"' + '(' + '['+  negative
 delim2 = whitespace + alpha_num + '"' + '(' + negative
 delim3 = whitespace + all_numbers + '('
 
-unary_delim = whitespace + all_letters + terminator
+unary_delim = whitespace + all_letters + terminator + ')'
 bool_delim = whitespace + terminator + COMMA + ')' + ']'
 num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relational_ops + terminator
 id_delim = NEWLINE + COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + terminator
@@ -95,7 +95,7 @@ WINTER = 'winter'
 
 #loop control statements
 BREAK = 'break'
-
+NEXT = 'next'
 #input and output statements
 COLLECT = 'collect'
 SHIP = 'ship' 
@@ -1078,6 +1078,33 @@ class Lexer:
                                             errors.extend([f'Invalid delimiter for harvest! Cause: {self.current_char}. Expected: {spacepr_delim + terminator}'])                                        
                                             return [], errors
                         
+            elif self.current_char == "n": #PELICAN, PERFECTION, PLANTING
+                ident += self.current_char
+                self.advance()
+                ident_count += 1
+                if self.current_char == "e":
+                    ident += self.current_char
+                    self.advance()
+                    ident_count += 1
+                    if self.current_char == "x":
+                        ident += self.current_char
+                        self.advance()
+                        ident_count += 1
+                        if self.current_char == "t":
+                            ident += self.current_char
+                            self.advance()
+                            ident_count += 1
+                            if self.current_char == None:
+                                    errors.extend([f'Invalid delimiter for next! Cause: {self.current_char} Expected: {break_delim}'])
+                                    return [], errors
+                            if self.current_char in break_delim: #double check this
+                                return Token(NEXT, "next"), errors
+                            elif self.current_char in break_delim:
+                                continue
+                            else:
+                                errors.extend([f'Invalid delimiter for next! Cause: {self.current_char} Expected: {break_delim}'])
+                                return [], errors
+            
             elif self.current_char == "p": #PELICAN, PERFECTION, PLANTING
                 ident += self.current_char
                 self.advance()
