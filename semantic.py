@@ -1545,30 +1545,682 @@ class Lexer:
             return string, errors
 
 #NODES
-class NumberNode:
+class IdentifierNode:
     def __init__(self, tok):
         self.tok = tok
 
-    def __repr__(self) -> str:
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+    
+    def __repr__(self):
         return f'{self.tok}'
     
+class NumberNode:
+    def __init__(self, tok):
+        self.notted= False
+        self.tok = tok
 
-class BinOpNode:
-    def __init__(self, left_node, op_tok, right_node) -> None:
-        self.left_node = left_node
-        self.op_tok = op_tok
-        self. right_node = right_node
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
 
     def __repr__(self):
-        return f'({self.left_node}, {self.op_tok}, {self.right_node})'
+        return f'NumberNode: value: {self.tok.value}'
+    
+class PreUnaryNode:
+    def __init__(self, tok, operation = None, adjust_by = 1):
+        self.tok = tok
+        self.operation = operation
+        self.adjust_by = adjust_by
+
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'PreUnaryNode')
+        print(spaces + '    - ', f"name: {self.tok.var_name_tok.value}")
+        print(spaces + '    - ', f"operation: {self.operation}")
+
+    def __repr__(self):   
+        return f"PreUnaryNode: operation: '{self.operation}', identifier: '{self.tok.var_name_tok.value}'"
+
+class PostUnaryNode:
+    def __init__(self, tok, operation = None, adjust_by = 1):
+        self.tok = tok
+        self.operation = operation
+        self.adjust_by = adjust_by
+
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'PostUnaryNode')
+        print(spaces + '    - ', f"name: {self.tok.var_name_tok.value}")
+        print(spaces + '    - ', f"operation: {self.operation}")
+
+    def __repr__(self):   
+        return f"PostUnaryNode: identifier: '{self.tok.var_name_tok.value}', operation: '{self.operation}',"
+    
+class StringNode:
+    def __init__(self, tok):
+        self.notted = False
+        self.tok = tok
+
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+
+    def __repr__(self):
+        return f'{self.tok}'
+
+class BooleanNode:
+    def __init__(self, tok, value = 0):
+        self.notted = False
+        self.tok = tok
+        if self.tok.token == FALSE:
+            self.value = 0
+        else:
+            self.value = 1
+
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+
+    def __repr__(self):
+        return f'{self.tok}'
+class ListNode:
+    def __init__(self, var_name, items = [] ):
+        self.var_name = var_name
+        self.items = items
+        self.pos_start = self.var_name.pos_start
+        self.pos_end = self.var_name.pos_end
+        self.clear_items()
+    def clear_items(self):
+        self.items = []
+    def add_item(self, token):
+        self.items.append(token)
+
+    def __repr__(self) -> str:
+        return f"ListNode: {self.items}"
+
+class ListCallNode:
+    def __init__(self, var_name, index=0 ):
+        self.var_name = var_name
+        self.index = index
+        self.pos_start = self.var_name.pos_start
+        self.pos_end = self.var_name.pos_end
+    def added_to(self, other):
+        return Number(1), None
+        
+
+    def subbed_by(self, other):
+        
+        return Number(1), None
+        
+
+    def multed_by(self, other):
+        
+        return Number(1), None
+        
+
+    def dived_by(self, other):
+        return Number(1), None
+    def modulo(self, other):
+        
+        return Number(1), None
+        
+    def get_comparison_eq(self, other):
+        
+        return Number(1), None
+
+    def get_comparison_ne(self, other):
+        
+        return Number(1), None
+
+    def get_comparison_lt(self, other):
+        return Number(1), None
+
+    def get_comparison_gt(self, other):
+        return Number(1), None
+
+    def get_comparison_lte(self, other):
+        return Number(1), None
+
+    def get_comparison_gte(self, other):
+        return Number(1), None
+
+    def anded_by(self, other):
+        return Number(1), None
+
+    def ored_by(self, other):
+        return Number(1), None
+
+    def notted(self):
+        return Number(1), None
+    def is_true(self):
+        return False
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+    # def add_item(self, token):
+    #     self.items.append(token)
+
+    def __repr__(self) -> str:
+        return f"ListCallNode: {self.var_name}, index: {self.index}"
+class VoidNode:
+    def __init__(self, tok):
+        self.tok = tok
+        
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+    def __repr__(self) -> str:
+        return "void"
+    
+class VarAccessNode:
+    def __init__(self, var_name_tok):
+        self.parent = None
+        self.var_name_tok = var_name_tok
+
+        self.pos_start = self.var_name_tok.pos_start
+        self.pos_end = self.var_name_tok.pos_end
+
+    def get_ln(self):
+        return self.pos_start.ln+1
+
+class VarAssignNode:
+    def __init__(self, var_name_tok, value_node):
+        self.parent = None
+        self.var_name_tok = var_name_tok
+        self.value_node = value_node
+        self.pos_start = self.var_name_tok.pos_start
+        self.pos_end = self.value_node.pos_end
+
+    def get_ln(self):
+        return self.pos_start.ln+1
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'VarAssignNode')
+        print(spaces + '    - ', f"parent: {self.parent}")
+        print(spaces + '    - ', f"name: {self.var_name_tok.value}")
+        print(spaces + '    - ', f"value: {self.value_node}")
+        
+class VarInitNode:
+    def __init__(self, var_name_tok, value_node, operation = Token(EQUAL, "=")):
+        self.var_name_tok = var_name_tok
+        self.value_node = value_node
+        self.operation = operation
+        self.pos_start = var_name_tok.pos_start
+        self.pos_end = var_name_tok.pos_end
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'VarInitNode')
+        print(spaces + '    - ', f"name: {self.var_name_tok}")
+        print(spaces + '    - ', f"operation: {self.operation}")
+        print(spaces + '    - ', f"value: {self.value_node}")
+
+class VarDecNode:
+    def __init__(self, var_name_tok):
+        self.parent = None
+        self.var_name_tok = var_name_tok.value
+        self.value_node = VoidNode(var_name_tok)
+
+        self.pos_start = var_name_tok.pos_start
+        self.pos_end = var_name_tok.pos_end
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'VarAssignNode')
+        print(spaces + '    - ', f"name: {self.var_name_tok}")
+        print(spaces + '    - ', f"value: {self.value_node}")
+
+class SaturnCallNode:
+    def __init__(self, value_node):
+        self.parent = None
+        self.value_node = value_node
+        self.value = None
+        print('saturn call value node: ', value_node)
+        if isinstance(value_node, RTResult):
+            self.pos_start = self.value_node.value.pos_start
+            self.pos_end = self.value_node.value.pos_end
+        elif isinstance(value_node, BinOpNode):
+            self.pos_start = self.value_node.pos_start
+            self.pos_end = self.value_node.pos_end
+        elif isinstance(value_node, VarAccessNode):
+            self.pos_start = self.value_node.var_name_tok.pos_start
+            self.pos_end = self.value_node.var_name_tok.pos_end
+        elif isinstance(value_node, FormCallNode):
+            value_node.parent = self.parent
+            self.pos_start = self.value_node.identifier.pos_start
+            self.pos_end = self.value_node.identifier.pos_end
+        else:
+            self.pos_start = self.value_node.tok.pos_start
+            self.pos_end = self.value_node.tok.pos_end
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'SaturnCall')
+        print(spaces + '    - ', f"parent: {self.parent}")
+        print(spaces + '    - ', f"value/s: {self.value_node}")
+        
+class OuterNode:
+    def __init__(self, body, out_tok= None):
+        
+        self.parent = None
+        self.body = body
+        # self.list_of_nodes = list_of_nodes
+        self.pos_start = self.body[0].pos_start
+        self.pos_end = self.body[len(body)-1].pos_end
+    
+    def add_child(self, node):
+        node.parent = self
+        # self.body.append(node)
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        for item in self.body:
+            self.add_child(item)
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'OuterNode')
+        print(spaces + '    - ', f"parent: {self.parent}")
+        print(spaces + '    - ', f"value/s: {self.body}")
+
+class InnerNode:
+    def __init__(self, variable_node) -> None:
+        self.parent = None
+        # this should be a VarAccessNode
+        self.variable_node = variable_node
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'InnerNode')
+        print(spaces + '    - ', f"value/s: {self.variable_node}, {self.variable_node.var_name_tok}")
+    
+class BinOpNode:
+    def __init__(self, left_node, op_tok, right_node):
+        self.parent = None
+        self.notted = False
+        self.left_node = left_node
+        self.op_tok = op_tok
+        self.right_node = right_node
+
+        self.pos_start = self.left_node.pos_start
+        self.pos_end = self.right_node.pos_end
+
+    def __repr__(self):
+        return f'BinOpNode({type(self.left_node)}, {self.op_tok}, {self.right_node})'
 
 class UnaryOpNode:
-	def __init__(self, op_tok, node):
-		self.op_tok = op_tok
-		self.node = node
+    def __init__(self, op_tok, node):
+        self.op_tok = op_tok
+        self.node = node
+        self.pos_start = self.node.pos_start
+        self.pos_end = self.node.pos_end
 
-	def __repr__(self):
-		return f'({self.op_tok}, {self.node})'
+    def __repr__(self):
+        return f'({self.op_tok}, {self.node})'
+    
+class FormCallNode:
+    def __init__(self, identifier = None) -> None:
+        self.parent = None
+        self.identifier = identifier
+        self.parameters = []
+        self.pos_end = self.identifier.pos_end
+        self.pos_start = self.identifier.pos_start
+        self.value = None
+    def added_to(self, other):
+        return Number(1), None
+        
+
+    def subbed_by(self, other):
+        
+        return Number(1), None
+        
+
+    def multed_by(self, other):
+        
+        return Number(1), None
+        
+
+    def dived_by(self, other):
+        return Number(1), None
+    def modulo(self, other):
+        
+        return Number(1), None
+        
+    def get_comparison_eq(self, other):
+        
+        return Number(1), None
+
+    def get_comparison_ne(self, other):
+        
+        return Number(1), None
+
+    def get_comparison_lt(self, other):
+        return Number(1), None
+
+    def get_comparison_gt(self, other):
+        return Number(1), None
+
+    def get_comparison_lte(self, other):
+        return Number(1), None
+
+    def get_comparison_gte(self, other):
+        return Number(1), None
+
+    def anded_by(self, other):
+        return Number(1), None
+
+    def ored_by(self, other):
+        return Number(1), None
+
+    def notted(self):
+        return Number(1), None
+
+    def add_param(self, node):
+        self.parameters.append(node)
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        self.pos_end = self.identifier.pos_end
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'FormCallNode')
+        print(spaces + '    - ', f"parent : {self.parent}")
+        print(spaces + '    - ', f"identifier : {self.identifier}")
+        print(spaces + '    - ', f"parameters : {self.parameters}")
+    
+    def __repr__(self) -> str:
+        return f"FormCallNode, name: {self.identifier}, parameters: {self.parameters}, parent: {self.parent}"
+    
+class IfNode:
+    def __init__(self, cases, else_case, ):
+        self.parent = None
+        #cases should be a a list of tuples with conditions, statements
+        self.cases = cases
+        self.else_case = else_case
+        self.body = []
+        self.pos_start = self.cases[0][0].pos_start
+        
+    def add_child(self, node):
+        node.parent = self
+        self.body.append(node)
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, f"IfNode")
+        print( "  "+ prefix, f"parent: {self.parent}")
+        for item in self.cases:
+            for j in item:
+                if not isinstance(j, list):
+                    print( "  "+ prefix, f"condition : {j} ")
+                else:
+                    print( "  "+ prefix, f"condition statements: ")
+                    for stmt in j:
+                        self.add_child(stmt)
+                        stmt.print_tree()
+        print( "  "+ prefix, f"else cases: {self.else_case} ")
+        
+class WhirlNode:
+    def __init__(self, condition):
+        self.parent = None
+        #cases should be a a list of tuples with conditions, statements
+        self.condition = condition
+        self.body = []
+        self.pos_start = self.condition.pos_start
+
+    def add_child(self, node):
+        node.parent = self
+        self.body.append(node)
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, f"WhirlNode")
+        print( "  "+ prefix, f"parent: {self.parent}")
+        print( "  "+ prefix, f"condition: {self.condition}")
+        print( "  "+ prefix, f"body: ")
+        for item in self.body:
+            item.print_tree()
+        
+        
+class DoWhirlNode:
+    def __init__(self, condition, do_tok):
+        self.parent = None
+        #cases should be a a list of tuples with conditions, statements
+        self.condition = condition
+        self.body = []
+        self.do_tok = do_tok
+        self.pos_start = self.do_tok.pos_start
+
+    def add_child(self, node):
+        node.parent = self
+        self.body.append(node)
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, f"DoWhirlNode")
+        print( "  "+ prefix, f"parent: {self.parent}")
+        print( "  "+ prefix, f"do statements: ")
+        for item in self.body:
+            item.print_tree()
+        print( "  "+ prefix, f"condition: {self.condition}")
+    
+
+class ForceNode:
+    def __init__(self, condition) -> None:
+        self.parent = None
+        self.variable = None # var a = 10, a = 10
+        self.condition = None # a <100
+        self.unary = None # --a
+        self.body = []
+        self.condition = condition
+        self.pos_start = self.condition.pos_start
+    
+    def add_child(self, node):
+        node.parent = self
+        self.body.append(node)
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        # self.pos_start = self.condition.pos_start
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, f"ForceNode")
+        print( "  "+ prefix, f"parent: {self.parent}")
+        print( "  "+ prefix, f"1st statement: {self.variable}")
+        print( "  "+ prefix, f"2nd statement: {self.condition}")
+        print( "  "+ prefix, f"3rd statement: {self.unary}")
+        print("  "+ prefix, f"body: ")
+        for item in self.body:
+            # self.add_child(item)
+            item.print_tree()
+            
+class SkipNode:
+    def __init__(self, tok) -> None:
+        self.tok = tok
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'SkipNode')
+        print(spaces + '    - ', f"value: {self.tok.value}")
+        
+class BlastNode:
+    def __init__(self, tok) -> None:
+        self.tok = tok
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'BlastNode')
+        print(spaces + '    - ', f"value: {self.tok.value}")
+    
+
+#INTERPRETER CLASS FOR SEMANTIC
+class RTResult:
+    def __init__(self):
+        self.value = None
+        self.error = None
+
+    def register(self, res):
+        if res.error: self.error = res.error
+        return res.value
+
+    def success(self, value):
+        self.value = value
+        return self
+
+    def failure(self, error):
+        self.error = error
+        return self
+
 
 #PARSE RESULT
 
@@ -1593,6 +2245,113 @@ class ParseResult:
         self.error = error
         return self
 
+class Program:
+    def __init__(self, symbol_table = None):
+        #has universe declarations
+        #has functions
+        #has main
+        self.parent = None
+        self.body = []
+        self.errors = []
+        self.symbol_table = symbol_table
+        self.functions = []
+        
+    # def add_variables(self,name, node):
+    #     self.context.symbol_table.set(name, node.value)
+
+    def add_child(self, node):
+        node.parent = self
+        self.body.append(node)
+    
+    def error(self, error):
+        self.errors.append(error)
+    
+
+    def display(self):
+        print("Program: ")
+        if self.body:
+            for item in self.body:
+                item.print_tree()
+                
+    #laman ng Program body is VarAssignNode/s, FormNode/s, GalaxyNode
+    
+class FormNode:
+    def __init__(self, identifier) -> None:
+        #parent should be program lang
+        self.parent = None
+        self.identifier =identifier
+        self.body = []
+        self.parameters = []
+        self.symbol_table = None
+        self.errors = []
+        self.called = False
+        
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, f"Form")
+        print( "  "+ prefix, f"parent: {self.parent}")
+        print( "  "+ prefix, f"identifier: {self.identifier}")
+        print( "  "+ prefix, f"parameters: ")
+        for item in range(len(self.parameters)):
+            print( spaces + '      -', f"parameter {item}: {self.parameters[item]}, {self.parameters[item].var_name_tok}")
+
+        print( "  "+ prefix, f"body: ")
+        if self.body:
+            for child in self.body:
+                child.print_tree()
+        
+    def add_child(self, node):
+        node.parent = self
+        self.body.append(node)
+
+class GalaxyNode:
+    def __init__(self, symbol_table = None) -> None:
+        self.parent = None
+        self.body = []
+        self.errors = []
+        self.context = None
+        self.symbol_table = symbol_table
+        # self.pos_start = self.body[0].pos_start
+        
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, f"Galaxy")
+        print( "  "+ prefix, f"parent: {self.parent}")
+
+        print( "  "+ prefix, f"body: ")
+        if self.body:
+            for child in self.body:
+                if isinstance(child, ParseResult):
+                    print("child: ",child.node)
+                else:
+                    print("child: ",child)
+                child.print_tree()
+        
+    def add_child(self, node):
+        node.parent = self
+        self.body.append(node)
+        
 #PARSER
     
 class Parser:
@@ -1617,7 +2376,9 @@ class Parser:
     def parse(self):
         res =  []
         error = []
-
+    
+        program = Program()
+        
         while self.current_tok.token == NEWLINE:
             self.advance()
             
@@ -1681,41 +2442,37 @@ class Parser:
                 self.advance()
         
             
-                     
-            #VAR DECLARATION  DAT MAY GLOBAL
+            # HARVEST SYNTAX         
+            #HARVEST DECLARATION  DAT MAY GLOBAL
             if self.current_tok.token in FARMHOUSE:
                 if self.is_pelican == True:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please declare global variables before pelican!"))
+                    program.error(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please declare global variables before pelican!"))
                     break
                 else:
                     self.advance() 
                 
                     if self.current_tok.token in CROP: 
-                        self.in_farmhouse = True
-                        crop, crop_error = self.crop_dec()
-                        if crop_error:
-                            error.extend(crop_error)
-                            break
-                        #res.append(var)
-                        #self.advance()
+                        if self.current_tok.matches(CROP, 'crop'):
+                            multiple, farmhouse_error = self.crop_dec()
+                            if farmhouse_error:
+                                program.error(farmhouse_error)
+                            else:
+                                program.add_child(multiple)
+                                
+                        while self.current_tok.token != COMMA:
+                            multiple, farmhouse_error = self.crop_dec()
+                            if farmhouse_error:
+                                program.error(farmhouse_error)
+                            else:
+                                program.add_child(multiple)
+                                if self.current_tok.token == TERMINATOR:
+                                    break
                         
                         if self.current_tok.token != TERMINATOR:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign from crop dec parse!"))
+                            program.error(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign after crop declaration!"))
+                        
                         else:
                             self.advance()
-                            self.in_farmhouse = False
-                            res.append(["SUCCESS from global declaration!"])
-                    else:
-                        print("check", self.current_tok)
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid global variable declaration!"))
-                        break
-
-            # ? pwede i-bring back pag need specific
-            # if self.current_tok.token in VAR:
-            #     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid global declaration!"))
-            #     break
-            
-            
 
             #functions
             if self.current_tok.token == CRAFT:
@@ -2264,7 +3021,7 @@ class Parser:
                                     res.append(c)
                     
                 elif self.current_tok.token == COMMA:
-                    if self.in_fall == False:
+                    if self.in_star == False:
                         comma, c_error = self.crop_dec()
                         
                         if c_error:

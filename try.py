@@ -54,7 +54,7 @@ delim3 = whitespace + all_numbers + '('
 unary_delim = whitespace + all_letters + terminator + ')'
 bool_delim = whitespace + terminator + COMMA + ')' + ']'
 num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relational_ops + terminator
-id_delim = NEWLINE + COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + terminator
+id_delim = NEWLINE + COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + terminator + all_numbers
 spacepr_delim = whitespace + '('
 break_delim = terminator + whitespace
 openparenthesis_delim = whitespace + alpha_num + negative + '(' + '[' + '"' + ')'
