@@ -1,41 +1,8 @@
-import customtkinter as ctk
-from tkinter import ttk
-from PIL import Image, ImageTk
-from pygame import mixer
-import tkinter as tk
 from itertools import count
 from ctypes import windll
 from strings_arrows import *
+import ast
 
-# Register custom fonts
-windll.gdi32.AddFontResourceW("Stardew-Valley-Regular.ttf")
-windll.gdi32.AddFontResourceW("StardewValley.ttf")
-
-# Initialize sound library
-mixer.init()
-
-# Load sound effects
-click_sound = mixer.Sound("Interface/bigSelect.wav")
-hover_sound = mixer.Sound("Interface/select.wav")
-background_music = r"BackgroundMusic/ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3"
-
-# Stardew Valley-themed colors
-BACKGROUND_COLOR = "#F5F5DC"  # Soft beige for Stardew Valley theme
-TEXT_COLOR = "#3B200E"  # Brown text for title and content
-BUTTON_COLOR = "#8B7355"  # Wooden Button-like
-HOVER_COLOR = "#6FA3EF"  # Blue hover effect for buttons
-TABLE_COLOR = "#D9C2A6"  # Inventory-like background
-TERMINAL_COLOR = "#F5F5DC"  # Softer beige for terminal
-
-# Font settings
-TITLE_FONT = ("Stardew Valley Regular", 48)  # Large title font
-PIXEL_FONT = ("Verdana", 12, "bold" )  # Font for other UI elements
-
-# Paths for assets
-background_image_path = "background.jpg"
-
-#Cursor
-junimo_cursor = "Stardew_Cursor.xpm" #Not Yet Working ; Maganda sana na-additional kaechosan.
 
 #alphabet
 alpha_capital = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -215,6 +182,57 @@ class InvalidSyntaxError(Error):
     def __init__(self,pos_start, pos_end, details=''):
         super().__init__(pos_start, pos_end, "Invalid Syntax", details)
 
+class RTError(Error):
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Runtime Error', details)
+        
+
+    def as_string(self):
+        result  = self.generate_traceback()
+        result_name = f"{self.error_name}: {self.details}"
+        #result += '\n\n' + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        errorDetail, arrowDetail = string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        return result, result_name, '\n'+ errorDetail
+        #return result
+
+    def generate_traceback(self):
+        result = []
+        pos = self.pos_start
+        # print("pos and ctx: ", self.pos_start, " ", self.context)
+        
+        
+        result.insert(0, f'File <Cosmic Script>, line {str(self.pos_start.ln + 1)}') 
+        
+
+        return result
+    def print_error(self):
+        print( f"details: {self.details}, pos start and end: {self.pos_start}, {self.pos_end}")\
+        
+class SemanticError(Error):
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Semantic Error', details)
+        
+
+    def as_string(self):
+        result  = self.generate_traceback()
+        result_name = f"{self.error_name}: {self.details}"
+        #result += '\n\n' + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        errorDetail, arrowDetail = string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        return result, result_name, '\n'+ errorDetail
+        #return result
+
+    def generate_traceback(self):
+        result = []
+        pos = self.pos_start
+        # print("pos and ctx: ", self.pos_start, " ", self.context)
+        
+        
+        result.insert(0, f'File <Cosmic Script>, line {str(self.pos_start.ln + 1)}') 
+        
+
+        return result
+    def print_error(self):
+        print( f"details: {self.details}, pos start and end: {self.pos_start}, {self.pos_end}")
 
 class Position:
     def __init__(self, idx, ln, col, fn, ftxt):
@@ -1565,34 +1583,6 @@ class NumberNode:
 
     def __repr__(self):
         return f'NumberNode: value: {self.tok.value}'
-    
-class PreUnaryNode:
-    def __init__(self, tok, operation = None, adjust_by = 1):
-        self.tok = tok
-        self.operation = operation
-        self.adjust_by = adjust_by
-
-        self.pos_start = self.tok.pos_start
-        self.pos_end = self.tok.pos_end
-
-    def get_level(self):
-        level = 0
-        p = self.parent
-        while p:
-            level += 1
-            p = p.parent
-
-        return level
-
-    def print_tree(self):
-        spaces = ' ' * self.get_level() * 3
-        prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'PreUnaryNode')
-        print(spaces + '    - ', f"name: {self.tok.var_name_tok.value}")
-        print(spaces + '    - ', f"operation: {self.operation}")
-
-    def __repr__(self):   
-        return f"PreUnaryNode: operation: '{self.operation}', identifier: '{self.tok.var_name_tok.value}'"
 
 class PostUnaryNode:
     def __init__(self, tok, operation = None, adjust_by = 1):
@@ -1616,11 +1606,11 @@ class PostUnaryNode:
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'PostUnaryNode')
-        print(spaces + '    - ', f"name: {self.tok.var_name_tok.value}")
+        print(spaces + '    - ', f"name: {self.tocrope_tok.value}")
         print(spaces + '    - ', f"operation: {self.operation}")
 
     def __repr__(self):   
-        return f"PostUnaryNode: identifier: '{self.tok.var_name_tok.value}', operation: '{self.operation}',"
+        return f"PostUnaryNode: identifier: '{self.tocrope_tok.value}', operation: '{self.operation}',"
     
 class StringNode:
     def __init__(self, tok):
@@ -1648,11 +1638,11 @@ class BooleanNode:
     def __repr__(self):
         return f'{self.tok}'
 class ListNode:
-    def __init__(self, var_name, items = [] ):
-        self.var_name = var_name
+    def __init__(self, crop_name, items = [] ):
+        self.crop_name = crop_name
         self.items = items
-        self.pos_start = self.var_name.pos_start
-        self.pos_end = self.var_name.pos_end
+        self.pos_start = self.crop_name.pos_start
+        self.pos_end = self.crop_name.pos_end
         self.clear_items()
     def clear_items(self):
         self.items = []
@@ -1663,11 +1653,11 @@ class ListNode:
         return f"ListNode: {self.items}"
 
 class ListCallNode:
-    def __init__(self, var_name, index=0 ):
-        self.var_name = var_name
+    def __init__(self, crop_name, index=0 ):
+        self.crop_name = crop_name
         self.index = index
-        self.pos_start = self.var_name.pos_start
-        self.pos_end = self.var_name.pos_end
+        self.pos_start = self.crop_name.pos_start
+        self.pos_end = self.crop_name.pos_end
     def added_to(self, other):
         return Number(1), None
         
@@ -1726,7 +1716,7 @@ class ListCallNode:
     #     self.items.append(token)
 
     def __repr__(self) -> str:
-        return f"ListCallNode: {self.var_name}, index: {self.index}"
+        return f"ListCallNode: {self.crop_name}, index: {self.index}"
 class VoidNode:
     def __init__(self, tok):
         self.tok = tok
@@ -1737,22 +1727,22 @@ class VoidNode:
         return "void"
     
 class VarAccessNode:
-    def __init__(self, var_name_tok):
+    def __init__(self, crop_name_tok):
         self.parent = None
-        self.var_name_tok = var_name_tok
+        self.crop_name_tok = crop_name_tok
 
-        self.pos_start = self.var_name_tok.pos_start
-        self.pos_end = self.var_name_tok.pos_end
+        self.pos_start = self.crop_name_tok.pos_start
+        self.pos_end = self.crop_name_tok.pos_end
 
     def get_ln(self):
         return self.pos_start.ln+1
 
 class VarAssignNode:
-    def __init__(self, var_name_tok, value_node):
+    def __init__(self, crop_name_tok, value_node):
         self.parent = None
-        self.var_name_tok = var_name_tok
+        self.crop_name_tok = crop_name_tok
         self.value_node = value_node
-        self.pos_start = self.var_name_tok.pos_start
+        self.pos_start = self.crop_name_tok.pos_start
         self.pos_end = self.value_node.pos_end
 
     def get_ln(self):
@@ -1775,13 +1765,15 @@ class VarAssignNode:
         print(spaces + '    - ', f"name: {self.var_name_tok.value}")
         print(spaces + '    - ', f"value: {self.value_node}")
         
+        
+
 class VarInitNode:
-    def __init__(self, var_name_tok, value_node, operation = Token(EQUAL, "=")):
-        self.var_name_tok = var_name_tok
+    def __init__(self, crop_name_tok, value_node, operation = Token(EQUAL, "=")):
+        self.crop_name_tok = crop_name_tok
         self.value_node = value_node
         self.operation = operation
-        self.pos_start = var_name_tok.pos_start
-        self.pos_end = var_name_tok.pos_end
+        self.pos_start = crop_name_tok.pos_start
+        self.pos_end = crop_name_tok.pos_end
 
     def get_level(self):
         level = 0
@@ -1801,13 +1793,13 @@ class VarInitNode:
         print(spaces + '    - ', f"value: {self.value_node}")
 
 class VarDecNode:
-    def __init__(self, var_name_tok):
+    def __init__(self, crop_name_tok):
         self.parent = None
-        self.var_name_tok = var_name_tok.value
+        self.var_name_tok = crop_name_tok.value
         self.value_node = VoidNode(var_name_tok)
 
-        self.pos_start = var_name_tok.pos_start
-        self.pos_end = var_name_tok.pos_end
+        self.pos_start = crop_name_tok.pos_start
+        self.pos_end = crop_name_tok.pos_end
 
     def get_level(self):
         level = 0
@@ -1825,7 +1817,7 @@ class VarDecNode:
         print(spaces + '    - ', f"name: {self.var_name_tok}")
         print(spaces + '    - ', f"value: {self.value_node}")
 
-class SaturnCallNode:
+class HarvestCallNode:
     def __init__(self, value_node):
         self.parent = None
         self.value_node = value_node
@@ -1838,9 +1830,9 @@ class SaturnCallNode:
             self.pos_start = self.value_node.pos_start
             self.pos_end = self.value_node.pos_end
         elif isinstance(value_node, VarAccessNode):
-            self.pos_start = self.value_node.var_name_tok.pos_start
-            self.pos_end = self.value_node.var_name_tok.pos_end
-        elif isinstance(value_node, FormCallNode):
+            self.pos_start = self.value_nodcrope_tok.pos_start
+            self.pos_end = self.value_nodcrope_tok.pos_end
+        elif isinstance(value_node, craftCallNode):
             value_node.parent = self.parent
             self.pos_start = self.value_node.identifier.pos_start
             self.pos_end = self.value_node.identifier.pos_end
@@ -1864,7 +1856,7 @@ class SaturnCallNode:
         print(spaces + '    - ', f"parent: {self.parent}")
         print(spaces + '    - ', f"value/s: {self.value_node}")
         
-class OuterNode:
+class ShipNode:
     def __init__(self, body, out_tok= None):
         
         self.parent = None
@@ -1895,7 +1887,7 @@ class OuterNode:
         print(spaces + '    - ', f"parent: {self.parent}")
         print(spaces + '    - ', f"value/s: {self.body}")
 
-class InnerNode:
+class CollectNode:
     def __init__(self, variable_node) -> None:
         self.parent = None
         # this should be a VarAccessNode
@@ -1914,7 +1906,7 @@ class InnerNode:
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'InnerNode')
-        print(spaces + '    - ', f"value/s: {self.variable_node}, {self.variable_node.var_name_tok}")
+        print(spaces + '    - ', f"value/s: {self.variable_node}, {self.variable_nodcrope_tok}")
     
 class BinOpNode:
     def __init__(self, left_node, op_tok, right_node):
@@ -1940,7 +1932,7 @@ class UnaryOpNode:
     def __repr__(self):
         return f'({self.op_tok}, {self.node})'
     
-class FormCallNode:
+class CraftCallNode:
     def __init__(self, identifier = None) -> None:
         self.parent = None
         self.identifier = identifier
@@ -2013,15 +2005,15 @@ class FormCallNode:
         self.pos_end = self.identifier.pos_end
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'FormCallNode')
+        print(prefix, 'craftCallNode')
         print(spaces + '    - ', f"parent : {self.parent}")
         print(spaces + '    - ', f"identifier : {self.identifier}")
         print(spaces + '    - ', f"parameters : {self.parameters}")
     
     def __repr__(self) -> str:
-        return f"FormCallNode, name: {self.identifier}, parameters: {self.parameters}, parent: {self.parent}"
+        return f"craftCallNode, name: {self.identifier}, parameters: {self.parameters}, parent: {self.parent}"
     
-class IfNode:
+class StarNode:
     def __init__(self, cases, else_case, ):
         self.parent = None
         #cases should be a a list of tuples with conditions, statements
@@ -2059,7 +2051,7 @@ class IfNode:
                         stmt.print_tree()
         print( "  "+ prefix, f"else cases: {self.else_case} ")
         
-class WhirlNode:
+class WinterNode:
     def __init__(self, condition):
         self.parent = None
         #cases should be a a list of tuples with conditions, statements
@@ -2089,45 +2081,11 @@ class WhirlNode:
         print( "  "+ prefix, f"body: ")
         for item in self.body:
             item.print_tree()
-        
-        
-class DoWhirlNode:
-    def __init__(self, condition, do_tok):
-        self.parent = None
-        #cases should be a a list of tuples with conditions, statements
-        self.condition = condition
-        self.body = []
-        self.do_tok = do_tok
-        self.pos_start = self.do_tok.pos_start
 
-    def add_child(self, node):
-        node.parent = self
-        self.body.append(node)
-
-    def get_level(self):
-        level = 0
-        p = self.parent
-        while p:
-            level += 1
-            p = p.parent
-
-        return level
-
-    def print_tree(self):
-        spaces = ' ' * self.get_level() * 3
-        prefix = spaces + "|__" if self.parent else ""
-        print(prefix, f"DoWhirlNode")
-        print( "  "+ prefix, f"parent: {self.parent}")
-        print( "  "+ prefix, f"do statements: ")
-        for item in self.body:
-            item.print_tree()
-        print( "  "+ prefix, f"condition: {self.condition}")
-    
-
-class ForceNode:
+class FallNode:
     def __init__(self, condition) -> None:
         self.parent = None
-        self.variable = None # var a = 10, a = 10
+        self.variable = None # crop a = 10, a = 10
         self.condition = None # a <100
         self.unary = None # --a
         self.body = []
@@ -2161,7 +2119,7 @@ class ForceNode:
             # self.add_child(item)
             item.print_tree()
             
-class SkipNode:
+class NextNode:
     def __init__(self, tok) -> None:
         self.tok = tok
         self.pos_start = self.tok.pos_start
@@ -2181,7 +2139,7 @@ class SkipNode:
         print(prefix, 'SkipNode')
         print(spaces + '    - ', f"value: {self.tok.value}")
         
-class BlastNode:
+class BreakNode:
     def __init__(self, tok) -> None:
         self.tok = tok
         self.pos_start = self.tok.pos_start
@@ -2273,9 +2231,9 @@ class Program:
             for item in self.body:
                 item.print_tree()
                 
-    #laman ng Program body is VarAssignNode/s, FormNode/s, GalaxyNode
+    #laman ng Program body is VarAssignNode/s, craftNode/s, PelicanNode
     
-class FormNode:
+class CraftNode:
     def __init__(self, identifier) -> None:
         #parent should be program lang
         self.parent = None
@@ -2303,7 +2261,7 @@ class FormNode:
         print( "  "+ prefix, f"identifier: {self.identifier}")
         print( "  "+ prefix, f"parameters: ")
         for item in range(len(self.parameters)):
-            print( spaces + '      -', f"parameter {item}: {self.parameters[item]}, {self.parameters[item].var_name_tok}")
+            print( spaces + '      -', f"parameter {item}: {self.parameters[item]}, {self.parameters[item].crop_name_tok}")
 
         print( "  "+ prefix, f"body: ")
         if self.body:
@@ -2314,7 +2272,7 @@ class FormNode:
         node.parent = self
         self.body.append(node)
 
-class GalaxyNode:
+class PelicanNode:
     def __init__(self, symbol_table = None) -> None:
         self.parent = None
         self.body = []
@@ -2374,8 +2332,8 @@ class Parser:
     
     #* parse takes the list of tokens then  decides which functions to execute based on the token
     def parse(self):
-        res =  []
-        error = []
+        # res =  []
+        # error = []
     
         program = Program()
         
@@ -2411,7 +2369,7 @@ class Parser:
                 
             
 
-        # * basically yung parse lang pero walang form
+        # * basically yung parse lang pero walang craft
 
         while True:
             # if self.current_tok.token == SEMICOLON:
@@ -2475,37 +2433,103 @@ class Parser:
                             self.advance()
 
             #functions
+            # craft for subfunctions
+            # craft syntax
             if self.current_tok.token == CRAFT:
                 if self.is_pelican == True:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please declare craft before pelican!"))
+                    program.error(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please declare craft before pelican!"))
                     break
                 else:
-                    craft_res, craft_error = self.init_craft()
-
-                    if craft_error:
-                        for err in craft_error:
-                            error.append(err)
-                        return res, error
-                    else:
-                        res.extend(craft_res)
+                    self.advance()
+                    
+                    craft_node = CraftNode(self.current_tok)
+                    craft_node.parent = program
+                    self.advance()
+                    
+                    self.advance()
+                    
+                    if self.current_tok.token == CROP:
+                        if self.current_tok.matches(CROP, 'crop'):
+                            multiple, craft_error = self.crop_dec()
+                            if craft_error:
+                                craft_node.errors.extend(craft_error)
+                            else:
+                                craft_node.parameters.append(craft_result)
+                                if self.current_tok.token == RPAREN:
+                                    self.advance()
+                                
+                                while self.current_tok.token == COMMA:
+                                    self.advance()
+                                    craft_result, craft_error = self.crop_dec()
+                                    if craft_error:
+                                        craft_node.errors.extend(craft_error)
+                                    else:
+                                        craft_node.parameters.append(craft_result)
+                                        if self.current_tok.token == RPAREN:
+                                            self.advance()
+                                if self.current_tok.token == CLBRACKET:
+                                    self.advance()
+                                    
+                                    result, body_error = self.body()
+                                    if body_error:
+                                        craft_node.errors = body_error
+                                    
+                                    for item in result:
+                                        craft_node.add_child(item)
+                                    
+                                    program.add_child(craft_node)
+                                    
+                                    while self.current_tok.token == NEWLINE:
+                                        self.advance()
+                                    
+                                    while self.current_tok.token != NEWLINE:
+                                        self.advance()  
+                                        
+                                    self.advance()
+                                    # return program
+                                    
+                    if self.current_tok.token == RPAREN:
+                        self.advance()
+                        self.advance()
+                        result, body_error = self.body()
+                        if body_error:
+                            craft_node.errors = body_error
+                        for item in result:
+                            craft_node.add_child(item)
+                        
+                        program.add_child(craft_node)
+                        self.advance()
 
             # -- this is the main body of our function! 
             # * also i call body() here
+            # main function
+            # pelican syntax
             if self.current_tok.token == PELICAN:
+                self.advance()
+                self.advance()
+                pelican_node = PelicanNode()
+                
                 if self.is_pelican == True:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Only one pelican function allowed!"))
-                    return res, error
-
-                self.is_pelican = True
-                g_res, g_error = self.pelican()
-
-                if g_error:
-                    for err in g_error:
-                        error.append(err)
-                    break
-                else:
-                    res.extend(g_res)
-
+                    program.error(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Pelican function already declared!, Only one pelican function is allowed!"))
+                    return program
+                self.advance()
+                
+                if self.current_tok.token == CLBRACKET:
+                    self.advance()
+                    result, body_error = self.body()
+                    
+                    if body_error:
+                        pelican_node.errors = body_error
+                    
+                    for item in result:
+                        pelican_node.add_child(item)
+                        
+                    program.add_child(pelican_node)
+                    self.advance()
+                    return program
+            
+            # end of program
+            # perfection syntax
             if self.current_tok.token == PERFECTION:
                 self.advance()
                 if self.current_tok.token == TERMINATOR:
@@ -2536,10 +2560,11 @@ class Parser:
 
 
 
-        return res, error
-    
+        return program
+    # main function definition
     #* controls what happens when the compiler encounters the galaxy token
     def pelican(self):
+        result = ParseResult()
         res = []
         error = []
         self.advance()
@@ -2558,42 +2583,41 @@ class Parser:
                     while self.current_tok.token == NEWLINE:
                         self.advance()
                     # -- okay so here we call body
-                    craft_res, craft_error = self.body()
+                    # TODO here we need to wrap it in a parseResult
+                    # remember ParseResult has an error and a node
+                    # maybe here try ko muna extract yung ast? then yung error separate
+                            
+                    craft_res = self.body()
                     
-                    if craft_error:
-                        for err in craft_error:
-                            error.append(err)
-                        return [], error
-                    else:
-                        for f_res in craft_res:
-                            res.extend(f_res)
-                            
                         
-                        if self.current_tok.token != CRBRACKET:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing curly brackets in pelican!"))
-                            
-                        else:
-                            res.append("SUCCESS from PELICAN!")
-                            self.advance()
+                    if self.current_tok.token != CRBRACKET:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing curly brackets in pelican!"))
+                        
+                    else:
+                        
+                        self.advance()
+                        return result.success(craft_res)
+                    
                 else:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Pelican definition missing!"))
                     self.advance()
             else:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis for pelican!"))   
-        #form add(a, b)
+        #craft Add(A, B)
         else:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected parentheses for parameters!"))
             return res, error
         # okay here we need to wrap this in a parseResult
-        return res, error
+        return result.success(craft_res)
 
+    # body of the function, definition
     #* body controls the user defined functions as well as the main function
     def body(self):
         res =  []
         error = []
 
         
-        # * basically yung parse lang pero walang form
+        # * basically yung parse lang pero walang craft
 
         while True:
             if self.is_statement():
@@ -2613,242 +2637,154 @@ class Parser:
                 if self.current_tok.token == NEWLINE:
                     self.advance()
 
-                #not working yung intel
+                #--INITIALIZATION OF IDENTIFIERS
                 if self.current_tok.token in INTEGER:
                     res = self.expr()
-
-                #--INITIALIZATION OF IDENTIFIERS
                 if self.current_tok.token == IDENTIFIER:
+                    crop_name = self.current_tok
                     self.advance()
                     #-- if it's a function call
                     if self.current_tok.token == LPAREN:
-                        c_craft, call_craft_error = self.call_craft()
-                        #self.advance()
-                        if call_craft_error:
-                            error.extend(call_craft_error)
-                            break
-                        else:
+                       craft_call = CraftCallNode(crop_name)
+                       self.advance()
+                        if self.current_tok.token in (INTEGER, FLOAT):
+                            craft_call.add_param(NumberNode(self.current_tok))
                             self.advance()
-                            if self.current_tok.token in TERMINATOR:
-                                res.append(c_craft)
-                                self.advance()
-                            else:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign in call craft!"))
-                    elif self.current_tok.token == SLBRACKET:
-                        self.advance()
-                        if self.current_tok.token in (IDENTIFIER, INTEGER):
-                            val, err = self.assign_val2([PLUS, MINUS, MUL,DIV,MODULUS])
-                            if err:
-                                error.append(err)
-                            print("don: ", self.current_tok)
-                            if self.current_tok.token == SRBRACKET:
-                                self.advance()
-                                if self.current_tok.token == EQUAL or self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
-
-                                    assign, a_error = self.init_var()
-                                    
-                                    
-                                    if a_error:
-                                        error.append(a_error)
-                                        return res, error
-                                    else:
-                                        #self.advance()
-                                        if self.current_tok.token != TERMINATOR:
-                                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign! from init crop"))
-                                            return res, error
-                                        else:
-                                            res.append(assign)
-                                            self.advance()
-                            else:
-                                print("heres the error")
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ] !"))
-                        else:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier!"))
-                            
-
                         
-                    #-- if we assign a value to it but not declaring it        
-                    # so this is a = 1+3; 
-                    elif self.current_tok.token == EQUAL or self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
-
-                        assign, a_error = self.init_crop()
-                        
-                         
-                        if a_error:
-                            error.extend(a_error)
-                            return res, error
-                        else:
-                            #self.advance()
-                            if self.current_tok.token != TERMINATOR:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign! from init crop"))
-                                return res, error
-                            else:
-                                res.append(assign)
-                                self.advance()
-                        
-                    #-- if we increment it
-                    elif self.current_tok.token == INCRE:
-                        self.advance()
-                        if self.current_tok.token != TERMINATOR:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-                        else:
-                            res.append(["SUCCESS from unary post increment"])
+                        elif self.current_tok.token == STRING:
+                            craft_call.add_param(StringNode(self.current_tok))
                             self.advance()
-                    #-- if we decrement it
-                    elif self.current_tok.token == DECRE:
-                        self.advance()
-                        if self.current_tok.token != TERMINATOR:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-                        else:
-                            res.append(["SUCCESS from unary post decrement"])
+                        
+                        elif self.current_tok.token in (TRUE, FALSE):
+                            craft_call.add_param(BooleanNode(self.current_tok))
                             self.advance()
-                    # -- else no other operation for it
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator, increment, decrement, or call craft!"))
-                        return [], error
-
-                if self.current_tok.token == INCRE:
+                        
+                        elif self.current_tok.token == VOIDEGG:
+                            craft_call.add_param(VoidNode(self.current_tok))
+                            self.advance()
+                        
+                        elif self.current_tok.token == IDENTIFIER:
+                            craft_call.add_param(VarAccessNode(self.current_tok))
+                            self.advance()
                     self.advance()
-                    if self.current_tok.token == IDENTIFIER:
-                        self.advance()
-                        if self.current_tok.token != TERMINATOR:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-                        else:
-                            res.append(["SUCCESS from unary pre increment"])
-                            self.advance()
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
-
-                if self.current_tok.token == DECRE:
+                    res.append(craft_call)
                     self.advance()
-                    if self.current_tok.token == IDENTIFIER:
-                        self.advance()
-                        if self.current_tok.token != TERMINATOR:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-                        else:
-                            res.append(["SUCCESS from unary pre decrement"])
+                
+                elif self.current_tok.token == SLBRACKET:
+                    self.advance()
+                    if self.current_tok.token in (IDENTIFIER, INTEGER):
+                        print("DEBUG: pumasok sa SLBRACKET")
+                        index = self.expr()
+                        index = index.node
+                        print("[DEBUG] after: ", self.current_tok) 
+                        if self.current_tok.token == SRBRACKET:
                             self.advance()
+                            if self.current_tok.token == EQUAL or self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
+                                init_var, init_error = self.crop_init(crop_name)
+                                init_vacrope_tok = ListCallNode(crop_name, index)
+                                res.append(init_var)
+                                self.advance()
+                        else:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing square bracket ']'"))
+                    else: 
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or number!"))
+                
+                # create the function of crop initialization
+                elif self.current_tok.token == EQUAL or self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
+                    init_crop, init_error = self.crop_init(crop_name)
+                    res.append(init_crop)
+                    self.advance()
+                        
+                #-- if we increment it
+                elif self.current_tok.token == INCRE:
+                    operation = self.current_tok
+                    self.advance()
+                    if self.current_tok.token != TERMINATOR:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
+                        res.append(PostUnaryNode(VarAccessNode(crop_name), operation))
+                        self.advance()
+                #-- if we decrement it
+                elif self.current_tok.token == DECRE:
+                    operation = self.current_tok
+                    self.advance()
+                    if self.current_tok.token != TERMINATOR:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
+                    else:
+                        res.append(PostUnaryNode(VarAccessNode(crop_name), operation))
+                        self.advance()
+                # -- else no other operation for it
+                else:
+                    print("[DEBUG] error token: ", self.current_tok)
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator, increment, decrement, or call craft!"))
+                    return [], error
+
                 #LOOPS
+                # for loop (fall)
                 if self.current_tok.token in FALL:
-                    print("[DEBUG] pumasok sa fall")
-                    self.advance()
-                    fall_res, fall_error = self.fall_stmt()
+                    '''
+                    fall(crop A = 123$ A < 10$ A++){
 
-                    if fall_error:
-                        error.extend(fall_error)
-                        break
-                    else:
-                        for fres in fall_res:
-                            res.append(fres)
-                            #self.advance()
+                    }
+                    [VarAssignNode, BinOpNode, UnaryNode]
+                    '''
+                    self.advance()
+                    fall_res = self.fall_stmt()
+                    print("[DEBUG] end of fall: ", self.current_tok)
+                    self.advance()
+                    res.append(fall_res)
                     
-                #   winter_stmt   --here  
+                #   winter_stmt (while loop)  
                 if self.current_tok.token in WINTER:
+                    result = self.winter_stmt()
+                    res.append(result)
                     self.advance()
-                    if self.current_tok.token != LPAREN:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected (!"))
-                        return res, error
-                    w_res, w_error = self.if_winter_condition()
-                    if w_error:
-                        for err in w_error:
-                            for e in err:
-                                error.append(e)
-                        return res, error
-                    else:
-                        if self.current_tok.token == CLBRACKET:
-                            self.advance()
-                            if self.in_condition == True:
-                                self.in_condition = False
-                            self.in_loop = True
-                            w_result, w_err = self.body()
-                            if w_err:
-                                for err in w_err:
-                                    error.append(err)
-                                return [], error
-                            else:
-                                for w in w_result:
-                                    res.append(w)
-                                if self.current_tok.token != CRBRACKET:
-                                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing curly bracket for winter!"))
-                                    return [], error
-                                else:
-                                    self.in_loop = False
-                                    self.advance()
-                        else:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected scope for winter!"))
                 
-                
+                # break statement
                 if self.current_tok.token == BREAK:
+                    break_node = BreakNode(self.current_tok)
                     self.advance()
-                    if self.in_loop == True and self.in_condition == True:
+                    #;
+                    res.append(break_node)
+                    self.advance()
                         
-                        if self.current_tok.token == TERMINATOR:
-                            self.advance()
-                        else:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign from break!"))
-
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Break not in valid scope!"))
-                        self.advance()
-
-                if self.current_tok.token == NEXT: # not yet implemented on docs
+                # continue statement (double check this with other files if implemented already)
+                if self.current_tok.token == NEXT: 
+                    next_node = NextNode(self.current_tok)
                     self.advance()
-                    if self.in_loop == True and self.in_condition == True:
-                        if self.current_tok.token == TERMINATOR:
-                            res.append(["SUCCESS from next"])
-                            self.advance()
-                        else:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign from next!"))
-
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "next not in valid scope!"))
-                        self.advance()
+                    #;
+                    res.append(next_node)
+                    self.advance()
 
                 #CONDITIONAL
+                # star (if)
                 if self.current_tok.token in STAR:
+                   #need this for checking skip and continue
                     self.in_condition = True
-                    star_res, star_error = self.star_stmt()
-                    #self.advance() 
-                    if star_error:
-                        error.extend(star_error)
-                        break
-                    else:
-                        for fres in star_res:
-                            res.append(fres)
-                            #self.advance()
-                            self.in_condition = False
 
-                if self.current_tok.token in DEW:
-                    dew_res, dew_error = self.dew_stmt()
                     self.advance()
-
-                    if dew_error:
-                        error.extend(dew_error)
-                        break
-                    else:
-                        for fres in dew_res:
-                            res.append(fres)
-                        self.advance()
+                    if self.current_tok.token != LPAREN:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '('"))
+                        return res, error
+                    self.advance()
+                    star_res = self.star_expr()
+                    # if if_res.error:
+                    #     print("if res error: ", if_res.error.as_string())
+                    #self.advance() 
+                    res.append(star_res)
 
                 #INPUT OUTPUT 
+                # ship (output)
                 if self.current_tok.token in SHIP: 
-                    ship_res, ship_error = self.ship_stmt() 
-                    #self.advance()
-                    if ship_error:
-                        error.extend(ship_error)
-                        break
-                    else:
-                        print('SHIP!: ', self.current_tok)
-                        
-                        if self.current_tok.token  != TERMINATOR:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign in ship!"))
-                            return res, error
-                        else:  
-                            res.append(["SUCCESS from SHIP"])
-                            self.advance()
-                            
+                    self.advance()
+                    #<<
+                    self.advance()
+                    #we're expecting a variable
+                    res.append(ShipNode(VarAccessNode(self.current_tok)))
+                    self.advance()
+                    #;
+                    self.advance()
+                # collect (input) (not yet fixed)    
                 if self.current_tok.token in COLLECT:
                     print("[DEBUG] pumasok dito sa collect")
                     collect_res, collect_error = self.collect_stmt() 
@@ -2865,57 +2801,61 @@ class Parser:
                             self.advance()
 
                         
-                # VAR DECLARATION            
+                # CROP DECLARATION            
                 if self.current_tok.token in CROP: 
-                    var, crop_error = self.crop_dec()
-                    if crop_error:
-                        error.extend(crop_error)
-                        break
-                    #res.append(var)
-                    #self.advance()
-                    
-                    if self.current_tok.token != TERMINATOR:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign, comma, +, -, *, /, %"))
-                        return res, error
-                    else:
-                        self.advance()
-                        res.append(["SUCCESS from variable declaration!"])
+                    if self.current_tok.matches(CROP, 'crop'):
+                        craft_result, craft_error = self.crop_dec() 
+                        if craft_error:
+                            error.append(craft_error)
+                            return res, error
+                        else:
+                            res.append(craft_result)
+                           
+                            while self.current_tok.token == COMMA:
+                                #self.advance()
+                                #we advanced kasi nasa crop tau rn
+                                craft_result, craft_error = self.crop_dec()
+                                
+                                if craft_error:
+                                    error.append(craft_error)
+                                else:
+                                    
+                                    res.append(craft_result)
+                                    if self.current_tok.token == RPAREN:
+                                        self.advance()
+
+                            if self.current_tok.token == TERMINATOR:
+                                self.advance()
                 
-                
+                # function for subfunctions
                 if self.current_tok.token in CRAFT:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "You can't declare a function within a function!"))
                     break
                 
+                # harvest statement (return)
                 if self.current_tok.token == HARVEST:
+                    result = ParseResult()
                     self.advance()
-                    if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOIDEGG and self.current_tok.token != FLOAT and self.current_tok.token != None:
+                    if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOID and self.current_tok.token != FLOAT:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, left parenthesis, true, false, string or voidegg!"))
                         break
                     else:
-                        # self.advance()
-                        harvest, err = self.assign_val()
-                        if err:
-                            for e in err:
-                                #error.append(err)
-                                error.extend(e)
-                                return res, error
-                            
-                        else:
-                            # res.append("SUCCESS from harvest")
-                            # return res, error
-                            if self.current_tok.token != TERMINATOR:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-                                return res, error
-                            else:
-                                print("is pelican?: ", self.is_pelican)
-                                if self.is_pelican == True:
-                                    print("in harvest body")
-                                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Can't call harvest in pelican!"))
-                                    return res, error
-                                else:
-                                    res.append(["SUCCESS! from harvest"])
-                                    self.advance()
+                        expr = result.register(self.expr())
+                        if result.error: 
+                            return res
+                        self.advance()
+
+                        # i want to store this in the galaxy node
+                        res.append(HarvestCallNode(expr))
+                        # if sub_func == True:
+                        #     self.advance()
+                        # else:
+                        #     self.advance()
+                        self.advance()
+                        print("[DEBUG] current val after harvest: ", self.current_tok)
+                        # return res, error
                         
+                # perfection (end statement)
                 if self.current_tok.token == PERFECTION:
                     self.advance()
                     if self.current_tok.token == TERMINATOR:
@@ -2923,7 +2863,7 @@ class Parser:
                         #self.advance()
                         return res, error
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Dollar sign expected for 'perfection'!"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Semicolon expected for 'landing'!"))
 
                 if self.current_tok.token == CRBRACKET:
                     break
@@ -2933,1584 +2873,507 @@ class Parser:
                     break
             
             else:
-                print("[DEBUG]",self.current_tok)
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, collect, ship, identifier, star, ++, --, winter"))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, inner, outer, identifier, if, ++, --, force, do, whirl"))
                 break
-
 
         return res, error
     
+    def crop_dec(self):
+        self.advance()
+        if self.current_tok.token != IDENTIFIER:
+            return None, InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected identifier"
+            )
+        
+        # Token(IDENTIFIER: a)
+        crop_name = self.current_tok
+        list_node = ListNode(crop_name)
+        # print("crop name: ", crop_name)
+        #res.register_advancement()
+        self.advance()
+        # print("this is current variable: ", crop_name)
+        if self.current_tok.token == EQUAL:
+            # print("FOUND AN EQUAL IN VAR DEC")
+            #res.register_advancement()
+            self.advance()
+            # this only gets the node from expr, not the ParserResult
+            # so NumberNode lang tong expr
+            # todo if number, plus, minus, identifier, use expr
+            if self.current_tok.token in (PLUS, MINUS, IDENTIFIER, INTEGER, FLOAT, LPAREN, STRING, VOIDEGG, INCRE, DECRE, negative, TRUE, FALSE):
+                expr = self.expr()
+                # print("we dont have an error in expr")
+                # print("current token after expr: ", self.current_tok)
+                # print("expr: ", type(expr.node))
+                return VarAssignNode(crop_name, expr.node), None
+            # check if it's crop a = [1, 3, true]
+            if self.current_tok.token == SLBRACKET:
+                # print("assigning a list")
+                self.advance()
+                if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, TRUE, FALSE, STRING):
+                    expr = self.expr()
+                    # print("we dont have an error in expr")
+                    # print("current token after first token list: ", self.current_tok)
+                    # print("expr: ", type(expr.node))
+                    list_node.add_item(expr.node)
+                    
+                    while self.current_tok.token == COMMA:
+                        # print("setting list inside comma loop")
+                        self.advance()
+                        expr = self.expr()
+                        # print("we dont have an error in expr")
+                        # print("current token after expr: ", self.current_tok)
+                        # print("expr: ", type(expr.node))
+                        list_node.add_item(expr.node)
+                    # print("token after comma loop:", self.current_tok)
+                if self.current_tok.token == SRBRACKET:
+                    # print('found srbracket')
+                    self.advance()
+                    print(list_node.items)
+                    return VarAssignNode(crop_name, list_node), None
+
+        else:
+            # print("found a comma in crop dec!: ", self.current_tok)
+            if self.current_tok.token == COMMA:
+                return VarAssignNode(crop_name, VoidNode(self.current_tok)), None
+                #return result.success(VarDecNode(crop_name))
+            elif self.current_tok.token == RPAREN:
+                return VarAssignNode(crop_name, VoidNode(self.current_tok)), None
+                #return result.success(VarDecNode(crop_name))
+            elif self.current_tok.token == TERMINATOR:
+                return VarAssignNode(crop_name, VoidNode(self.current_tok)), None
+            else:
+                # print("found error in variable_declaration")
+                return None, InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ), ', ' or ;!")
+                #append a ParseResult instance sa list
+                # res.append(result.success(VarDecNode(crop_name)))
+                #self.advance()
+
+    def crop_init(self, crop_name):
+        #test
+        # self.advance()
+        if self.current_tok.token == EQUAL:
+            operation = self.current_tok
+        elif self.current_tok.token == PLUS_EQUAL:
+            operation = self.current_tok
+        elif self.current_tok.token == MINUS_EQUAL:
+            operation = self.current_tok
+        elif self.current_tok.token == MUL_EQUAL:
+            operation = self.current_tok
+        elif self.current_tok.token == DIV_EQUAL:
+            operation = self.current_tok
+        # todo assignment operators
+
+        self.advance()
+        
+        if self.current_tok.token in (PLUS, MINUS, IDENTIFIER, INTEGER, FLOAT, LPAREN, STRING, VOIDEGG, TRUE, FALSE):
+            expr = self.expr()
+            return VarInitNode(crop_name, expr.node, operation), None
+        # check if it's crop a = [1, 3, true]
+        if self.current_tok.token == SLBRACKET:
+            list_node = ListNode(crop_name)
+            
+            self.advance()
+            print("token after left bracket: ", self.current_tok)
+            if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, TRUE, FALSE, STRING):
+                expr = self.expr()
+                list_node.add_item(expr.node)
+                
+                while self.current_tok.token == COMMA:
+                    self.advance()
+                    expr = self.expr()
+                    
+                    list_node.add_item(expr.node)
+            elif self.current_tok.token == SRBRACKET:
+                self.advance()
+                # print(list_node.items)
+                print("[DEBUG] list node init: ", list_node.items)
+                # self.advance()
+                print("[DEBUG] tok after srbracket: ", self.current_tok)
+                return VarInitNode(crop_name, list_node, operation), None
+                      
+        # todo assignment operators
+        
+        
     # * checks if the current token's a valid statement in body
     def is_statement(self):
         if self.current_tok.token == BREAK or self.current_tok.token == SINGLELINE or self.current_tok.token == COMMENT or self.current_tok.token == NEWLINE or self.current_tok.token in INTEGER or self.current_tok.token == IDENTIFIER or self.current_tok.token in FALL or self.current_tok.token in WINTER or self.current_tok.token in WINTER or self.current_tok.token in SHIP or self.current_tok.token in STAR or self.current_tok.token in DEW or self.current_tok.token in COLLECT or self.current_tok.token in CROP or self.current_tok.token in HARVEST or self.current_tok.token in CRAFT or self.current_tok.token in CRBRACKET or self.current_tok.token in EOF or self.current_tok.token == INCRE or self.current_tok.token == DECRE  or self.current_tok.token == COMMENT or self.current_tok.token == MULTILINE_OPEN or self.current_tok.token == MULTILINE_CLOSE or self.current_tok.token ==PERFECTION:
             return True
         else:
             return False
-
-    #* initialize a variable
-    def init_crop(self):
-        
-        res = []
-        error = []
-        
-        if self.current_tok.token == EQUAL or self.current_tok.token == PLUS_EQUAL:
-            # -- pag equal or plus equal lang pwede string
-            
-            self.advance()
-            
-            assign, err = self.assign_val()
-            if err:
-                #error.append(err)
-                for e in err:
-                    error.append(e)
-                
-            else:
-                res.append("SUCCESS from assign")
-                return res, error
-        elif self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
-            #-- use assign val pero bawal dapat sa string
-            
-            self.advance()
-            # todo dapat arithmetic values lang to since assignment yung ginagawa
-            # should be assign, err = self.assign_val2(PLUS, MINUS, MUL, DIV, MODULUS)
-            assign, err = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
-            
-
-            if err:
-                for e in err:
-                    error.append(e)
-                
-            else:
-                res.append("SUCCESS! from assign")
-                    
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator!"))
-        return res, error
-    
-    #*declare a variable
-    def crop_dec(self):
-        res = []
-        error = []
-        # -- token when entering this function is 'var'
-        self.advance()
-
-        # -- if the user doesnt type an identiifier after 'var'
-        if self.current_tok.token != IDENTIFIER:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier"))
-        else:
-            self.advance()
-            if self.current_tok.token == EQUAL or self.current_tok.token == COMMA:
-                if self.current_tok.token == EQUAL:
-                    # -- USED SELF ASSIGN VAL 1
-                    self.advance()
-                    assign,err = self.assign_val()
-                    if err:
-                        for e in err:
-                            error.append(e)
-                        
-                    else:
-                        #self.advance()
-                        if self.current_tok.token == COMMA:
-                            comma, c_error = self.crop_dec()
-                            
-                            if c_error:
-                                for err in c_error:
-                                    error.append(err)
-                            else:
-                                for c in comma:
-                                    res.append(c)
-                    
-                elif self.current_tok.token == COMMA:
-                    if self.in_star == False:
-                        comma, c_error = self.crop_dec()
-                        
-                        if c_error:
-                            for err in c_error:
-                                error.append(err)
-                        else:
-                            for c in comma:
-                                res.append(c)
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid  condition!"))
-            elif self.current_tok.token == TERMINATOR:
-                res.append("SUCCESS from variable declaration")
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected equal, comma or dollar sign!"))
-
-        return res, error
-    
-    #* assign a value of a variable
-    # -- may string, and boolean here, id, num, void, also paren support, used in =
-    def assign_val(self):
-        res=[]
-        error =[]
-        #print ("VALUE ASSIGNED FROM  ASSIGN_VAL")
-        #self.advance()
-        if self.current_tok.token == STRING:
-            self.advance()
-            while self.current_tok.token in PLUS:
-                self.advance()
-                if self.current_tok.token == STRING or self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == FLOAT :
-                    self.advance()
-                else:
-                    #error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after comma!"))
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or string!"))
-
-            return res, error
-        if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER:
-            n_res, n_error = self.assign_val2([PLUS, MINUS, DIV, MODULUS, MUL])
-            
-            if n_error:
-                for err in n_error:
-                    error.append(err)
-            else:
-                res.append("Success form ident assign!")
-
-            return res, error
-
-        elif self.current_tok.token == LPAREN:
-            
-            n_res, n_error = self.assign_val2([PLUS, MINUS, DIV, MODULUS, MUL])
-
-            if n_error:
-                for err in n_error:
-                    
-
-                    error.append(err)
-            else:
-                
-                res.append("Success form ident assign!")
-                
-        elif self.current_tok.token == TRUE:
-            self.advance()
-            return res, error
-        elif self.current_tok.token == FALSE:
-            self.advance()
-            return res, error
-        
-        
-        # Check for collect statement
-        elif self.current_tok.token == COLLECT:
-            print(f"[DEBUG] Collect statement detected.")
-            self.advance()
-
-            # Ensure opening parenthesis
-            if not self.current_tok or self.current_tok.token != "(":
-                error.append(InvalidSyntaxError(
-                    getattr(self.current_tok, 'pos_start', "Unknown"),
-                    getattr(self.current_tok, 'pos_end', "Unknown"),
-                    "Expected '(' after 'collect'!"
-                ))
-                return res, error
-
-            self.advance()
-            print(f"[DEBUG] Opening parenthesis detected: {self.current_tok.token}")
-            # Ensure string prompt
-            if not self.current_tok or self.current_tok.token != "StrLit":
-                error.append(InvalidSyntaxError(
-                    getattr(self.current_tok, 'pos_start', "Unknown"),
-                    getattr(self.current_tok, 'pos_end', "Unknown"),
-                    "Expected a prompt string inside 'collect'!"
-                ))
-                return res, error
-
-            prompt_message = self.current_tok.token
-            print(f"[DEBUG] Prompt message identified: {prompt_message}")
-            res.append(f"Collect statement with prompt: {prompt_message}")
-            
-            self.advance()
-
-            # Ensure closing parenthesis
-            if not self.current_tok or self.current_tok.token != ")":
-                error.append(InvalidSyntaxError(
-                    getattr(self.current_tok, 'pos_start', "Unknown"),
-                    getattr(self.current_tok, 'pos_end', "Unknown"),
-                    "Expected ')' to close 'collect' statement!"
-                ))
-                return res, error
-            
-            print(f"[DEBUG] Closing parenthesis detected: {self.current_tok.token}")
-            self.advance()
-            return res, error
-        
-        elif self.current_tok.token == SLBRACKET:
-            l_res, l_err = self.init_list()
-            if l_err:
-                for err in l_err:
-                    error.append(err)
-            else:
-                res.append("Success form list init!")
-                self.advance()
-        elif self.current_tok.token == VOIDEGG:
-            self.advance()
-            return res, error
-        # elif self.current_tok.token == INCRE or self.current_tok.token == DECRE:
-        #     if self.in_farmhouse == True:
-        #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
-        #         return res, error
-        #     self.advance()
-        #     if self.current_tok.token != IDENTIFIER:
-        #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier!"))
-        #     else:
-        #         self.advance()
-
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, boolean, string, list, or void!"))
-    
-        return res, error
-        
-    
-    def assign_val2(self, ops):
-        res = []
-        error = []
-        num =  []
-
-        
-        if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER or self.current_tok.token == STRING:
-            if self.current_tok.token in (INTEGER, FLOAT):
-                num.append(self.current_tok.token)
-            if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == STRING:
-                self.advance()
-
-                if self.current_tok.token not in ops:
-                    return res, error
-                check, err = self.num_loop(num, ops)
-                print("after num loop: ", self.current_tok)
-                if err:
-                    # print("FOUND AN ERROR IN NUM LOOP")    
-                    for e in err:
-                        error.append(e)
-                        # print('error in num loop: ', e.as_string())
-                    # print("i'll return the num loop now")
-                    # print("error list: ", error)
-                    #self.advance()
-                    return [], error
-                else:
-                    # print("checked")
-                    # #self.advance()
-                    # print("after checked: ", self.current_tok)
-                    res.append(["okay yung num loop!"])
-                return res, error
-                
-                
-                
-            elif self.current_tok.token == "Identifier":
-                # print("assign val 2 ident")
-                # print("first value in assign val is an identifier")
-                self.advance()
-                if self.in_farmhouse == True:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
-                    return res, error
-                if self.current_tok.token == "(":
-                    if self.in_farmhouse == True:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot call form in farmhouse declaration/initialization!"))
-                        return res, error
-                    # print("we assigned a function call to a variable")
-                    c_form, call_craft_error = self.call_craft()
-                    # print("token after call form in assign val: ", self.current_tok.token)
-                    #self.advance()
-                    # print('call form result in assign val:', c_form)
-                    if call_craft_error:
-                        print("ERROR IN VALL FORM")
-                        for err in call_craft_error:
-                            error.append(err)
-                        
-                    else:
-                        self.advance()
-                        print("FOUND FORM CALL OPERAND HERE: ", self.current_tok)
-                        if self.current_tok.token in (MUL, DIV, PLUS, MINUS, MODULUS):
-                            # -- USED SELF.ASSIGN_VAL()
-                            self.advance()
-                            check, err = self.assign_val2([MUL, DIV, PLUS, MINUS, MODULUS])
-                            print("token after form arith: ", self.current_tok)
-                            if  err:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected semicolon!!"))
-
-                            else:
-                                res.append("Success form ident assign!")
-                        return res, error
-                elif self.current_tok.token == SLBRACKET:
-                    # print("assign val 2 list")
-                    #TODO LIST
-                    # print("you got a list")
-                    self.advance()
-                    list, err = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
-                    # print('after list index: ', self.current_tok)
-                    # print("list: ", err)
-                    if err:
-                        #error.append(err)
-                        for e in err:
-                            error.append(e)
-                        #return res, error
-                    else:
-                        if self.current_tok.token != SRBRACKET:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing bracket for list!"))
-                        else:
-                            # print("Sucess from assign list")
-                            self.advance()
-                            num, err = self.num_loop()
-                            if err:
-                                error.append(err)
-                            else:
-                                res.append("Success form ident assign!")
-                # elif self.current_tok.token in (INCRE, DECRE):
-                #     if self.in_farmhouse == True:
-                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
-                #         return res, error
-                #     #self.advance()
-                    
-                #     res.append("success unary init")
-                #     self.advance()
-                #     ########
-                else:
-                    # print('FIRST OPERAND IS AN IDENTIFIER')
-                    num, err = self.num_loop()
-                    if err:
-                        error.append(err)
-                    else:
-                        res.append("Success form ident assign!")
-
-        elif self.current_tok.token == LPAREN:
-            print("PARENTHESIS IN ASSIGN")
-            self.advance()
-            if self.current_tok.token == RPAREN:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier or left parenthesis!"))   
-            else:
-                check, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
-            #self.advance()
-                
-                if err:
-                    error.append(err)
-                    
-
-                else:
-                    if self.current_tok.token == RPAREN:
-                        print("found closing")
-                        self.advance()
-                        
-                        if self.current_tok.token in (PLUS, MINUS, DIV, MUL, MODULUS):
-                            print("found operator  after paren")
-                            self.advance()
-                            num, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
-                            if  err:
-                                for e in err:
-                                    error.append(e)
-
-                            else:
-                                res.append("Success form ident assign!")
-
-                        return res, error
-                        
-                            
-                        #return True
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis! assign val 2 lparen"))
-        # elif self.current_tok.token == INCRE or self.current_tok.token == DECRE:
-        #     self.advance()
-        #     if self.current_tok.token != IDENTIFIER:
-        #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier!"))
-        #     else:
-        #         self.advance()
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier or left parenthesis!"))
-    
-        return res, error
-        
-    def num_loop(self, check = [], ops = []):
-        res = []
-        error = []
-        ops_string = ""
-        #num = []
-        # print("current tok in num loop: ", self.current_tok)
-        while self.current_tok.token in (PLUS, MINUS, DIV, MUL, MODULUS):
-            ops_string += self.current_tok.token
-            self.advance()
-            if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
-                self.advance()
-                if self.current_tok.token in (INTEGER, FLOAT):
-                    # print("found NUMBER")
-                    check.append(self.current_tok.token)
-                elif self.current_tok.token == SLBRACKET:
-                    self.advance()
-                    print("num loop slbracket")
-                    if self.current_tok.token in (IDENTIFIER, INTEGER):
-                        # self.advance()
-                        var, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
-                        if err:
-                            error.append(err)
-                        if self.current_tok.token in SRBRACKET:
-                            print("found srbracket")
-                            self.advance()
-                        else:
-                            print('no ]')
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ]"))
-                    else:
-                        print("no ] 1")
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ]"))
-
-
-            elif self.current_tok.token == LPAREN:
-                # print("found a left paren in num loop")
-                self.advance()
-
-                if self.current_tok.token == RPAREN:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, or open parenthesis!"))
-                    
-                num, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
-                # print("CURRENT TOKEN AFTER PARENTHESIS ASSIGN VAL CALL IN NUM LOOP: ", self.current_tok)
-                if self.current_tok.token != RPAREN:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parethesis in arithmetic expression!"))
-                    
-                else:
-                    # print("found closing")
-                    self.advance()
-                    
-                        
-                    if self.current_tok.token in (PLUS, MINUS, DIV, MUL, MODULUS):
-                        # print("found operator  after paren in num loop: ",  self.current_tok)
-                        self.advance()
-                        num, err = self.assign_val2(ops)
-                        if  err:
-                            for e in err:
-                                error.append(e)
-                        else:
-                            return res, error
-
-                    return res, error
-                
-
-            elif self.current_tok.token == STRING:
-                # print("check:", check)
-                # print("there's a string here")
-                if "-" in ops_string or "/" in ops_string or "%" in ops_string or "*" in ops_string:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected + !"))
-                    # print("ERROR IN STRING OPS")
-                elif INTEGER in check or FLOAT in check:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot concat string with number!"))
-                    # print("ERROR IN STRING OPS")
-                else:
-                    # print("advanced after string found")
-                    self.advance()
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier or left parenthesis!"))
-                return res, error
-
-        
-            # else:
-            #     return False
-        # print("end the num lop value: ", self.current_tok)
-        return res, error
-          
-
-    #* DECLARING A CRAFT OR SUBFUNCTION
-    def init_craft(self):
-        res = []
-        error = []
-
-        print(f"[DEBUG] Starting init_craft with token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Advance to check for form identifier
-        self.advance()
-        if self.current_tok.token == "Identifier":
-            print(f"[DEBUG] Form name found: {self.current_tok.token}")
-            self.advance()
-
-            # Check for opening parenthesis '('
-            if self.current_tok.token == "(":
-                print(f"[DEBUG] Found opening parenthesis: {self.current_tok.token}")
-                self.advance()
-
-                # Check if first parameter is a crop
-                if self.current_tok.token == CROP:
-                    print("[DEBUG] Found 'crop' keyword in parameters")
-                    self.advance()
-
-                    # Ensure crop is followed by an identifier
-                    if self.current_tok.token == "Identifier":
-                        print(f"[DEBUG] Found identifier after 'crop': {self.current_tok.token}")
-                        self.advance()
-
-                       # Handle comma-separated parameters
-                        while self.current_tok.token == ",":
-                            print(f"[DEBUG] Found comma, processing next parameter")
-                            self.advance()
-                            if self.current_tok.token == CROP:
-                                print(f"[DEBUG] Found 'crop' keyword after comma")
-                                self.advance()
-                                if self.current_tok.token == "Identifier":
-                                    print(f"[DEBUG] Found identifier after 'crop': {self.current_tok.token}")
-                                    self.advance()
-                                else:
-                                    error.append(InvalidSyntaxError(
-                                        self.current_tok.pos_start,
-                                        self.current_tok.pos_end,
-                                        "Expected identifier after 'crop' in parameter list!"
-                                    ))
-                                    return res, error
-                            else:
-                                error.append(InvalidSyntaxError(
-                                    self.current_tok.pos_start,
-                                    self.current_tok.pos_end,
-                                    "Expected 'crop' after comma in parameter list!"
-                                ))
-                                return res, error
-
-                        # Ensure closing parenthesis ')'
-                        if self.current_tok.token != ")":
-                            error.append(InvalidSyntaxError(
-                                self.current_tok.pos_start,
-                                self.current_tok.pos_end,
-                                "Expected closing parenthesis in craft parameters!"
-                            ))
-                            return res, error
-                        else:
-                            print(f"[DEBUG] Found closing parenthesis: {self.current_tok.token}")
-                            self.advance()
-
-                        # Check for opening curly bracket '{'
-                        if self.current_tok.token == "{":
-                            print(f"[DEBUG] Found opening curly bracket: {self.current_tok.token}")
-                            self.advance()
-
-                            # Skip any newlines
-                            while self.current_tok.token == NEWLINE:
-                                self.advance()
-                                print("[DEBUG] pumasok na sa newline")
-                            # Verify the token after newlines
-                            print(f"[DEBUG] Token after skipping newlines: {self.current_tok.token if self.current_tok else 'None'}")
-                            print(f"[DEBUG] Token after snewline: {self.current_tok.token if self.current_tok else 'None'}")
-                            
-                            # Process the body of the craft
-                            craft_res, craft_error = self.body()
-                            if craft_error:
-                                print("[DEBUG] Error inside the craft body")
-                                error.extend(craft_error)
-                                return [], error
-                            else:
-                                print("[DEBUG] Successfully processed craft body")
-                                res.extend(craft_res)
-
-                            # Ensure closing curly bracket '}'
-                            if self.current_tok.token != "}":
-                                error.append(InvalidSyntaxError(
-                                    self.current_tok.pos_start,
-                                    self.current_tok.pos_end,
-                                    "Expected closing curly bracket in craft definition!"
-                                ))
-                                return res, error
-                            else:
-                                print(f"[DEBUG] Found closing curly bracket: {self.current_tok.token}")
-                                self.advance()
-                                res.append("SUCCESS from CRAFT!")
-                        else:
-                            error.append(InvalidSyntaxError(
-                                self.current_tok.pos_start,
-                                self.current_tok.pos_end,
-                                "Expected opening curly bracket for craft body!"
-                            ))
-                            return res, error
-                    else:
-                        error.append(InvalidSyntaxError(
-                            self.current_tok.pos_start,
-                            self.current_tok.pos_end,
-                            "Expected identifier after 'crop' in parameter list!"
-                        ))
-                        return res, error
-                elif self.current_tok.token == "[":
-                    print(f"[DEBUG] Empty parameter list detected")
-                    self.advance()
-
-                    # Check for opening curly bracket '{'
-                    if self.current_tok.token == "{":
-                        print(f"[DEBUG] Found opening curly bracket: {self.current_tok.token}")
-                        self.advance()
-
-                        # Skip any newlines
-                        while self.current_tok.token == "NEWLINE":
-                            self.advance()
-
-                        # Process the body of the form
-                        craft_res, craft_error = self.body()
-                        if craft_error:
-                            print("[DEBUG] Error inside the craft body")
-                            error.extend(craft_error)
-                            return [], error
-                        else:
-                            print("[DEBUG] Successfully processed craft body")
-                            res.extend(craft_res)
-
-                        # Ensure closing curly bracket '}'
-                        if self.current_tok.token != "}":
-                            error.append(InvalidSyntaxError(
-                                self.current_tok.pos_start,
-                                self.current_tok.pos_end,
-                                "Expected closing curly bracket in craft definition!"
-                            ))
-                            return res, error
-                        else:
-                            print(f"[DEBUG] Found closing curly bracket: {self.current_tok.token}")
-                            self.advance()
-                            res.append("SUCCESS from CRAFT!")
-                    else:
-                        error.append(InvalidSyntaxError(
-                            self.current_tok.pos_start,
-                            self.current_tok.pos_end,
-                            "Expected opening curly bracket for craft body!"
-                        ))
-                        return res, error
-                else:
-                    error.append(InvalidSyntaxError(
-                        self.current_tok.pos_start,
-                        self.current_tok.pos_end,
-                        "Expected 'crop' or ')' in craft parameters!"
-                    ))
-                    return res, error
-            else:
-                error.append(InvalidSyntaxError(
-                    self.current_tok.pos_start,
-                    self.current_tok.pos_end,
-                    "Expected opening parenthesis '(' for craft parameters!"
-                ))
-                return res, error
-        else:
-            error.append(InvalidSyntaxError(
-                self.current_tok.pos_start,
-                self.current_tok.pos_end,
-                "Expected form identifier!"
-            ))
-            return res, error
-
-        return res, error
-
-    
-    # * INITIALIZE A LIST
-    def init_list(self):
-        res = []
-        error = []
-        #-- so una muna yung SLBRACKET
-        self.advance()
-        if self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == STRING or self.current_tok.token == TRUE or self.current_tok.token == FALSE or self.current_tok.token == FLOAT:
-        
-            self.advance()
-            if self.current_tok.token == COMMA:
-                #if comma yung current, find identifier, next, then if comma, next, and repeat
-                a_error = self.list_literal()
-                if a_error:
-                     
-                    error.extend(a_error)
-                
-                else:
-                    if self.current_tok.token != SRBRACKET:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing square bracket or comma!"))
-                        self.advance()
-                    else: 
-
-                        res.append(["SUCCESS from list init!"])
-                            
-            elif self.current_tok.token == SRBRACKET:
-                res.append(["SUCCESS from init list!"])
-                    
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected comma or ]"))
-
-        elif self.current_tok.token == SRBRACKET:
-            
-            res.append(["SUCCESS from list  init!"])         
-
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected number, identifier, string, true, or false"))
-
-
-        return res, error
-    
-    #* CALLING A FORM
-    def call_craft(self):
-        res = []
-        error = []
-        
-        self.advance()
-        if self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == STRING or self.current_tok.token == TRUE or self.current_tok.token == FALSE or self.current_tok.token == FLOAT or self.current_tok.token == VOIDEGG:
-        
-            val, err = self.assign_val2([PLUS,MINUS, DIV, MUL, MODULUS])
-            if err:
-                error.append(err)
-            if self.current_tok.token == COMMA:
-                #if comma yung current, find identifier, next, then if comma, next, and repeat
-                a_error = self.arguments()
-                if a_error:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, true, false, or string after commna!"))
-                
-                else:
-                    if self.current_tok.token != RPAREN:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-                        self.advance()
-                    else: 
-
-                        res.append(["SUCCESS from function call!"])
-                            
-            elif self.current_tok.token == RPAREN:
-                res.append(["SUCCESS from function call!"])
-                    
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-
-        elif self.current_tok.token == RPAREN:
-            
-            res.append(["SUCCESS from function call!"])         
-
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, string, boolean, ), or void!"))
-
-        return res, error
-    
-    def arguments (self):
-        error = False
-        while self.current_tok.token  == COMMA:
-            self.advance()
-            if self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == STRING or self.current_tok.token == TRUE or self.current_tok.token == FALSE or self.current_tok.token==FLOAT or self.current_tok.token == VOIDEGG :
-                self.advance()
-            else:
-                #error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after comma!"))
-                error = True
-        return error
-    
-    def list_literal (self):
-        res = []
-        error = []
-        #error = False
-        while self.current_tok.token  == COMMA:
-            self.advance()
-            if self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == STRING or self.current_tok.token == TRUE or self.current_tok.token == FALSE or self.current_tok.token==FLOAT :
-                self.advance()
-                
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, string, or boolean value!"))
-
-        return error
-
-    def comma(self):
-        res = []
-        error = []
-        #error = False
-        while self.current_tok.token  == COMMA:
-            self.advance()
-            if self.current_tok.token == CROP:
-                self.advance()
-                if self.current_tok.token == IDENTIFIER:
-                    self.advance()
-                else:
-                    #error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after comma!"))
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier "))
-
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop "))
-                
-                
-        return res, error
     
     #*LOOPING STATEMENTS
+    # fall loop (for loop)
     def fall_stmt(self):
-        res = []
-        error = []
-        #TODO create 
-        if self.current_tok.token == LPAREN:
-            self.advance()
-            crop, crop_error = self.if_first_condition()
-            print("[DEBUG] ok na sa first condition")
-            if crop_error:
-                error.extend(crop_error)
-                return res, error
-            else:
-                #self.advance()
-                #TODO relational operator
-                rel, rel_error = self.fall_rel()
-                # ! DITO DAPAT YUNG SEMICOLON
-                if rel_error:
-                    error.extend(rel_error)
-                    return res, error
-                else:
-                    #TODO unary and assignment
-                        #self.advance()
-                    if self.current_tok.token == TERMINATOR:
-                        #res.append(["SUCCESS from "])
-                        self.advance()
-                        print("ok na sa second condition")
-                        #return res, error
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign from 2nd condition!"))
-                        return res, error
-                    
-                    # * nasa identifier tayo rn
-                    rel2, rel2_error = self.star_iteration()
-                    #nasa r paren tayo if ever nag assign value tayo sa iteration
-                    #self.advance()
-                    if rel2_error:
-                        error.extend(rel2_error)
-                        return res, error
-                    else:
-                        #self.advance()
-                        # print("success 3rd condition")
-                        # print("after success 3rd condition:" , self.current_tok)
-                        if self.current_tok.token != RPAREN:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis for FALL!"))
-                        else:
-                            self.advance()
-                            # print("success condition")
-                            #TODO FORCE SCOPE
-                            if self.current_tok.token == CLBRACKET:
-                                if self.in_condition == True:
-                                    self.in_condition = False
-                                self.in_loop = True
-                                self.advance()
-                                fall_res, fall_error = self.body()
-                                # print(" res: ", res)
-                                if fall_error:
-                                    print("THERES  AN ERROR INSIDE THE FORCE SCOPE")
-                                    for err in fall_error:
-                                        error.append(err)
-                                    return [], error
-                                else:
-                                    for f_res in fall_res:
-                                        res.append(f_res)
-                                        # print("f res: ", f_res)
-                                    res.append([f"SUCCESS from FALL"])
-                                    self.advance()
-                            else:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid  scope!"))
-        return res, error
-
-    # -- need a function for the var dec of 
-    def if_crop_dec(self):
-        res = []
-        error = []
-        # -- token when entering this function is 'var'
-        self.advance()
-
-        # -- if the user doesnt type an identiifier after 'var'
-        if self.current_tok.token != IDENTIFIER:
-            print("bro put an identifier!")
-            print("current tok: ", self.current_tok.token)
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier"))
-        else:
-            # print("u good")
-            self.advance()
-            
-            if self.current_tok.token == EQUAL:
-                # print("value after equal: ", self.current_tok)
-                # -- USED SELF ASSIGN VAL 2 kasi number lang
-                self.advance()
-                assign,err = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
-                if err:
-                    for e in err:
-                        error.append(e)
-                    
-                else:
-                    #self.advance()
-                    # print("CURRENT TOKEN FROM VAR DEC INIT: ", self.current_tok)
-                    res.append("success init first statement ")
-                
-            
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected = !"))
-
-            #res.append("SUCCESS! from variable declaration")
-
-
-        return res, error
-    
-    #-- need ng init function for  lang
-    def fall_init_crop(self):
-        res = []
-        error = []
-        if self.current_tok.token == EQUAL:
-            print("in init crop")
-            self.advance()
-            assign, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
-            print("assign: ", err)
-            if err:
-                #error.append(err)
-                for e in err:
-                    error.append(e)
-
-
-            else:
-                # semicolon current char
-                if self.current_tok.token != TERMINATOR:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign after first statement"))
-                else:    
-                    res.append(" first condition")
-                    self.advance()
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected = !"))
-
-        return res, error
-    # combine lang  init and var
-    def if_first_condition(self):
-        res = []
-        error = []
-        if self.current_tok.token == CROP:
-            # print("this is a var token")
-            crop, crop_error = self.if_crop_dec()
-            if crop_error:
-                error.extend(crop_error)
-                return res, error
-            #res.append(var)
-            #self.advance()
-            # print("current token from var dec parse: ", self.current_tok)
-            
-            if self.current_tok.token != TERMINATOR:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-            else:
-                self.advance()
-                res.append([" first condition"])
-        elif self.current_tok.token == "Identifier":
-            self.advance()
-            init_res, init_err = self.fall_init_crop()
-            if init_err:
-                error.extend(init_err)
-            else:
-                res.append([" first condition init"])
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid  condition!"))
-
-        return res, error   
-         
-    # -- need relational for 
-    def fall_rel(self):
-        res = []
-        error = []
-        if self.current_tok.token == NOT_OP:
-            self.advance()
-            if self.current_tok.token != LPAREN:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please enclose the relation operation in parenthesis!"))
-        if self.current_tok.token == LPAREN:
-            print("found lparen")
-            self.advance()
-            f_rel, f_err = self.star_rel()
-            if f_err:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid relational operation!"))
-                return res, error
-            else:
-                print("sucess for 2nd rel in paren: ", self.current_tok)
-                if self.current_tok.token == RPAREN:
-                    res.append("lparen good")
-                    self.advance()
-                    return res, error
-                else:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-                    return res, error
-
-
-        elif self.current_tok.token == IDENTIFIER:
-            self.advance()
-            if self.current_tok.token in REL_OP:
-                self.advance()
-                if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER, LPAREN):
-                
-                    n_res, n_error = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
-                    # print("assign val in arith rel op left in 3: ", self.current_tok.token)
-                    if n_error:
-                        for err in n_error:
-                            error.append(err)
-                        return res, error
-                    #self.advance()
-
-                else:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier, or lparen!"))
-                    print("error operand: ", self.current_tok)
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected <, >, <=, >=, !=  "))
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid  loop!"))
-            print("error operand: ", self.current_tok)
-
-
-        return res, error
-
-    # -- need unary statement for 
-    def star_iteration(self):
-        res = []
-        error = []
-        #--INITIALIZATION OF IDENTIFIERS
-        if self.current_tok.token == IDENTIFIER:
-            self.advance()
-            #-- if we assign a value to it but not declaring it           
-            if self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
-                print("initialize the variable")
-                assign, a_error = self.init_crop()
-
-                if a_error:
-                    error.extend(a_error)
-                    
-                else:
-                    #self.advance()
-                    return res, error
-            #-- if we increment it
-            elif self.current_tok.token == INCRE:
-                self.advance()
-                return res, error
-            #-- if we decrement it
-            elif self.current_tok.token == DECRE:
-                self.advance()
-                return res, error
-            # -- else no other operation for it
-            else:
-                print('INVALID IDENT OPERATION')
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected --, ++, +=, -=, *=, /="))
-                return [], error
-        elif self.current_tok.token == INCRE:
-            self.advance()
-            if self.current_tok.token == IDENTIFIER:
-                self.advance()
-                
-                return res, error
-            
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after increment!"))
-
-        elif self.current_tok.token == DECRE:
-            self.advance()
-            if self.current_tok.token == IDENTIFIER:
-                self.advance()
-                return res, error
-                    
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifierafter decrement!"))
-
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, ++, or --"))
+        #return a list of []
         
-
-        return res, error
-
-
-    def winter(self):
-        res = []
-        error = []
-        print("first token in winter: ", self.current_tok)
-        
+        #TODO create force
         if self.current_tok.token == LPAREN:
             self.advance()
-            if self.current_tok.token == IDENTIFIER:
+            if self.current_tok.token == CROP:
+                if self.current_tok.matches(CROP, 'crop'):
+                    cropdec_result, cropdec_error = self.variable_declaration()
+                    if cropdec_error:
+                        print("found error in: ", cropdec_error.as_string())
+                        
+                    else:
+                        # print("no error in fall crop dec: ", self.current_tok)
+                        
+                        if self.current_tok.token == TERMINATOR:
+                            fall_node_variable = cropdec_result
+                            self.advance()
+            elif self.current_tok.token == IDENTIFIER:
+                crop_name = self.current_tok
                 self.advance()
-                if self.current_tok.token == E_EQUAL or self.current_tok.token == LESS_THAN or self.current_tok.token == GREATER_THAN or self.current_tok.token == GREATER_THAN_EQUAL or self.current_tok.token == LESS_THAN_EQUAL or self.current_tok.token == NOT_EQUAL:
+                # = 
+                self.advance()
+                #assign value dapat
+                if self.current_tok.token in (PLUS, MINUS, IDENTIFIER, INTEGER, FLOAT, LPAREN):
+                    expr = self.expr()
+                    #self.advance()
+                    fall_node_variable = VarInitNode(crop_name, expr.node)
                     self.advance()
-                    if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER or self.current_tok.token == STRING:
-                        self.advance()
-                        if self.current_tok.token == RPAREN:
-                            res.append('SUCCESS from winter!')
-                        else:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis! winter"))
 
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier! winter"))
-                        
-                else:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected relational operator!"))
-
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier for winter!"))
-
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected condition for winter!"))
-
-        return res, error
-    
-    # INPUT AND OUTPUT STATEMENT
-    def ship_stmt(self):
-        res = []
-        error = []
-
-        # Debugging: Print current token
-        print(f"[DEBUG] Starting ship_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Step 1: Check for '(' after 'ship'
-        self.advance()
-        print(f"[DEBUG] After advancing, token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        if not self.current_tok or self.current_tok.token != "(":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected '(' after 'ship'!"
-            ))
-            return res, error
-
-        res.append(self.current_tok.token)  # Add the '('
-        self.advance()
-
-        # CONTENTS OF 'SHIP' STATEMENT
-        expecting_value = True
-        while self.current_tok:
-            print(f"[DEBUG] Looping, current token: {self.current_tok.token if self.current_tok else 'None'}")
-
-            if expecting_value:
-                # Accept a value (StrLit, IDENTIFIER, etc.)
-                if self.current_tok.token in ("StrLit", "Identifier", "IntLit", "FloatLit"):
-                    res.append(self.current_tok.token)
-                    print(f"[DEBUG] Valid token added: {self.current_tok.token}")
+                            # -----------------------------
+            #call expr here
+            if self.current_tok.token in (PLUS, MINUS, IDENTIFIER, INTEGER, FLOAT, LPAREN):
+                condition = self.own_if_expr()
+                #sobrang buried nya sa ParseResult hahaha
+                fall_node_condition = condition.node.node
+                fall_node = FallNode(fall_node_condition)
+                fall_node.variable = fall_node_variable
+                if self.current_tok.token == TERMINATOR:
                     self.advance()
-                    expecting_value = False  # After a value, expect a comma or closing parenthesis
-                else:
-                    error.append(InvalidSyntaxError(
-                        getattr(self.current_tok, 'pos_start', "Unknown"),
-                        getattr(self.current_tok, 'pos_end', "Unknown"),
-                        f"Expected a valid value inside 'ship', but got '{self.current_tok.token}'!"
-                    ))
-                    return res, error
-            else:
-                # Accept a comma or a closing parenthesis
-                if self.current_tok.token == ",":
-                    res.append(self.current_tok.token)
-                    print(f"[DEBUG] Comma found: {self.current_tok.token}")
-                    self.advance()
-                    print(f"[DEBUG] Advanced to token: {self.current_tok.token if self.current_tok else 'None'}")
-                    expecting_value = True  # After a comma, expect another value
-                elif self.current_tok.token == ")":
-                    print(f"[DEBUG] Closing parenthesis found.")
-                    res.append(self.current_tok.token)  # Add the ')'
-                    self.advance()
-                    break  # Exit loop if closing parenthesis is found
-                else:
-                    error.append(InvalidSyntaxError(
-                        getattr(self.current_tok, 'pos_start', "Unknown"),
-                        getattr(self.current_tok, 'pos_end', "Unknown"),
-                        f"Expected ',' or ')' but got '{self.current_tok.token}'!"
-                    ))
-                    return res, error
-
-        # CLOSING 
-        if not res or res[-1] != ")":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected ')' to close 'ship' statement!"
-            ))
-            return res, error
-
-        print(f"[DEBUG] Completed parsing ship statement: {res}")
-        return res, error
-    
-    
-    def collect_stmt(self):
-        res = []
-        error = []
-
-        # Debugging: Print current token
-        print(f"[DEBUG] Starting collect_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Step 1: Ensure opening parenthesis '('
-        if not self.current_tok or self.current_tok.token != "(":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected '(' after 'collect'!"
-            ))
-            return res, error
-
-        res.append(self.current_tok.token)  # Add '('
-        self.advance()
-        print(f"[DEBUG] After checking '(', token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Step 2: Check for prompt string
-        if not self.current_tok or self.current_tok.token != "StrLit":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected a prompt string inside 'collect' statement!"
-            ))
-            return res, error
-
-        prompt_message = self.current_tok.token
-        print(f"[DEBUG] Prompt message identified: {prompt_message}")
-        res.append(prompt_message)  # Add prompt message
-        self.advance()
-
-        # Step 3: Ensure closing parenthesis ')'
-        if not self.current_tok or self.current_tok.token != ")":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected ')' to close 'collect' statement!"
-            ))
-            return res, error
-
-        res.append(self.current_tok.token)  # Add ')'
-        self.advance()
-        print(f"[DEBUG] After checking ')', token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        print(f"[DEBUG] Successfully processed 'collect' statement")
-        res.append(f"Processed collect statement: collect({prompt_message})")
-
-        return res, error
-
-    
-    #*CONDITIONAL
-    #FUNC FOR IF, ELSE, ELSEIF
-    def star_stmt(self):
-        res = []
-        error = []
-        self.advance()
-        if self.current_tok.token == "(":
-            self.advance()
-            c_ces, c_error = self.if_winter_condition()
-            if c_error:
-                for err in c_error:
-                    error.append(err)
-            else:
-                
-                if self.current_tok.token == ")":
-                    self.advance()
-                    # if self.current_tok.token == NEWLINE:
-                    #     self.advance()
-                    if self.current_tok.token == "{":
-                        self.advance()
-                        star_res, star_error = self.body()
-                        # print("if res: ", res)
-                        if star_error:
-                            print("THERES  AN ERROR INSIDE THE STAR SCOPE")
-                            for err in star_error:
-                                error.append(err)
-                            return [], error
-                        else:
-                            # print("successful if!")
-                            for f_res in star_res:
-                                res.append(f_res)
-                                # print("f res: ", f_res)
-                            res.append([f"SUCCESS from star"])
-                            self.advance()
-
-                            while self.current_tok.token == STARDEW: #elseif
-                                if self.current_tok.token in STARDEW:
-                                    # print("this is an elif statement")
-                                    stardew_res, stardew_error = self.stardew_stmt()
-                                    #self.advance()
-
-                                    if stardew_error:
-                                        # for err in elif_error:
-                                        #     error.append(err)
-                                        for err in stardew_error:
-                                            error.append(err)
-
-                                    else:
-                                        for fres in stardew_res:
-                                            res.append(fres)
-                                            # print("current token from elseif parse: ", self.current_tok)
-                                        #self.advance()
-                            # print("token after last elseif: ", self.current_tok)
-                            if self.current_tok.token == DEW:
-                                # print('ELSE FOUND')
-                                dew_res, dew_error = self.dew_stmt()
-                                    #self.advance()
-
-                                if dew_error:
-                                    # for err in elif_error:
-                                    #     error.append(err)
-                                    for err in dew_error:
-                                        error.append(err)
-
-                                else:
-                                    for fres in dew_res:
-                                        res.append(fres)
-                                        # print("current token from else parse: ", self.current_tok)
-                            #self.advance()
-                        
-                            return res, error
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected { !"))
-                        
-                    #res.append(["SUCCESS FROM IF"]) 
+                    # here na yung unary node
                     
-                else:
-                    print("error star stmt: ", self.current_tok)
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis! star"))
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Exepected left paren!"))
-
-        return res, error
-    
-    def stardew_stmt(self):
-        res = []
-        error = []
-        self.advance()
-        if self.current_tok.token == LPAREN:
-            self.advance()
-            c_ces, c_error = self.if_winter_condition()
-            if c_error:
-                for err in c_error:
-                    error.append(err)
-            else:
-                if self.current_tok.token == RPAREN:
-                    self.advance()
-                    # if self.current_tok.token == NEWLINE:
-                    #     self.advance()
-                    if self.current_tok.token == CLBRACKET:
+                    if self.current_tok.token == IDENTIFIER:
+                        unary = PostUnaryNode(VarAccessNode(self.current_tok))
                         self.advance()
-                        star_res, star_error = self.body()
-                        # print("elif res: ", res)
-                        if star_error:
-                            print("THERES  AN ERROR INSIDE THE STARDEW SCOPE")
-                            for err in star_error:
-                                error.append(err)
-                            return [], error
-                        else:
-                            # print("successful elif!")
-                            for f_res in star_res:
-                                res.append(f_res)
-                                # print("f res: ", f_res)
-                            res.append(["SUCCESS from elif"])
+                        if self.current_tok.token in (INCRE, DECRE):
+                            unary.operation = self.current_tok
+                            fall_node.unary = unary
                             self.advance()
-                            # if self.current_tok.token in ELSEIF:
-                            #     print("this is an elif statement")
-                            #     elif_res, elif_error = self.elif_stmt()
-                            #     #self.advance()
+                            #;
+                            self.advance()
+                            #)
+                            self.advance()
+                            # {
+                            self.advance()
+                            # call body
+                    fall_node.unary = unary
+                    result, body_error = self.body()
+                    for item in result:
+                        fall_node.add_child(item)
+                    # fall_node.body = result
+                    self.advance()
+                    return fall_node
 
-                            #     if elif_error:
-                            #         # for err in elif_error:
-                            #         #     error.append(err)
-                            #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid elif condition!"))
+    #*conditional statements  
+    def star_expr(self):
+        res = ParseResult()
+        cases = []
+        else_case = []
 
-                            #     else:
-                            #         for fres in elif_res:
-                            #             res.append(fres)
-                            #             print("current token from elseif parse: ", self.current_tok)
-                            #         self.advance()
-                            # return res, error
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected { !"))
-                        
-                    #res.append(["SUCCESS FROM IF"]) 
-                    
-                else:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected (!"))
-
-        return res, error
-    
-    def dew_stmt(self):
-        res = []
-        error = []
+        condition = res.register(self.own_if_expr())
+        if res.error: 
+            print("[DEBUG] error in condition")
+            return res
+        condition = condition.node
         self.advance()
-        # print("IN ELSE STMT: ", self.current_tok)
+        print("[DEBUG] token after condition: ", self.current_tok)
         if self.current_tok.token != CLBRACKET:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected { !"))
-        else:
-            self.advance()
-            dew_res, dew_error = self.body()
-            # print("if res: ", res)
-            if dew_error:
-                print("THERES  AN ERROR INSIDE THE IF SCOPE")
-                for err in dew_error:
-                    error.append(err)
-                return [], error
-            else:
-                # print("successful else!")
-                for f_res in dew_res:
-                    res.append(f_res)
-                    # print("f res: ", f_res)
-                res.append(["SUCCESS from else"])
-                self.advance()
-                
-                            
-                #next is yung new line, curly brackerts and stamements
-        return res, error
+            print ("err { 1")
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected { "
+            ))
 
-    def if_winter_condition(self):
-        res = []
-        error = []
-        # print("IN IF WINTER NOW")
-        if self.current_tok.token == NOT_OP:
-            # print("found not op in if winter condition")
-            self.advance()
-            if self.current_tok.token != LPAREN:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected parenthesis for relational after not operator!"))
-                return res, error
-        if self.current_tok.token == LPAREN:
-            self.advance()
-            if self.current_tok.token == NOT_OP:
-                self.advance()
-                if self.current_tok.token != LPAREN:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected parenthesis for relational after not operator!"))
-                    return res, error
-            if self.current_tok.token == RPAREN:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier or left parentheis!"))
-                return res, error
-
-            c_ces, c_error = self.if_winter_condition()
-            if c_error:
-                for err in c_error:
-                    error.append(err)
-            else:
-                if self.current_tok.token == RPAREN:
-                    
-                    self.advance()
-                    if self.current_tok.token in LOG_OP:
-                        self.advance()
-                        c_ces, c_error = self.if_winter_condition()
-                        if c_error:
-                            for err in c_error:
-                                error.append(err)
-                        else:
-                            if self.current_tok.token == RPAREN:
-                                res.append("SUCCESS FROM CONDITION") 
-                            else:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-                    else:
-                        res.append("SUCCESS FROM CONDITION")       
-                        return res, error
-                else:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-        elif self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, STRING) :
-            if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER, STRING):
-                
-                n_res, n_error = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
-                # print("assign val in arith rel op left 1: ", self.current_tok)
-                if n_error:
-                    # print("ERROR IN assign val in arith rel op left")
-                    for err in n_error:
-                        error.append(err)
-                    return res, error
-                # print("going to check the value now: ", self.current_tok)
-                #self.advance()
-                if self.current_tok.token == STRING:
-                    self.advance()
-            if self.current_tok.token in REL_OP:
-                self.advance()
-                if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, TRUE, STRING, FALSE):
-                    if self.current_tok.token == TRUE:
-                        self.advance()
-                    if self.current_tok.token == FALSE:
-                        self.advance()
-                    elif self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER, STRING):
-                        #TODO RECURSIVE CALL SA IF WINTER CONDITION
-                        c_ces, c_error = self.if_winter_condition()
-                        if c_error:
-                            print("ERROR IN LEFT SIDE")
-                            for err in c_error:
-                                error.append(err)
-                        else:
-                            # print("REL OP TOKEN: ", self.current_tok)
-                            if self.current_tok.token == RPAREN:
-                                return res, error
-                elif self.current_tok.token in LPAREN:
-                    #TODO RECURSIVE CALL SA IF WINTER CONDITION
-                    n_res, n_error = self.assign_val2()
-                    # print("assign val in arith rel op left 2: ", self.current_tok.token)
-                    if n_error:
-                        # print("ERROR IN assign val in arith rel op left")
-                        for err in n_error:
-                            error.append(err)
-                        return res, error
-                         
-                       
-                else:
-                    print("if winter condition: ", self.current_tok)
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier! WINTER condition"))
-            elif self.current_tok.token in LOG_OP:
-                print("LOG OP FOUND")
-                self.advance()
-                if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT):
-
-                    c_ces, c_error = self.if_winter_condition()
-                    if c_error:
-                        print('error after log op')
-                        for err in c_error:
-                            error.append(err)
-                    
-                    else:
-                        print("SUCCESS NAMAN YUNG RIGHT SIDE: ", self.current_tok)
-                        if self.current_tok.token == RPAREN:
-                            
-                            #self.advance()
-                            
-                            res.append("SUCCESS FROM CONDITION")       
-                            return res, error
-                        else:
-                            print("R PAREN NOT FOUND")
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid if condition!"))
-                elif self.current_tok.token == LPAREN:
-                    self.advance()
-                    if self.current_tok.token == NOT_OP:
-                        self.advance()
-                    c_ces, c_error = self.if_winter_condition()
-                    if c_error:
-                        for err in c_error:
-                            error.append(err)
-                    else:
-                        if self.current_tok.token == RPAREN:
-                            
-                            self.advance()
-                            if self.current_tok.token in LOG_OP:
-                                self.advance()
-                                c_ces, c_error = self.if_winter_condition()
-                                if c_error:
-                                    for err in c_error:
-                                        error.append(err)
-                                else:
-                                    if self.current_tok.token == RPAREN:
-                                        res.append("SUCCESS FROM CONDITION") 
-                                    else:
-                                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-                            else:
-                                res.append("SUCCESS FROM CONDITION")       
-                                return res, error
-                        else:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-                #------------------
-                else:
-                    print("error 2nd part")
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected left paren or identifier!"))
-            elif self.current_tok.token == RPAREN:
-                res.append("SUCCESS from if condition")
-                return res, error 
-            else:
-                print("ETO YUNG ERROR: ", self.current_tok)
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or logical operator or relational operator or right parenthesis!"))
-                return res, error
-        else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or left paren!"))
         
-        return res, error
+        self.advance()
+        result, body_error = self.body()
+        #need to append it to cases as a tuple of (condition, [body result])
+        cases.append((condition, result))
+        if body_error:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Error in body "
+            ))
+        
+        #return result.success(if_res_body)
+        if res.error: 
+            return res
+        
+        #self.advance()
+        #self.advance()
+        #self.advance()
+        while self.current_tok.token == NEWLINE:
+            self.advance()
+        self.advance()
+        while self.current_tok.token == STARDEW:
+            self.advance()
+            self.advance()
+            stardew_condition = res.register(self.own_if_expr())
+            stardew_condition = stardew_condition.node
+            if res.error: 
+                return res
 
+            self.advance()
+
+
+            if self.current_tok.token != CLBRACKET:
+                print("[DEBUG] err { 2")
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected { "
+                ))
+            self.advance()
+            #todo need to append this its body
+            result, body_error = self.body()
+            #need to append it to cases as a tuple of (condition, [body result])
+            cases.append((stardew_condition, result))
+            self.advance()
+            #self.advance()
+            
+
+        if self.current_tok.token == DEW:
+            # res.register_advancement()
+            self.advance()
+            # {
+            self.advance()
+            result, body_error = self.body()
+            for item in result:
+                else_case.append(item)
+            
+            #return result.success(if_res_body)
+            
+                
+            self.advance()
+
+        # self.advance()
+        
+        return StarNode(cases, else_case)
+    
+    def winter_stmt(self):
+        # cases = []
+        self.advance()
+        self.advance()
+        condition = self.own_if_expr().node
+
+        condition = condition.node
+        winter_node = WinterNode(condition)
+        winter_node.condition = condition
+        self.advance()
+        #{
+        self.advance()
+
+
+        if self.in_condition == True:
+            self.in_condition = False
+        self.in_loop = True
+        result, body_error = self.body()
+
+        
+        for item in result:
+            winter_node.add_child(item)
+        
+
+        if body_error:
+            for i in body_error:
+                print("[DEBUG] error in body if: ", i.as_string())
+        # print("cases so far: ", cases)
+        return winter_node
+        
+    def own_if_expr(self):
+        res = ParseResult()
+        node =  self.bin_op(self.comp_expr, (AND_OP, OR_OP))
+        return res.success(node)
+        #same as expr but we need to call comp expr in bin op
+    
+    def arith_expr(self):
+        node = self.bin_op(self.term, (PLUS, MINUS))
+        return node
+    
+    def comp_expr(self):
+        # print("comp expr first item: ", self.current_tok)
+        res = ParseResult()
+
+        if self.current_tok.matches(NOT_OP, '!'):
+            # print("comp expr not op")
+            op_tok = self.current_tok
+            # res.register_advancement()
+            self.advance()
+
+            node = res.register(self.comp_expr())
+            if res.error: 
+                # print("error after not")
+                return res
+            if node.notted == True:
+                node.notted = False
+            else:
+                node.notted = True
+                
+            return res.success(node)
+        # print("value after ! comp expr: ", self.current_tok)
+        node = res.register(self.bin_op(self.arith_expr, (LESS_THAN, GREATER_THAN, LESS_THAN_EQUAL, 
+        GREATER_THAN_EQUAL, E_EQUAL, NOT_EQUAL )))
+        # print("token after arith expr: ", self.current_tok)
+        
+        if res.error:
+            print("[DEBUG] arith error in comp expr")
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected int, float, identifier, '+', '-', '(' or 'NOT'"
+            ))
+
+        return res.success(node)
+    
+    
 
     #?PARSE RESULT ARE HERE
     def factor(self):
+        # print("factor current tok: ", self.current_tok)
         res = ParseResult()
         tok = self.current_tok
         
-        # if tok.token in STRING:
-        #     return res.success(tok.value)
+        if tok.token in STRING:
+            res.register(self.advance())
+            return res.success(StringNode(tok))
+        
+        if tok.token in TRUE:
+            res.register(self.advance())
+            return res.success(BooleanNode(tok))
+
+        if tok.token in FALSE:
+            res.register(self.advance())
+            return res.success(BooleanNode(tok))
+        
+        if tok.token in VOIDEGG:
+            res.register(self.advance())
+            return res.success(VoidNode(tok))
+
+       
         
         # if tok.token in IDENTIFIER:
         #     return res.success(tok.token)
         
-        if tok.token in (PLUS, MINUS):
+        if tok.token in (INCRE, negative, DECRE):
+            operation = self.current_tok
             res.register(self.advance())
+            identifier = self.current_tok
             factor = res.register(self.factor())
             if res.error: return res
-            return res.success(UnaryOpNode(tok, factor))
+            return res.success(PreUnaryNode(VarAccessNode(identifier), operation))
 
         if tok.token in (INTEGER, FLOAT):
-            res.register(self.advance())
+            res.register(self.advance())    
             return res.success(NumberNode(tok))
+        
+        
+        if self.current_tok.token == IDENTIFIER:
+            print('found length: ', self.current_tok)
+            #comment
+            crop_name = self.current_tok
+            self.advance()
+            if self.current_tok.token == LPAREN:
+                craft_call = CraftCallNode(tok)
+                self.advance()
+                #look for 1, "string", true, false, void
+                if self.current_tok.token in (INTEGER, FLOAT):
+                    craft_call.add_param(NumberNode(self.current_tok))
+                    self.advance()
+                elif self.current_tok.token == STRING:
+                    craft_call.add_param(StringNode(self.current_tok))
+                    self.advance()
+                elif self.current_tok.token in (TRUE, FALSE):
+                    craft_call.add_param(BooleanNode(self.current_tok))
+                    self.advance()
+                elif self.current_tok.token == VOIDEGG:
+                    craft_call.add_param(VoidNode(self.current_tok))
+                    self.advance()
+                elif self.current_tok.token == IDENTIFIER:
+                    print("ident form")
+                    crop_name = self.current_tok
+                    # self.advance()
+                    # if self.current_tok.token == SLBRACKET:
+                    #     print("list!")
+                    #     self.advance()
+                    #     index = self.expr()
+                    #     index = index.node
+                    #     print("after index: ", self.current_tok )
+                    #     self.advance()
+                    #     form_call.add_param(ListCallNode(VarAccessNode(var_name), index))
+                    # index = self.expr()
+                    # index = index.node
+                   
+                    expr = self.expr()
+                    expr = expr.node
+                    craft_call.add_param(expr)
+                    # self.advance()
+                
+                while self.current_tok.token == COMMA:
+                    self.advance()
+                    if self.current_tok.token in (INTEGER, FLOAT):
+                        craft_call.add_param(NumberNode(self.current_tok))
+                        self.advance()
+                    elif self.current_tok.token == STRING:
+                        craft_call.add_param(StringNode(self.current_tok))
+                        self.advance()
+                    elif self.current_tok.token in (TRUE, FALSE):
+                        craft_call.add_param(BooleanNode(self.current_tok))
+                        self.advance()
+                    elif self.current_tok.token == VOIDEGG:
+                        craft_call.add_param(VoidNode(self.current_tok))
+                        self.advance()
+                    elif self.current_tok.token == IDENTIFIER:
+                        print("ident form")
+                        
+                        
+                        expr = self.expr()
+                        expr = expr.node
+                        craft_call.add_param(expr.node)
+
+                            # form_call.add_param(VarAccessNode(var_name))
+                #this should be a ) token
+                self.advance()
+                # self.advance()
+                #this is a semicolon
+                
+                return res.success(craft_call)
+            elif self.current_tok.token == SLBRACKET:
+                # print("in list factor")
+                self.advance()
+                # index[3-1]
+                # index = self.current_tok
+                index = self.expr()
+                if index.error:
+                    print("error in list cond")
+                index = index.node
+                self.advance()
+                return res.success(ListCallNode(VarAccessNode(crop_name), index))
+            if self.current_tok.token in (INCRE, DECRE):
+                return res.success(PostUnaryNode(VarAccessNode(tok), self.current_tok))
+            else:
+                return res.success(VarAccessNode(tok))
         
         elif tok.token == LPAREN:
             res.register(self.advance())
-            expr = res.register(self.expr())
+            # print("value after lparen: ", self.current_tok)
+            expr = res.register(self.comp_expr())
             if res.error: return res
+            print("after lparen expr: ", self.current_tok)
             if self.current_tok.token == RPAREN:
                 res.register(self.advance())
                 return res.success(expr)
             else:
+                print("error after lparen")
                 return res.failure(InvalidSyntaxError(
-					self.current_tok.pos_start, self.current_tok.pos_end,
-					"Expected ')'"
-				))
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected ')'"
+                ))
         #return res.failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, "Expected int or float"))
     
     def term(self):
-        return self.bin_op(self.factor, (MUL, DIV))
+        return self.bin_op(self.factor, (MUL, DIV, MODULUS))
     
         #really this means:
         '''
@@ -4527,8 +3390,10 @@ class Parser:
         '''
 
     def expr(self):
+        
         return self.bin_op(self.term, (PLUS, MINUS))
-    
+
+        #todo add string expr
         #really this means:
         '''
         def bin_op(self, func, ops):
@@ -4545,20 +3410,1123 @@ class Parser:
    
     #func is rule (expr or term)
     def bin_op(self, func, ops):
+        # print("func: ", func)
+        # print("bin op current tok: ", self.current_tok)
         res = ParseResult()
+        # print('first token in bin op: ', self.current_tok.token)
         left = res.register(func()) #instead of self.factor() or self.term()
+        #NumberNode
         if res.error:
+            print("error in left node: ", res.error.as_string())
             return res
-
         while self.current_tok.token in ops: #instead of (MUL, DIV)
             op_tok = self.current_tok
             res.register(self.advance())
             right = res.register(func()) #instead of self.factor() or self.term()
             if res.error:
+                print("error in right node")
                 return res
             left = BinOpNode(left, op_tok, right)
+            # (left=NumberNode op_tok = + right = NumberNode)
 
         return res.success(left)
+    
+####################
+#* INTERPRETER
+class Interpreter:
+    #eto yung kinocall natin sa run
+    # automatic na malalagay yung name ng node kaya ganyan yung method_name
+    def visit(self, node, context):
+        method_name = f'visit_{type(node).__name__}'
+        method = getattr(self, method_name, self.no_visit_method)
+        return method(node, context)
+
+    def no_visit_method(self, node, context):
+        raise Exception(f'No visit_{type(node).__name__} method defined')
+    
+    def visit_Program(self, node, symbol_table):
+
+        for item in node.body:
+            if isinstance(item, VarAssignNode):
+                value = self.visit(item, symbol_table)
+                if value.error:
+                    node.errors.append(value.error)
+
+                symbol_table.set(item.var_name_tok.value, value.value)
+                print("global variables: ", symbol_table.symbols)
+            elif isinstance(item, CraftNode):
+                item.symbol_table = SymbolTable(f"<craft {item.identifier}>")
+                item.symbol_table.parent = symbol_table
+                node.functions.append(item)
+                for i in item.parameters:
+                    item.symbol_table.set(i.var_name_tok.value, i)
+                print("functions: ", node.functions)
+                # for i in item.body:
+                #     value = self.visit(i, item.symbol_table)
+                #     if value.error:
+                #         print("error in galaxy()")
+                #         node.errors.append(value.error)
+            elif isinstance(item, PelicanNode):
+                
+                # galaxy_context.parent_entry_pos = node.body[0].pos_start
+                item.symbol_table = SymbolTable("<pelican()>")
+                item.symbol_table.parent = symbol_table
+                for i in item.body:
+                    i.parent = item
+                    value = self.visit(i, item.symbol_table)
+                    if value.error:
+                        print("error in pelican()")
+                        node.errors.append(value.error)
+
+        # print ("global symbols: ", )
+        return node
+
+    def visit_FormCallNode(self, node, symbol_table):
+        craft_call_node = node
+        craft_ident =  node.identifier.value
+        res = RTResult()
+        # print("node parent:  ", node.parent)
+        while node.parent:
+            node = node.parent
+        # print("node:  ", node)
+        if isinstance(node, CraftCallNode):
+            # print("found craft call")
+            pass
+        for item in node.functions:
+            if item.identifier.value == craft_ident:
+                # print("function is declared")
+                if len(item.parameters) == len(craft_call_node.parameters):
+                    # print("valid number of params")
+                    #here we need to assign the value of params to the value of the form call param to to the value of the function
+                    # ah so we can set the value of test(var a, var b) var a to "hello"
+                    #current item should be assigned to the symbol table of the parameter's function
+            
+                    for i in range(len(item.parameters)):
+                        param_item = item.parameters[i]
+                        param_call_node = craft_call_node.parameters[i]
+                        # print('param call node: ', param_call_node)
+                        # Visit the parameter in the function call to resolve its value
+                        param_value = self.visit(param_call_node, symbol_table)
+                        if param_value.error:
+                            # print("error in calling param")
+                            return res.failure(param_value.error)
+                        # print("param value: ", param_value.value)
+
+                        # Assign the value to the corresponding parameter in the symbol table
+                        item.symbol_table.set(param_item.crop_name_tok.value, param_value.value)
+                        # print(f"symbol table of the called param {i}: ", form_call_node.parent.symbol_table.symbols)
+                        
+                    item.called = True
+                    for i in item.body:
+                        # print("item in the called form: ", i)
+                        # if isinstance(i, SaturnCallNode):
+                        #     # print("found saturn call in called form")
+                        #     value = self.visit(i, item.symbol_table)
+                        #     # print("saturn symbol table: ", item.symbol_table.symbols)
+                        #     # print("value of saturn call: ", value.value)
+                        #     if value.error:
+                        #         return res.failure(value.error)
+                        #     # print("node.value form call: ", node.val)
+                        #     # i.value = value.value
+                            
+                        #     form_call_node.value = value.value
+                        #     break
+                        value = self.visit(i, item.symbol_table)
+                        
+                        if value.error:
+                            print("error in galaxy()")
+                            node.errors.append(value.error)
+                    return res.success(craft_call_node)
+                else:
+                    print("invalid number of params")
+                    return res.failure(SemanticError(
+                craft_call_node.pos_start, craft_call_node.pos_end,
+                f"\nform '{craft_ident}' takes {len(item.parameters)} parameters, received {len(craft_call_node.parameters)} arguments ",
+            ))
+        if craft_ident == "append" or craft_ident == "remove" or craft_ident == "length":
+            return res.success(craft_call_node)
+        return res.failure(SemanticError(
+                craft_call_node.pos_start, craft_call_node.pos_end,
+                f"\nform '{craft_ident}' is not defined",
+            ))
+
+    def visit_VarAccessNode(self, node, symbol_table):
+        # print("in crop access node")
+        res = RTResult()
+
+        crop_name = node.crop_name_tok.value
+        value = symbol_table.get(crop_name)
+        # print("value crop access: ", value)
+        # print("crop access symbol table: ", symbol_table.symbols)
+        if not value and value != 0 and not isinstance(value, list):
+            # print("couldnt find variable")
+            if symbol_table.parent:
+                # print("theres a parent: ", symbol_table.parent.symbols)
+                value = symbol_table.parent.get(crop_name)
+                if not value and value != 0:
+                    # print("theres no value")
+                    return res.failure(SemanticError(
+                node.pos_start, node.pos_end,
+                f"\n'{crop_name}' is not defined in {symbol_table.name}"
+            ))
+                value = value.copy().set_pos(node.pos_start, node.pos_end)
+                return res.success(value)
+            return res.failure(SemanticError(
+                node.pos_start, node.pos_end,
+                f"\n'{crop_name}' is not defined",
+            ))
+        # print(f"value type {value}, {type(value)}")
+        # value = value.copy().set_pos(node.pos_start, node.pos_end)
+        return res.success(value)
+
+
+    def visit_SaturnCallNode(self, node, symbol_table):
+        res = RTResult()
+        # print("saturn call value node: ", node.value_node)
+        # print("visit saturn: ", symbol_table.symbols)
+        node.value_node.parent = node
+        value = self.visit(node.value_node, symbol_table)
+        # print('value in saturn call: ', (value.error))
+        if value.error:
+            return res.failure(value.error)
+        node.value = value
+        
+        return res.success(value)
+    
+    def visit_OuterNode(self, node, context):
+        res = RTResult()
+        values = []
+        for item in node.body:
+            # print("item in outer: ", item)
+            # if isinstance(item, FormCallNode):
+            #     item.parent = node.parent
+            item.parent = node
+            # print("item: ", item)
+            # print("item parent: ", item.parent)
+            value = self.visit(item, context)
+            
+            # print("value type: ", type(value))
+            if value.error:
+                value.error.print_error()
+                # print("item.pos_end: ", item.pos_end)
+                
+                value.error.print_error()
+                return value
+                # return res.failure(value.error)
+            values.append(value.value)
+        return res.success(values)
+    
+    def visit_InnerNode(self, node, context):
+        # print("inner parent: ", node.parent)
+        # print("variable node: ", node.variable_node)
+        res = RTResult()
+        value = self.visit(node.variable_node, context)
+        if value.error:
+            print("ERROR IN INNERNODE")
+            return res.failure(value.error)
+        # print("value inner: ", value.value)
+        # print("paren symbol table inner before setting: ", node.parent.symbol_table.symbols)
+        context.set(node.variable_node.var_name_tok.value, value.value)
+        # print("paren symbol table inner: ", node.parent.symbol_table.symbols)
+        return res.success(node)
+    # identifier: a
+
+    
+    def visit_VarAssignNode(self, node, symbol_table):
+        # print("in var assign node: ", node.var_name_tok)
+        res = RTResult()
+        crop_name = node.crop_name_tok.value
+        if isinstance(node.value_node, CraftCallNode):
+            # print("assigning a function")
+            node.value_node.parent = node.parent
+        if isinstance(node.value_node, BinOpNode):
+            # print("assigning a function")
+            node.value_node.parent = node.parent
+        if isinstance(node.value_node, ListNode):
+            pass
+            # print("ASSIGNED A LIST")
+            # node.value_node.parent = node.parent
+        value = res.register(self.visit(node.value_node, symbol_table))
+        # print("value of list : ", value)
+        # print(f"assign value type {value}: {type(value)}")
+        if res.error: 
+            print("error var assign")
+            return res
+
+        symbol_table.set(crop_name, value)
+        # print("symbol table var assign: ", symbol_table.symbols)
+        #returns rtresult
+        return res.success(node)
+    
+    
+    def visit_VarInitNode(self, node, symbol_table):
+        res = RTResult()
+        if isinstance(node.crop_name_tok, ListCallNode):
+
+            crop_name = node.crop_name_tok.crop_name.value
+            value = symbol_table.get(crop_name)
+            if not value and value != 0 and not isinstance(value, list):
+                print("couldnt find variable")
+                return res.failure(SemanticError(
+                    node.pos_start, node.pos_end,
+                    f"\n'{crop_name}' is not defined",
+                ))
+        else:
+            crop_name = node.var_name_tok.value
+            value = symbol_table.get(crop_name)
+            if not value and value != 0:
+                # print("couldnt find variable")
+                return res.failure(SemanticError(
+                    node.pos_start, node.pos_end,
+                    f"\n'{crop_name}' is not defined",
+                ))      
+        # print("in var assign node: ", node.var_name_tok)
+        res = RTResult()
+        # var_name = node.var_name_tok.value
+        if isinstance(node.value_node, CraftCallNode):
+            # print("assigning a function")
+            node.value_node.parent = node.parent
+        if isinstance(node.value_node, ListNode):
+            print("ASSIGNED A LIST")
+            # node.value_node.parent = node.parent
+        value = res.register(self.visit(node.value_node, symbol_table))
+        # print("value of a: ", type(value))
+        # print(f"assign value type {value}: {type(value)}")
+        if res.error: return res
+
+        symbol_table.set(crop_name, value)
+        
+        #returns rtresult
+        return res.success(value)
+
+    def visit_VarDecNode(self, token, context):
+        res = RTResult()
+        crop_name = token.crop_name_tok
+        # print("var name: ", var_name)
+        #value = res.register(self.visit(node.value_node, context))
+        if res.error: return res
+
+        
+        context.symbol_table.set(crop_name, Void(None).set_context(context).set_pos(token.pos_start, token.pos_end))
+        
+        # return res.value
+        return RTResult().success(
+            Number(crop_name).set_context(context).set_pos(token.pos_start, token.pos_end)
+        )
+    # -- visit_VoidNode
+    def visit_VoidNode(self, node, context):
+        return RTResult().success(
+            Void(value = None).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
+
+    def visit_ListNode(self, node, symbol_table):
+        res = RTResult()
+        list_res = []
+        for item in node.items:
+            value = self.visit(item, symbol_table)
+            if value.error:
+                return res.failure(value.error)
+            list_res.append(value.value)
+        # print("list res: ", list_res)
+        # print("found list")
+        return res.success(list_res)
+    
+    def visit_ListCallNode(self, node, symbol_table):
+        res = RTResult()
+        value = self.visit(node.crop_name, symbol_table)
+        if value.error:
+            return res.failure(value.error)
+        return res.success(node)
+
+    def visit_NumberNode(self, node, context):
+        
+        return RTResult().success(
+            Number(node.tok.value)
+        )
+    
+    def visit_StringNode(self, node, context):
+        # print("found string node")
+        return RTResult().success(
+            String(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
+    
+    def visit_BooleanNode(self, node, symbol_table):
+        # print("found boolean node")
+        res = RTResult()
+        if node.value == 0:
+            return(res.success(
+                SemanticFalse(node)
+                ))
+        else:
+            return(res.success(
+                SemanticTrue(node)
+                ))
+        
+    def visit_PostUnaryNode(self, node, symbol_table):
+        # print("found post unary")
+        res = RTResult()
+        value = self.visit(node.tok, symbol_table)
+        if value.error:
+            return res.failure(value.error)
+        return res.success(value)
+    def visit_PreUnaryNode(self, node, symbol_table):
+        # print("found post unary")
+        res = RTResult()
+        value = self.visit(node.tok, symbol_table)
+        if value.error:
+            return res.failure(value.error)
+        return res.success(value)
+    def visit_BinOpNode(self, node, context):
+        # print("bin op parent", node.parent)
+        res = RTResult()
+        # if isinstance(item, FormCallNode):
+        #     item.parent = node.parent
+        if isinstance(node.left_node, CraftCallNode) or isinstance(node.left_node, BinOpNode):
+            node.left_node.parent = node.parent
+        left = res.register(self.visit(node.left_node, context))
+        # print("left of Bin op: ", type(left))
+        if res.error: return res
+        if isinstance(node.right_node, CraftCallNode) or isinstance(node.right_node, BinOpNode):
+            node.right_node.parent = node.parent
+        right = res.register(self.visit(node.right_node, context))
+        if res.error: return res
+
+        # check natin if yung left factor natin number, pag hindi error dapat
+        # print("type of left: ", type(left))
+        # if not isinstance(left, Number):
+        #     return res.failure(RTError(
+        #             node.pos_start, node.pos_end,
+        #             f"Invalid value: '{left}' type: {type(left)} in operation",
+        #             context
+        #         ))
+
+        if node.op_tok.token == PLUS:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+           
+            result, error = left.added_to(right)
+            
+        elif node.op_tok.token == MINUS:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(right, Number) or not isinstance(left, Number):
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation({node.op_tok.token}) between {left} and type:{type(right)}:{right}',
+            #     ))
+            result, error = left.subbed_by(right)
+        elif node.op_tok.token == MUL:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(right, Number) and not isinstance(left, Number) and not isinstance(right, Void) and not isinstance(left, Void):
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation({node.op_tok.token}) between {left} and type:{type(right)}:{right}',
+            #     ))
+            result, error = left.multed_by(right)
+        elif node.op_tok.token == DIV:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(right, Number) and not isinstance(left, Number)and not isinstance(left, Void)and not isinstance(right, Void):
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation({node.op_tok.token}) between {left} and type:{type(right)}:{right}',
+            #     ))
+            result, error = left.dived_by(right)
+        elif node.op_tok.token == MODULUS:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(right, Number) or not isinstance(left, Number):
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation({node.op_tok.token}) between {left} and type:{type(right)}:{right}',
+            #     ))
+            result, error = left.modulo(right)
+        elif node.op_tok.token == E_EQUAL:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(left, Number) and not isinstance(left, String):
+            #         print("right in e_equal is not a number")
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation between {left} and type:{type(right)}:{right}',
+            #     ))
+            
+            # print("found e_eq: ", type(left))
+            result, error = left.get_comparison_eq(right)
+        elif node.op_tok.token == NOT_EQUAL:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            
+            result, error = left.get_comparison_ne(right)
+            
+        elif node.op_tok.token == LESS_THAN:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(right, Number) or not isinstance(left, Number) and not isinstance(left, Void):
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation between {left} and type:{type(right)}:{right}',
+            #     ))
+            result, error = left.get_comparison_lt(right)
+        elif node.op_tok.token == GREATER_THAN:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            
+            result, error = left.get_comparison_gt(right)
+        elif node.op_tok.token == LESS_THAN_EQUAL:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(right, Number)or not isinstance(left, Number):
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation between {left} and type:{type(right)}:{right}',
+            #     ))
+            result, error = left.get_comparison_lte(right)
+        elif node.op_tok.token == GREATER_THAN_EQUAL:
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(right, Number)or not isinstance(left, Number):
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation between {left} and type:{type(right)}:{right}',
+            #     ))
+            result, error = left.get_comparison_gte(right)
+        elif node.op_tok.matches(AND_OP, '&&'):
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(right, Number):
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation between {left} and type:{type(right)}:{right}',
+            #     ))
+            result, error = left.anded_by(right)
+        elif node.op_tok.matches(OR_OP, '||'):
+            if isinstance(left or right, list):
+                list_res = RTResult()
+                return list_res.success(Number(1))
+            # if not isinstance(right, Number):
+            #         return res.failure(RTError(
+            #         node.pos_start, node.pos_end,
+            #         f'Invalid operation between {left} and type:{type(right)}:{right}',
+            #     ))
+            result, error = left.ored_by(right)
+        
+        if error:
+            return res.failure(error)
+        else:
+            
+            final = res.success(result.set_pos(node.pos_start, node.pos_end))
+            # print('final: ', final.value)
+            return res
+
+    # def visit_UnaryOpNode(self, node, context):
+    #     res = RTResult()
+    #     number = res.register(self.visit(node.node, context))
+    #     if res.error: return res
+
+    #     error = None
+
+    #     if node.op_tok.token == MINUS:
+    #         number, error = number.multed_by(Number(-1))
+
+    #     if error:
+    #         return res.failure(error)
+    #     else:
+    #         return res.success(number.set_pos(node.pos_start, node.pos_end))
+    def visit_FallNode(self, node, symbol_table):
+        res = RTResult()
+        value = self.visit(node.variable, symbol_table)
+        if value.error:
+            return res.failure(value.error)
+        for item in node.body:
+            val = self.visit(item, symbol_table)
+            if val.error:
+                return res.failure(val.error)
+        return res.success(value)
+    
+    def visit_WinterNode(self, node, symbol_table):
+        # print("found a whirl node")
+        res = RTResult()
+        # print("whirl condition: ", node.condition)
+        node.condition.parent = node
+        condition_value = res.register(self.visit(node.condition, symbol_table))
+        # print("condition value: ", condition_value)
+        if res.error: 
+            # print("error in visit node")
+            return res
+
+        if condition_value.is_true():
+            # print("found true condition: ", condition_value)
+            for item in node.body:
+                expr_value = self.visit(item, symbol_table)
+                if expr_value.error:
+                    print("error 1")
+                    return res.failure(expr_value.error)
+                if isinstance(item, HarvestCallNode):
+                    # print("saturn call in whirl")
+                    return res.success(HarvestCallNode(expr_value))
+                
+                if res.error: 
+                    print("error 2")
+                    return res
+            return res.success(node)
+    def visit_DoWhirlNode(self, node, symbol_table):
+        # print("found a do whirl node")
+        res = RTResult()
+        for item in node.body:
+            value = self.visit(item, symbol_table)
+            if value.error:
+                return res.failure(value.error)
+        # print("do whirl condition: ", node.condition)
+        node.condition.parent = node
+        condition_value = self.visit(node.condition, symbol_table)
+        if condition_value.error:
+            return res.failure(condition_value.error)
+        return res.success(node)
+    def visit_IfNode(self, node, context):
+        list_of_outer = []
+        res = RTResult()
+        # print("node.cases: ", node.cases)
+        for condition, expr in node.cases:
+            # print("visiting nodes now")
+            condition.parent = node
+            condition_value = res.register(self.visit(condition, context))
+            # print("condition value: ", condition_value)
+            if res.error: 
+                # print("error in visit node")
+                return res
+
+            if condition_value.is_true():
+                # print("found true condition: ", condition_value)
+                for item in expr:
+                    expr_value = res.register(self.visit(item, context))
+                    if isinstance(item, HarvestCallNode):
+                        # print("saturn call in if")
+                        return res.success(HarvestCallNode(expr_value))
+                    if isinstance(item, ShipNode):
+                        # print("outer in if")
+                        list_of_outer.append(ShipNode(expr_value))
+                    # print("expr in if node: ", expr)
+                    '''
+                    res.append(result.success(SaturnCallNode(expr)))
+                    '''
+                    if res.error: 
+                        return res
+                return res.success(list_of_outer)
+        # print("floating")
+        if node.else_case:
+            # print("we have an else case")
+            for item in node.else_case:
+                else_value = res.register(self.visit(item, context))
+                if isinstance(item, HarvestCallNode):
+                    # print("saturn call in if")
+                    # print("else value type: ", type(else_value))
+                    return res.success(HarvestCallNode(else_value))
+                if isinstance(item,ShipNode):
+                    # print("outer in else")
+                    return res.success(ShipNode(else_value))
+            if res.error: return res
+            return res.success(else_value)
+
+        return res.success(None)
+    def visit_SkipNode(self, node, symbol_table):
+        res = RTResult()
+        return res.success(node)
+    def visit_BlastNode(self, node, symbol_table):
+        res = RTResult()
+        return res.success(node)
+class Void:
+    def __init__(self, value=None):
+        self.value = 'void'
+        self.set_pos()
+        self.set_context()
+    
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def set_context(self, context=None):
+        self.context = context
+        return self
+    def added_to(self, other):
+        return Number(1).set_context(self.context), None
+
+    def subbed_by(self, other):
+        
+        return Number(1).set_context(self.context), None
+        
+
+    def multed_by(self, other):
+        
+        return Number(1).set_context(self.context), None
+        
+
+    def dived_by(self, other):
+        
+        return Number(1).set_context(self.context), None
+        
+    def modulo(self, other):
+        
+        return Number(1).set_context(self.context), None
+        
+    def get_comparison_eq(self, other):
+        
+        return Number(1).set_context(self.context), None
+
+    def get_comparison_ne(self, other):
+        
+        return Number(1).set_context(self.context), None
+
+    def get_comparison_lt(self, other):
+        
+        return Number(1).set_context(self.context), None
+
+    def get_comparison_gt(self, other):
+        
+        return Number(1), None
+
+    def get_comparison_lte(self, other):
+       
+        return Number(1).set_context(self.context), None
+
+    def get_comparison_gte(self, other):
+        
+        return Number(1).set_context(self.context), None
+
+    def anded_by(self, other):
+        
+        return Number(1).set_context(self.context), None
+
+    def ored_by(self, other):
+       
+        return Number(1).set_context(self.context), None
+
+    def notted(self):
+        return Number(1).set_context(self.context), None
+    
+    def copy(self):
+        copy = Void(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+    
+    def __repr__(self):
+        return "void"
+
+class SemanticTrue:
+    def __init__(self, node, value=None):
+        self.value = value
+        self.pos_start = node.tok.pos_start
+        self.pos_end = node.tok.pos_end
+        # self.set_pos()
+        # self.set_context()
+    def is_true(self):
+        return True
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+    def added_to(self, other):
+        return Number(1), None
+        
+
+    def subbed_by(self, other):
+        
+        return Number(1), None
+        
+
+    def multed_by(self, other):
+        
+        return Number(1), None
+        
+
+    def dived_by(self, other):
+        return Number(1), None
+    def modulo(self, other):
+        
+        return Number(1), None
+        
+    def get_comparison_eq(self, other):
+        
+        return Number(1), None
+
+    def get_comparison_ne(self, other):
+        
+        return Number(1), None
+
+    def get_comparison_lt(self, other):
+        return Number(1), None
+
+    def get_comparison_gt(self, other):
+        return Number(1), None
+
+    def get_comparison_lte(self, other):
+        return Number(1), None
+
+    def get_comparison_gte(self, other):
+        return Number(1), None
+
+    def anded_by(self, other):
+        return Number(1), None
+
+    def ored_by(self, other):
+        return Number(1), None
+
+    def notted(self):
+        return Number(1), None
+    def set_context(self, context=None):
+        self.context = context
+        return self
+
+    def copy(self):
+        copy = SemanticTrue(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+    
+class SemanticFalse:
+    def __init__(self, node, value=None):
+        self.value = value
+        self.pos_start = node.tok.pos_start
+        self.pos_end = node.tok.pos_end
+        # self.set_pos()
+        # self.set_context()
+    def added_to(self, other):
+        return Number(1), None
+        
+
+    def subbed_by(self, other):
+        
+        return Number(1), None
+        
+
+    def multed_by(self, other):
+        
+        return Number(1), None
+        
+
+    def dived_by(self, other):
+        return Number(1), None
+    def modulo(self, other):
+        
+        return Number(1), None
+        
+    def get_comparison_eq(self, other):
+        
+        return Number(1), None
+
+    def get_comparison_ne(self, other):
+        
+        return Number(1), None
+
+    def get_comparison_lt(self, other):
+        return Number(1), None
+
+    def get_comparison_gt(self, other):
+        return Number(1), None
+
+    def get_comparison_lte(self, other):
+        return Number(1), None
+
+    def get_comparison_gte(self, other):
+        return Number(1), None
+
+    def anded_by(self, other):
+        return Number(1), None
+
+    def ored_by(self, other):
+        return Number(1), None
+
+    def notted(self):
+        return Number(1), None
+    def is_true(self):
+        return False
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def set_context(self, context=None):
+        self.context = context
+        return self
+
+    def copy(self):
+        copy = SemanticFalse(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+class Number:
+    def __init__(self, value):
+        self.value = value
+        self.set_pos()
+        self.set_context()
+
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def set_context(self, context=None):
+        self.context = context
+        return self
+
+    def added_to(self, other):
+        
+        return Number(1).set_context(self.context), None
+        # return None, RTError(
+        #             other.pos_start, other.pos_end,
+        #             f'{other} added to number',
+                    
+        #         )
+
+    def subbed_by(self, other):
+        return Number(1).set_context(self.context), None
+                
+
+    def multed_by(self, other):
+        return Number(1).set_context(self.context), None
+
+    def dived_by(self, other):
+        return Number(1).set_context(self.context), None
+
+    def modulo(self, other):
+        return Number(1).set_context(self.context), None
+    def get_comparison_eq(self, other):
+        return Number(1).set_context(self.context), None
+
+    def get_comparison_ne(self, other):
+        
+        return Number(1).set_context(self.context), None
+
+    def get_comparison_lt(self, other):
+        return Number(1).set_context(self.context), None
+
+    def get_comparison_gt(self, other):
+        return Number(1).set_context(self.context), None
+
+    def get_comparison_lte(self, other):
+        
+        return Number(1).set_context(self.context), None
+
+    def get_comparison_gte(self, other):
+        return Number(1).set_context(self.context), None
+
+    def anded_by(self, other):
+        return Number(1).set_context(self.context), None
+
+    def ored_by(self, other):
+        return Number(1).set_context(self.context), None
+
+    def notted(self):
+        return Number(1).set_context(self.context), None
+
+    def is_true(self):
+        return self.value != 0
+
+    def copy(self):
+        copy = Number(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+    
+    def __repr__(self):
+        return str(self.value)
+    
+class String:
+    def __init__(self, value):
+        self.value = value
+        self.set_pos()
+        self.set_context()
+
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def set_context(self, context=None):
+        self.context = context
+        return self
+
+    def concat(self, other):
+        # if isinstance(other, String) or isinstance(other, FormCallNode):
+        #     string = ''
+        #     # string += self.value
+        #     # string += other.value
+        return String(self.value).set_context(self.context), None
+        # return None, RTError(
+        #             other.pos_start, other.pos_end,
+        #             f"Invalid value '{other}', type: {type(other)} concatenated with string",
+                    
+        #         )
+
+    def get_comparison_eq(self, other):
+        
+        return String(str(self.value)).set_context(self.context), None
+        
+    def get_comparison_ne(self, other):
+        return String(str(self.value)).set_context(self.context), None
+    def added_to(self, other):
+        
+        return String(1).set_context(self.context), None
+        
+
+    def subbed_by(self, other):
+        if isinstance(other, Number)or isinstance(other, Void):
+            return Number(self.value - other.value).set_context(self.context), None
+        return None, RTError(
+                    other.pos_start, other.pos_end,
+                    f'{other} subtracted from number',
+                    self.context
+                )
+
+    def multed_by(self, other):
+        if isinstance(other, Number) or isinstance(other, Void):
+            return Number(self.value * other.value).set_context(self.context), None
+        return None, RTError(
+                    other.pos_start, other.pos_end,
+                    f'Number  multiplied by {other}',
+                    
+                )
+
+    def dived_by(self, other):
+        if isinstance(other, Number)or isinstance(other, Void):
+            # if other.value == 0:
+            #     return None, RTError(
+            #         other.pos_start, other.pos_end,
+            #         'Division by zero',
+                    
+            #     )
+            return Number(1).set_context(self.context), None
+        else:
+            return None, RTError(
+                    other.pos_start, other.pos_end,
+                    f'Number divided by {other} ',
+                    self.context
+                )    
+
+    def get_comparison_eq(self, other):
+        if isinstance(other, Number):
+            return Number(1).set_context(self.context), None
+
+
+    def get_comparison_lt(self, other):
+        if isinstance(other, Number):
+            return Number(1).set_context(self.context), None
+
+    def get_comparison_gt(self, other):
+        if isinstance(other, Number):
+            return Number(1), None
+
+    def get_comparison_lte(self, other):
+        if isinstance(other, Number):
+            return Number(1).set_context(self.context), None
+
+    def get_comparison_gte(self, other):
+        if isinstance(other, Number):
+            return Number(1).set_context(self.context), None
+
+    def anded_by(self, other):
+        if isinstance(other, Number):
+            return Number(1).set_context(self.context), None
+
+    def ored_by(self, other):
+        if isinstance(other, Number):
+            return Number(1).set_context(self.context), None
+
+    def is_true(self):
+        return self.value != 0
+     
+    def copy(self):
+        copy = String(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+    
+    # def __repr__(self):
+    #     return str(self.value)
+    
+
+        
+# class Context:
+#     def __init__(self, display_name, parent=None):
+#         self.display_name = display_name
+#         self.parent = parent
+#         self.symbol_table = SymbolTable()
+
+#######################################
+# SYMBOL TABLE
+#######################################
+
+class SymbolTable:
+    def __init__(self, name = None):
+        self.symbols = {}
+        self.parent = None
+        self.name = name
+
+    def set_parent(self, node):
+        self.parent = node
+
+    def get(self, name):
+        value = self.symbols.get(name, None)
+        if value == None and self.parent:
+            return self.parent.get(name)
+        return value
+
+    def set(self, name, value):
+        self.symbols[name] = value
+
+    def remove(self, name):
+        del self.symbols[name]
+
+
+#RUN THE PROGRAM
+#this will go to main
+
+
+def run(fn, text):
+    # print("running")
+    lexer = Lexer(fn, text)
+    tokens, error = lexer.make_tokens()
+    
+    for item in tokens:
+        if isinstance(item, list):
+            tokens.remove(item)
+
+    parser = Parser(tokens)
+    ast = parser.parse()
+    # print("ast: ", ast)
+    #ast is a Program instance
+    # print("ast body: ", ast.body)
+    ast.display()
+    #ast is a Program instance
+    # -- return ast
+    #here i need to visit the ast nodes hahaha
+    
+    interpreter = Interpreter()
+    symbol_table = SymbolTable("<Cosmic Script>")
+    # context.symbol_table = global_symbol_table
+    symbol_table.symbols = {}
+    ast.symbol_table = symbol_table
+    res = interpreter.visit(ast, symbol_table)
+    
+    if res.errors:
+        print("found error in program")
+        return None, res.errors
+    return res, None
 
 '''
 def run(fn, text):
@@ -4578,322 +4546,18 @@ def run(fn, text):
        
   
 
-def run(fn, text):
-    lexer = Lexer(fn, text)
-    tokens, error = lexer.make_tokens()
+# def run(fn, text):
+#     lexer = Lexer(fn, text)
+#     tokens, error = lexer.make_tokens()
     
-    # Create a new list excluding spaces or lists
-    tokens = [item for item in tokens if not (isinstance(item, list) or item.token == SPACE)]
+#     # Create a new list excluding spaces or lists
+#     tokens = [item for item in tokens if not (isinstance(item, list) or item.token == SPACE)]
     
-    print("TOKENS: ", tokens)
+#     print("TOKENS: ", tokens)
     
-    parser = Parser(tokens)
-    result, parseError = parser.parse()
+#     parser = Parser(tokens)
+#     result, parseError = parser.parse()
     
 
-    return result, parseError
+#     return result, parseError
 
-class StardewLexerGUI:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Junimo Code Lexical Analyzer")
-        self.root.geometry("1920x1200")
-        self.root.configure(bg=BACKGROUND_COLOR)
-        self.code = None
-
-        # Play background music
-        mixer.music.load(background_music)
-        mixer.music.play(loops=-1)
-
-        # Set theme for CustomTkinter
-        ctk.set_appearance_mode("light")
-        ctk.set_default_color_theme("green")
-
-        # Setup UI elements
-        self.setup_background()
-        self.setup_widgets()
-
-
-    def setup_background(self):
-        # Load and stretch the background image
-        bg_image = Image.open(background_image_path)
-        bg_image = bg_image.resize((1920, 1200), Image.LANCZOS)
-        self.bg_photo = ImageTk.PhotoImage(bg_image)
-
-        # Place the background image on canvas
-        self.canvas = tk.Canvas(self.root, width=1920, height=1200, highlightthickness=0, bg=BACKGROUND_COLOR)
-        self.canvas.pack(fill="both", expand=True)
-        self.bg = self.canvas.create_image(0, 0, anchor="nw", image=self.bg_photo)
-        
-    def update_line_numbers(self):
-        """Synchronize line numbers with text lines in the code_input box."""
-        # Enable editing for the line number widget
-        self.line_numbers.configure(state=tk.NORMAL)
-        self.line_numbers.delete(1.0, tk.END)
-
-        # Get the number of lines in the code_input
-        code = self.code_input.get("1.0", tk.END)
-        self.code = code
-        lines = code.split("\n")  # Count lines
-
-        # Add line numbers for each line
-        for i in range(1, len(lines) + 1):
-            self.line_numbers.insert(tk.END, f"{i}\n")
-
-        # Ensure the line numbers are aligned with the text
-        self.line_numbers.configure(state=tk.DISABLED)
-
-        # Align the font size with the code_input
-        self.line_numbers.configure(font=("Verdana", 15))  # Set font and size
-
-        # Adjust spacing to add margin or padding
-        self.line_numbers.configure(spacing1=1)  # Default spacing for all lines
-        self.line_numbers.tag_configure("first_line", spacing1=25)  # Adjust first-line spacing
-
-        # Apply custom alignment for the first line
-        self.line_numbers.tag_add("first_line", "1.0", "1.end")
-        self.line_numbers.tag_configure("center", justify="center")  # Center-align numbers
-        self.line_numbers.tag_add("center", "1.0", "end")
-
-        # Update the scroll synchronization
-        self.line_numbers.yview_moveto(self.code_input.yview()[0])
-        self.code_input.configure(font=("Verdana", 16))  # Match font size
- # Match font size
-    # Match font size
-           
-    def sync_scrollbars(self, *args):
-        try:
-            # Synchronize the scroll position of the line numbers with the code input
-            self.line_numbers.yview_moveto(self.code_input.yview()[0])
-            self.code_input.yview(*args)
-        except Exception as e:
-            print(f"Error syncing scrollbars: {e}")
-
-
-    def setup_widgets(self):
-        # Input box for code
-        self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10)
-        self.code_frame.place(x=100, y=140)
-        self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=500,
-                                         font=("Verdana", 10),
-                                         fg_color="#ffe9db",
-                                         text_color=TEXT_COLOR,
-                                         wrap="word")
-        self.code_input.configure(spacing1=2)
-        # Insert placeholder text
-        self.placeholder_text = "Code will be placed here...\n"
-        self.code_input.insert(tk.END, self.placeholder_text)
-                        # Bind to update line numbers dynamically
-        self.code_input.bind("<KeyRelease>", lambda event: self.update_line_numbers())
-        self.code_input.bind("<MouseWheel>", lambda event: self.update_line_numbers())
-
-                # Error at line numbers
-        self.line_numbers = tk.Text(self.code_frame, width=4, padx=3, takefocus=0, fg="#ffe9db",
-                                     bg="#8f3901", highlightthickness=0, state=tk.DISABLED)
-        self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
-
-        self.code_input.pack(padx=10, pady=10)
-        # self.code_input.configure(yscrollcommand=self.sync_scrollbars)
-        # self.line_numbers.configure(yscrollcommand=self.sync_scrollbars)
-        #image for Lexical Analyzer Button/Button
-        self.analyze_button = Image.open("Lexical.png")
-        self.resize_analyze_button = self.analyze_button.resize((200,50))
-        self.analyze_button_picture = ImageTk.PhotoImage(self.resize_analyze_button)
-        self.image_analyze_button = tk.Button(image=self.analyze_button_picture, borderwidth=0, command=self.analyze_code_with_sound)
-        self.image_analyze_button.place(x=190, y=920)
-
-        #image for Clear Analyzer Button/Button
-        self.semantic_button = Image.open("Clear.png")
-        self.resize_semantic_button = self.semantic_button.resize((200,50))
-        self.semantic_button_picture = ImageTk.PhotoImage(self.resize_semantic_button)
-        self.image_semantic_button = tk.Button(image=self.semantic_button_picture, borderwidth=0, command=self.clear_input_with_sound)
-        self.image_semantic_button.place(x=450, y=920)
-
-        #image for Undo Button/Button
-        self.syntax_button = Image.open("Syntax.png") #placeholder for syntax button
-        self.resize_syntax_button = self.syntax_button.resize((200,50))
-        self.syntax_button_picture = ImageTk.PhotoImage(self.resize_syntax_button)
-        self.image_syntax_button = tk.Button(image=self.syntax_button_picture, borderwidth=0, command=self.syntax_analyzer_with_sound)
-        self.image_syntax_button.place(x=710, y=920)
-
-
-        #Style
-        style = ttk.Style()
-        style.theme_use("default")
-        style.configure("Treeview", font=("Verdana", 14), fieldbackground="#ffe9db", rowheight=25)  # Change font for Treeview
-        style.configure("Treeview.Heading", font=("Verdana", 16), background="#d88e41", foreground="#ffe9db")  # Change font for headings
-
-        # Token Table
-        self.token_frame = ctk.CTkFrame(self.root, fg_color="#8f3901", corner_radius=10)
-        self.token_frame.place(x=830, y=50)
-
-        self.token_tree = ttk.Treeview(self.token_frame, columns=("Index", "Lexeme", "Token"), show='headings',
-                                       height=40)
-        self.token_tree.heading("Index", text="Index")
-        self.token_tree.heading("Lexeme", text="Lexeme")
-        self.token_tree.heading("Token", text="Token")
-        self.token_tree.column("Index", width=120, anchor="center")
-        self.token_tree.column("Lexeme", width=440, anchor="center")
-        self.token_tree.column("Token", width=230, anchor="center")
-        self.token_tree.pack(fill="both", expand=True, padx=10, pady=10)
-
-        # Terminal Output
-        self.terminal_frame = ctk.CTkFrame(self.root, width=200, height=100, fg_color="#8f3901", corner_radius=10)
-        self.terminal_frame.place(x=100, y=800)
-        self.terminal_output = ctk.CTkTextbox(self.terminal_frame, width=700, height=85,
-                                              font=PIXEL_FONT,
-                                              fg_color="#ffe9db",
-                                              text_color="red",
-                                              wrap="word")
-        self.terminal_output.insert(tk.END, "Errors will be displayed here...\n")
-        self.terminal_output.pack(padx=10, pady=2)
-
-    def place_widgets(self):
-        # Dynamically position widgets
-        width = self.root.winfo_width()
-        height = self.root.winfo_height()
-
-        self.canvas.config(width=width, height=height)
-        self.bg_photo = ImageTk.PhotoImage(self.bg_image.resize((width, height), Image.LANCZOS))
-        self.canvas.itemconfig(self.bg, image=self.bg_photo)
-
-        # Input code frame
-        self.code_frame.place(relx=0.05, rely=0.1, relwidth=0.4, relheight=0.5)
-
-        # Buttons
-        self.image_analyze_button.place(relx=0.05, rely=0.7, relwidth=0.1, relheight=0.05)
-        self.image_clear_button.place(relx=0.17, rely=0.7, relwidth=0.1, relheight=0.05)
-        self.image_undo_button.place(relx=0.29, rely=0.7, relwidth=0.1, relheight=0.05)
-
-        # Token table
-        self.token_frame.place(relx=0.5, rely=0.1, relwidth=0.45, relheight=0.5)
-
-        # Terminal output
-        self.terminal_frame.place(relx=0.05, rely=0.8, relwidth=0.9, relheight=0.15)
-
-    def on_resize(self, event):
-        self.place_widgets()
-
-    def analyze_code_with_sound(self):
-        mixer.Sound.play(click_sound)
-        self.analyze_code()
-
-    def clear_input_with_sound(self):
-        mixer.Sound.play(click_sound)
-        self.clear_input()
-
-    def syntax_analyzer_with_sound(self):
-        mixer.Sound.play(click_sound)
-        self.syntax_analyzer()
-
-
-    def analyze_code(self): #lexer button
-
-        # Clear previous tokens and errors
-        for row in self.token_tree.get_children():
-            self.token_tree.delete(row)
-        self.terminal_output.delete("1.0", tk.END)
-
-        # Get code from input box and handle any extra newline at the end
-        code = self.code_input.get("1.0", tk.END).rstrip("\n")  # Remove the trailing newline
-        lines = code.splitlines()  # Split code into lines for easier indexing
-        
-        # Do not strip the code; keep all spaces intact
-        lexer = Lexer("<input>", code)
-        tokens, errors = lexer.make_tokens()
-
-        # Configure Treeview tags row background
-        self.token_tree.tag_configure("all_rows", background="#ffe9db")  # Light blue background
-
-        # Display tokens in the treeview with row numbers
-        row_number = 1
-        for token in tokens:
-            if isinstance(token, Token):  # Ensure it's a valid token object
-                lexeme = token.value if token.value is not None else token.token
-                # Check for spaces as errors
-                if token.token == "SPACE":
-                    self.terminal_output.insert(tk.END, f"Error: Unexpected whitespace at line {row_number}\n")
-                # Check for newlines as tokens
-                elif token.token == "NEWLINE":
-                    lexeme = "\\n"  # Display as "\n" in the table for clarity
-                row_tag = "odd_row" if row_number % 2 == 1 else "even_row"
-                self.token_tree.insert("", tk.END, values=(row_number, lexeme, token.token), tags=("all_rows",))
-                row_number += 1
-
-        if errors:
-            self.terminal_output.insert(tk.END, "\n".join(errors) + "\n")
-        else:
-            self.terminal_output.insert(tk.END, "No errors found.\n")
-            
-    def clear_input(self):
-        """Clear the code input box"""
-        self.code_input.delete("1.0", tk.END)
-
-    def syntax_analyzer(self): # syntax button
-        
-        # Clear previous tokens and errors
-        for row in self.token_tree.get_children():
-            self.token_tree.delete(row)
-        self.terminal_output.delete("1.0", tk.END)
-
-        # Get code from input box and handle any extra newline at the end
-        code = self.code_input.get("1.0", tk.END).rstrip("\n")  # Remove the trailing newline
-        lines = code.splitlines()  # Split code into lines for easier indexing
-        
-        # Do not strip the code; keep all spaces intact
-        lexer = Lexer("<input>", code)
-        tokens, errors = lexer.make_tokens()
-
-        # Configure Treeview tags row background
-        self.token_tree.tag_configure("all_rows", background="#ffe9db")  # Light blue background
-
-        # Display tokens in the treeview with row numbers
-        row_number = 1
-        for token in tokens:
-            if isinstance(token, Token):  # Ensure it's a valid token object
-                lexeme = token.value if token.value is not None else token.token
-                # Check for spaces as errors
-                if token.token == "SPACE":
-                    self.terminal_output.insert(tk.END, f"Error: Unexpected whitespace at line {row_number}\n")
-                # Check for newlines as tokens
-                elif token.token == "NEWLINE":
-                    lexeme = "\\n"  # Display as "\n" in the table for clarity
-                row_tag = "odd_row" if row_number % 2 == 1 else "even_row"
-                self.token_tree.insert("", tk.END, values=(row_number, lexeme, token.token), tags=("all_rows",))
-                row_number += 1
-
-        if errors:
-            self.terminal_output.insert(tk.END, "\n".join(errors) + "\n")
-        else:
-            # self.terminal_output.insert(tk.END, "No errors found.\n")
-            # If lexer is successful, run syntax parser
-            syntax_result, syntax_error = run("<junimo code>", code)
-            if syntax_error:
-                # self.terminal_output.insert(tk.END, syntax_error.details)
-                for err in syntax_error:
-                    self.terminal_output.insert(tk.END, err.as_string())
-                # for err in syntax_error:
-                #     if isinstance(err, list):
-                #         for e in err:
-                #             errorResult, fileDetail, arrowDetail, arrows = e.as_string()
-                #             self.terminal_output.insert(tk.END, errorResult)
-                #             self.terminal_output.insert(tk.END, fileDetail)
-                #             self.terminal_output.insert(tk.END, arrowDetail)
-                #             # errors_text.insert(tk.END, arrows)
-                #     else:
-                #         errorResult, fileDetail, arrowDetail, arrows = err.as_string()
-                #         self.terminal_output.insert(tk.END, errorResult)
-                #         self.terminal_output.insert(tk.END, fileDetail)
-                #         self.terminal_output.insert(tk.END, arrowDetail)
-                #         # errors_text.insert(tk.END, arrows)
-            else:
-                
-                # for res in syntax_result:
-                self.terminal_output.insert(tk.END, "SUCCESS from syntax")
-                # errors_text.insert(tk.END, "SUCCESS")
-
-
-if __name__ == "__main__":
-    root = ctk.CTk()
-    app = StardewLexerGUI(root)
-    root.mainloop()
