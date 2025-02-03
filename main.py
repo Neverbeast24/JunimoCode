@@ -25,6 +25,7 @@ mixer.init()
 # Load sound effects
 click_sound = mixer.Sound("Interface/bigSelect.wav")
 hover_sound = mixer.Sound("Interface/select.wav")
+delete_sound = mixer.Sound("Interface/bigDeSelect.wav")
 background_music = r"BackgroundMusic/ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3"
 
 # Stardew Valley-themed colors
@@ -148,26 +149,34 @@ class StardewLexerGUI:
         self.code_input.pack(padx=10, pady=10)
         # self.code_input.configure(yscrollcommand=self.sync_scrollbars)
         # self.line_numbers.configure(yscrollcommand=self.sync_scrollbars)
-        #image for Lexical Analyzer Button/Button
-        self.analyze_button = Image.open("Lexical.png")
-        self.resize_analyze_button = self.analyze_button.resize((200,50))
-        self.analyze_button_picture = ImageTk.PhotoImage(self.resize_analyze_button)
-        self.image_analyze_button = tk.Button(image=self.analyze_button_picture, borderwidth=0, command=self.analyze_code_with_sound)
-        self.image_analyze_button.place(x=190, y=920)
-
-        #image for Clear Analyzer Button/Button
-        self.semantic_button = Image.open("Clear.png")
+        
+        #image for Semantic Analyzer Button/Button
+        self.semantic_button = Image.open("Images/Semantic.png")
         self.resize_semantic_button = self.semantic_button.resize((200,50))
         self.semantic_button_picture = ImageTk.PhotoImage(self.resize_semantic_button)
-        self.image_semantic_button = tk.Button(image=self.semantic_button_picture, borderwidth=0, command=self.clear_input_with_sound)
+        self.image_semantic_button = tk.Button(image=self.semantic_button_picture, borderwidth=0, command=self.semantic_input_with_sound)
         self.image_semantic_button.place(x=450, y=920)
 
-        #image for Undo Button/Button
-        self.syntax_button = Image.open("Syntax.png") #placeholder for syntax button
+        #image for Syntax Button
+        self.syntax_button = Image.open("Images/Syntax.png") #placeholder for syntax button
         self.resize_syntax_button = self.syntax_button.resize((200,50))
         self.syntax_button_picture = ImageTk.PhotoImage(self.resize_syntax_button)
         self.image_syntax_button = tk.Button(image=self.syntax_button_picture, borderwidth=0, command=self.syntax_analyzer_with_sound)
         self.image_syntax_button.place(x=710, y=920)
+
+        #image for Clear Button
+        self.clear_button = Image.open("Images/Clear.png")
+        self.resize_clear_button = self.clear_button.resize((40,40))
+        self.clear_button_picture = ImageTk.PhotoImage(self.resize_clear_button)
+        self.image_clear_button = tk.Button(image=self.clear_button_picture, borderwidth=0, command=self.clear_input_with_sound)
+        self.image_clear_button.place(x=700, y=90) #may differ in 1920x1200 resolution
+
+        #image for Undo Button
+        self.undo_button = Image.open("Images/Undo.png")
+        self.resize_undo_button = self.undo_button.resize((40,40))
+        self.undo_button_picture = ImageTk.PhotoImage(self.resize_undo_button)
+        self.image_undo_button = tk.Button(image=self.undo_button_picture, borderwidth=0, command=self.undo_input_with_sound)
+        self.image_undo_button.place(x=760, y=90) #may differ in 1920x1200 resolution
 
 
         #Style
@@ -227,17 +236,27 @@ class StardewLexerGUI:
     def on_resize(self, event):
         self.place_widgets()
 
+ # Sound Effects
+
     def analyze_code_with_sound(self):
         mixer.Sound.play(click_sound)
         self.analyze_code()
 
-    def clear_input_with_sound(self):
+    def semantic_input_with_sound(self):
         mixer.Sound.play(click_sound)
-        self.clear_input()
+        self.semantic_input()
 
     def syntax_analyzer_with_sound(self):
         mixer.Sound.play(click_sound)
         self.syntax_analyzer()
+
+    def clear_input_with_sound(self):
+        mixer.Sound.play(delete_sound)
+        self.clear_input()
+
+    def undo_input_with_sound(self):
+        mixer.Sound.play(delete_sound)
+        self.undo_input()
 
 
     def analyze_code(self): #lexer button
@@ -281,6 +300,14 @@ class StardewLexerGUI:
     def clear_input(self):
         """Clear the code input box"""
         self.code_input.delete("1.0", tk.END)
+        
+    def undo_input(self): #added for the undo button feature
+        """Undo the last action in the code input box"""
+        current_text = self.code_input.get("1.0", tk.END)
+        if len(current_text) > 1:  # Check if there's any text to undo
+            self.code_input.delete("1.0", tk.END)
+            self.code_input.insert("1.0", current_text[:-2])  # Remove the last character (including newline)
+
 
     def syntax_analyzer(self): # syntax button
         
