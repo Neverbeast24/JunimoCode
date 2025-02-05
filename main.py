@@ -126,9 +126,9 @@ class StardewLexerGUI:
 
     def setup_widgets(self):
         # Input box for code
-        self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10)
-        self.code_frame.place(x=100, y=140)
-        self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=500,
+        self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10) #width and height of the outline box
+        self.code_frame.place(x=100, y=140) #x and y for input box
+        self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=500, #width and height of the box
                                          font=("Verdana", 10),
                                          fg_color="#ffe9db",
                                          text_color=TEXT_COLOR,
@@ -149,34 +149,41 @@ class StardewLexerGUI:
         self.code_input.pack(padx=10, pady=10)
         # self.code_input.configure(yscrollcommand=self.sync_scrollbars)
         # self.line_numbers.configure(yscrollcommand=self.sync_scrollbars)
+
+        #image for Lexical Analyzer Button/Button
+        self.analyze_button = Image.open("Images/Lexical.png")
+        self.resize_analyze_button = self.analyze_button.resize((200,50))
+        self.analyze_button_picture = ImageTk.PhotoImage(self.resize_analyze_button)
+        self.image_analyze_button = tk.Button(image=self.analyze_button_picture, borderwidth=0, command=self.analyze_code_with_sound)
+        self.image_analyze_button.place(x=190, y=920)  #x and y for lexical
         
         #image for Semantic Analyzer Button/Button
         self.semantic_button = Image.open("Images/Semantic.png")
         self.resize_semantic_button = self.semantic_button.resize((200,50))
         self.semantic_button_picture = ImageTk.PhotoImage(self.resize_semantic_button)
         self.image_semantic_button = tk.Button(image=self.semantic_button_picture, borderwidth=0, command=self.semantic_input_with_sound)
-        self.image_semantic_button.place(x=450, y=920)
+        self.image_semantic_button.place(x=450, y=920) #x and y for semantic
 
         #image for Syntax Button
         self.syntax_button = Image.open("Images/Syntax.png") #placeholder for syntax button
         self.resize_syntax_button = self.syntax_button.resize((200,50))
         self.syntax_button_picture = ImageTk.PhotoImage(self.resize_syntax_button)
         self.image_syntax_button = tk.Button(image=self.syntax_button_picture, borderwidth=0, command=self.syntax_analyzer_with_sound)
-        self.image_syntax_button.place(x=710, y=920)
+        self.image_syntax_button.place(x=710, y=920) #x and y for syntax button
 
         #image for Clear Button
         self.clear_button = Image.open("Images/Clear.png")
         self.resize_clear_button = self.clear_button.resize((40,40))
         self.clear_button_picture = ImageTk.PhotoImage(self.resize_clear_button)
         self.image_clear_button = tk.Button(image=self.clear_button_picture, borderwidth=0, command=self.clear_input_with_sound)
-        self.image_clear_button.place(x=700, y=90) #may differ in 1920x1200 resolution
+        self.image_clear_button.place(x=700, y=90) #may differ in 1920x1200 resolution, x and y for clear buttons
 
         #image for Undo Button
         self.undo_button = Image.open("Images/Undo.png")
         self.resize_undo_button = self.undo_button.resize((40,40))
         self.undo_button_picture = ImageTk.PhotoImage(self.resize_undo_button)
         self.image_undo_button = tk.Button(image=self.undo_button_picture, borderwidth=0, command=self.undo_input_with_sound)
-        self.image_undo_button.place(x=760, y=90) #may differ in 1920x1200 resolution
+        self.image_undo_button.place(x=760, y=90) #may differ in 1920x1200 resolution, x and y for clear buttons
 
 
         #Style
@@ -187,7 +194,7 @@ class StardewLexerGUI:
 
         # Token Table
         self.token_frame = ctk.CTkFrame(self.root, fg_color="#8f3901", corner_radius=10)
-        self.token_frame.place(x=830, y=50)
+        self.token_frame.place(x=830, y=50) #x and y for the table
 
         self.token_tree = ttk.Treeview(self.token_frame, columns=("Index", "Lexeme", "Token"), show='headings',
                                        height=40)
@@ -201,7 +208,7 @@ class StardewLexerGUI:
 
         # Terminal Output
         self.terminal_frame = ctk.CTkFrame(self.root, width=200, height=100, fg_color="#8f3901", corner_radius=10)
-        self.terminal_frame.place(x=100, y=800)
+        self.terminal_frame.place(x=100, y=800) #x and y for terminal
         self.terminal_output = ctk.CTkTextbox(self.terminal_frame, width=700, height=85,
                                               font=PIXEL_FONT,
                                               fg_color="#ffe9db",
