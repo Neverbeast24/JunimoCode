@@ -42,10 +42,12 @@ alpha_capital = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 alpha = 'abcdefghijklmnopqrstuvwxyz'
 all_letters = alpha + alpha_capital
 
+
 #numbers
 zero = '0'
 number = '123456789'
 all_numbers = zero + number
+alpha1 = alpha + all_numbers
 
 #alphanumeric and special symbols
 punctuation_symbols = "~!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
@@ -296,8 +298,9 @@ class Lexer:
                     if self.current_char == " ":
                         tokens.append(Token(SPACE, "\" \"", pos_start = self.pos))
                     self.advance()
-            elif self.current_char in alpha:
+            elif self.current_char in alpha1:
                 result, error = self.make_word()
+                #NONE 
 
                 if error:
                     errors.extend(error)
@@ -336,8 +339,9 @@ class Lexer:
                 if self.current_char == None or self.current_char == EOF:
                     errors.append(f"Error at line: {self.pos.ln + 1}. Invalid delimiter for {result.value}. Cause: ' {self.current_char} '.")
                 else:
+                    
                     tokens.append(result)
-
+                
             elif self.current_char == "\"":  # Handle string literals
                 string, error = self.make_string()
                 errors.extend(error)
@@ -1283,8 +1287,8 @@ class Lexer:
                                                 return [], errors
                                             if self.current_char in break_delim:
                                                 return Token(PLANTING, "planting", pos_start = self.pos), errors
-                                            # elif self.current_char in alpha_num:
-                                            #     continue
+                                            #elif self.current_char in alpha_num:
+                                            #    continue
                                             else:
                                                 errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for planting! Cause: {self.current_char}. Expected: TERMINATOR, whitespace '])
                                                 self.advance()
@@ -1340,7 +1344,7 @@ class Lexer:
                                 errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for ship! Cause: {self.current_char}. Expected: open parenthesis'])
                                 self.advance()
                                 return [], errors
-                            
+
                 elif self.current_char == "t": #STAR
                     ident += self.current_char
                     self.advance()
@@ -1910,7 +1914,7 @@ class Parser:
                                 self.advance()
                                 if self.current_tok.token == EQUAL or self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
 
-                                    assign, a_error = self.init_crop()
+                                    assign, a_error = self.init_var()
                                     
                                     
                                     if a_error:

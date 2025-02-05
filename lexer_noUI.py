@@ -724,36 +724,50 @@ class Lexer:
         num_str = ''
         dot_count = 0
         errors = []
+        #not used ata to
+        reached_limit_intel = False
+        
 
         while self.current_char is not None and self.current_char in all_numbers + '.':
+           
+                    
             if self.current_char == '.':
                 if dot_count == 1: 
                     errors.append(f"Invalid character '{self.current_char}' in number. Decimal point already found!")
                     break 
                 dot_count += 1 
                 num_str += '.'
-            else:                
+                
+            else:
+                if '.' in num_str: 
+                    dec_count += 1
+                    num_count -= 1
+                
                 num_count += 1
                 num_str += self.current_char
             self.advance()
-
-        # Check if there are letters after the number
+        
+        # check if there are letters after the number
         if self.current_char is not None and self.current_char.isalpha():
+            # while self.current_char is not None and self.current_char.isalpha():
+            #     num_str += self.current_char
+            #     #added this advance para maskip nya yung identifier if ever
+            #     self.advance()
             errors.append(f"Invalid delimiter for number: {num_str}")    
             if errors:
                 return [], errors
-        
-        # Validate the next character using `num_delim`
-        if self.current_char is not None and self.current_char not in num_delim:
-            errors.append(
-                f"Invalid delimiter '{self.current_char}' after number '{num_str}'. "
-                f"Expected one of: {num_delim}"
-            )
-            if errors:
-                return [], errors
+               
+            
 
-        # Determine if the token is an integer or a float
+       #TODO need maread kapag may 0
+            # if dot_count == 0:
+            #     #balik naalng yung token intel or gravity if need makita yung tokens ket may errors
+            #     return Token(INTEL, int(num_str)), errors
+            # else:
+            #     return Token(GRAVITY, float(num_str)), errors
+        
         if dot_count == 0:
+            #balik naalng yung token intel or gravity if need makita yung tokens ket may errors
             return Token(INTEGER, int(num_str)), errors
         else:
             return Token(FLOAT, float(num_str)), errors
