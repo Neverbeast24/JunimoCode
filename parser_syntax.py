@@ -105,7 +105,7 @@ comment2_delim = whitespace + newline_delim + ascii
 error = []
 
 #TOKENS
-
+ENTITY = 'entity'
 #reserved words
 PLANTING = 'planting' #Start
 PERFECTION = 'perfection' #End
@@ -198,9 +198,10 @@ class Error: # do not change
         self. details = details
 
     def as_string(self):
-        result = f'{self.error_name}: {self.details}\n'
-        result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
-        return result
+        result  = f'{self.error_name}: {self.details}\n'
+        fileDetail = f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
+        errorDetail, arrowDetail = string_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        return result, fileDetail, errorDetail, arrowDetail
 
 class IllegalCharError(Error):
     #the lexer comes across a character it doesn't support
@@ -2044,7 +2045,30 @@ class Parser:
                         else:
                             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected scope for winter!"))
                 
+                    # Handle list statements
+                if self.current_tok.token in ADD:
+                    add_res, add_error = self.add_stmt()
+                    if add_error:
+                        error.extend(add_error)
+                        break
+                    else:
+                        res.extend(add_res)
+                        if self.current_tok.token != TERMINATOR:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign after 'add'!"))
+                        else:
+                            self.advance()
                 
+                elif self.current_tok.token in PLUCK:
+                    pluck_res, pluck_error = self.pluck_stmt()
+                    if pluck_error:
+                        error.extend(pluck_error)
+                        break
+                    else:
+                        res.extend(pluck_res)
+                        if self.current_tok.token != TERMINATOR:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign after 'pluck'!"))
+                        else:
+                            self.advance()
                 if self.current_tok.token == BREAK:
                     self.advance()
                     if self.in_loop == True and self.in_condition == True:
@@ -2580,7 +2604,93 @@ class Parser:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier or left parenthesis!"))
     
         return res, error
-        
+    
+    def add_stmt(self):
+        res = []
+        error = []
+
+        print(f"[DEBUG] Starting add_stmt with token: {self.current_tok.token}")
+
+        # Parse `add` keyword
+        self.advance()
+        if self.current_tok.token != "(":
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' after 'add'!"))
+            return res, error
+
+        self.advance()
+        print(f"[DEBUG] Parsing add parameters, token: {self.current_tok.token}")
+
+        # Parse the first identifier or value
+        if self.current_tok.token in ("Identifier", "StrLit", "IntLit", "FloatLit"):
+            res.append(self.current_tok.token)
+            self.advance()
+        else:
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected a valid identifier or value after 'add'!"))
+            return res, error
+
+        # Parse additional comma-separated values
+        while self.current_tok.token == ",":
+            self.advance()
+            if self.current_tok.token in ("Identifier", "StrLit", "IntLit", "FloatLit"):
+                res.append(self.current_tok.token)
+                self.advance()
+            else:
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected a valid value after ',' in 'add'!"))
+                return res, error
+
+        # Parse closing parenthesis
+        if self.current_tok.token != ")":
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')' to close 'add' statement!"))
+            return res, error
+
+        res.append("Success from add")
+        self.advance()
+
+        return res, error
+    def pluck_stmt(self):
+        res = []
+        error = []
+
+        print(f"[DEBUG] Starting pluck_stmt with token: {self.current_tok.token}")
+
+        # Parse `pluck` keyword
+        self.advance()
+        if self.current_tok.token != "(":
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' after 'pluck'!"))
+            return res, error
+
+        self.advance()
+        print(f"[DEBUG] Parsing pluck parameters, token: {self.current_tok.token}")
+
+        # Parse the first identifier
+        if self.current_tok.token == "Identifier":
+            res.append(self.current_tok.token)
+            self.advance()
+        else:
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected an identifier in 'pluck'!"))
+            return res, error
+
+        # Parse additional comma-separated values
+        while self.current_tok.token == ",":
+            self.advance()
+            if self.current_tok.token in ("Identifier", "StrLit", "IntLit", "FloatLit"):
+                res.append(self.current_tok.token)
+                self.advance()
+            else:
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected a valid value after ',' in 'pluck'!"))
+                return res, error
+
+        # Parse closing parenthesis
+        if self.current_tok.token != ")":
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')' to close 'pluck' statement!"))
+            return res, error
+
+        res.append("Success from pluck")
+        self.advance()
+
+        return res, error
+
+ 
     def num_loop(self, check = [], ops = []):
         res = []
         error = []
@@ -3281,7 +3391,6 @@ class Parser:
 
         return res, error
     
-    # INPUT AND OUTPUT STATEMENT
     def ship_stmt(self):
         res = []
         error = []
@@ -3315,7 +3424,45 @@ class Parser:
                     res.append(self.current_tok.token)
                     print(f"[DEBUG] Valid token added: {self.current_tok.token}")
                     self.advance()
-                    expecting_value = False  # After a value, expect a comma or closing parenthesis
+
+                    # Check if the next token is '[' for list access
+                    if self.current_tok and self.current_tok.token == "[":
+                        print(f"[DEBUG] Detected start of list access: {self.current_tok.token}")
+                        res.append(self.current_tok.token)  # Add the '['
+                        self.advance()
+
+                        # Process the index inside the list access
+                        while self.current_tok and self.current_tok.token != "]":
+                            if self.current_tok.token in ("IntLit", "Identifier"):
+                                res.append(self.current_tok.token)
+                                print(f"[DEBUG] List index: {self.current_tok.token}")
+                                self.advance()
+                            elif self.current_tok.token in ("+", "-", "*", "/"):  # Handle arithmetic inside list access
+                                res.append(self.current_tok.token)
+                                print(f"[DEBUG] Arithmetic operator in list index: {self.current_tok.token}")
+                                self.advance()
+                            else:
+                                error.append(InvalidSyntaxError(
+                                    getattr(self.current_tok, 'pos_start', "Unknown"),
+                                    getattr(self.current_tok, 'pos_end', "Unknown"),
+                                    "Invalid token inside list access!"
+                                ))
+                                return res, error
+
+                        # Ensure closing bracket ']'
+                        if not self.current_tok or self.current_tok.token != "]":
+                            error.append(InvalidSyntaxError(
+                                getattr(self.current_tok, 'pos_start', "Unknown"),
+                                getattr(self.current_tok, 'pos_end', "Unknown"),
+                                "Expected ']' to close list access!"
+                            ))
+                            return res, error
+
+                        res.append(self.current_tok.token)  # Add the ']'
+                        print(f"[DEBUG] Found closing bracket for list access")
+                        self.advance()
+
+                    expecting_value = False  # After a value or list, expect a comma or closing parenthesis
                 else:
                     error.append(InvalidSyntaxError(
                         getattr(self.current_tok, 'pos_start', "Unknown"),
@@ -3355,6 +3502,8 @@ class Parser:
 
         print(f"[DEBUG] Completed parsing ship statement: {res}")
         return res, error
+
+
     
     
     def collect_stmt(self):
@@ -3856,7 +4005,7 @@ def run(fn, text):
     result, parseError = parser.parse()
     
 
-    return result, parseError
+    return parser, parseError
 
 class StardewLexerGUI:
     def __init__(self, root):
@@ -4138,23 +4287,42 @@ class StardewLexerGUI:
                 for err in syntax_error:
                     self.terminal_output.insert(tk.END, err.as_string())
                 # for err in syntax_error:
-                #     if isinstance(err, list):
-                #         for e in err:
-                #             errorResult, fileDetail, arrowDetail, arrows = e.as_string()
-                #             self.terminal_output.insert(tk.END, errorResult)
-                #             self.terminal_output.insert(tk.END, fileDetail)
-                #             self.terminal_output.insert(tk.END, arrowDetail)
-                #             # errors_text.insert(tk.END, arrows)
-                #     else:
-                #         errorResult, fileDetail, arrowDetail, arrows = err.as_string()
-                #         self.terminal_output.insert(tk.END, errorResult)
-                #         self.terminal_output.insert(tk.END, fileDetail)
-                #         self.terminal_output.insert(tk.END, arrowDetail)
-                #         # errors_text.insert(tk.END, arrows)
+                #     print(f"[DEBUG] Processing syntax error: {err}")  # Debugging: Print raw error object
+                    
+                #     if isinstance(err, list):  # If error is a list, iterate through its elements
+                #         for sub_err in err:
+                #             if hasattr(sub_err, "as_string") and callable(sub_err.as_string):
+                #                 formatted_error = sub_err.as_string()
+                                
+                #                 # Ensure it's a single string, not a tuple
+                #                 if isinstance(formatted_error, tuple):
+                #                     formatted_error = "\n".join(formatted_error)
+
+                #                 print(f"[DEBUG] Formatted Error: {formatted_error}")  # Debugging
+                #                 self.terminal_output.insert(tk.END, formatted_error + "\n")
+                #             else:
+                #                 error_message = f"Error: {str(sub_err)}"
+                #                 print(f"[DEBUG] Fallback Error: {error_message}")  # Debugging
+                #                 self.terminal_output.insert(tk.END, error_message + "\n")
+                #     else:  # If error is a single object
+                #         if hasattr(err, "as_string") and callable(err.as_string):
+                #             formatted_error = err.as_string()
+                            
+                #             # Ensure it's a single string, not a tuple
+                #             if isinstance(formatted_error, tuple):
+                #                 formatted_error = "\n".join(formatted_error)
+
+                #             print(f"[DEBUG] Formatted Error: {formatted_error}")  # Debugging
+                #             self.terminal_output.insert(tk.END, formatted_error + "\n")
+                #         else:
+                #             error_message = f"Error: {str(err)}"
+                #             print(f"[DEBUG] Fallback Error: {error_message}")  # Debugging
+                #             self.terminal_output.insert(tk.END, error_message + "\n")
+
             else:
                 
                 # for res in syntax_result:
-                self.terminal_output.insert(tk.END, "SUCCESS from syntax")
+                self.terminal_output.insert(tk.END, "Success from Syntax")
                 # errors_text.insert(tk.END, "SUCCESS")
 
 

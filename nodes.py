@@ -1,13 +1,13 @@
 
 import subprocess
 import semantic
-from semantic import InnerNode, VarAssignNode, VarInitNode, VarDecNode, VarAccessNode
+from semantic import ShipNode, VarAssignNode, VarInitNode, VarDecNode, VarAccessNode
 # import subprocess
 # import sys
 import os
 
 import sys
-sys.path.append(f"C:\Users\sayso\Desktop\JunimoCode\built_in.py")
+sys.path.append(r"C:\Users\sayso\Desktop\JunimoCode\built_in.py")
 
 
 import keyword
