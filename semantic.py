@@ -4612,6 +4612,7 @@ mixer.init()
 click_sound = mixer.Sound("Interface/bigSelect.wav")
 hover_sound = mixer.Sound("Interface/select.wav")
 delete_sound = mixer.Sound("Interface/bigDeSelect.wav")
+output_sound = mixer.Sound("Interface/newRecipe.wav")
 background_music = r"BackgroundMusic/ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3"
 
 # Stardew Valley-themed colors
@@ -4710,10 +4711,10 @@ class StardewLexerGUI:
             print(f"Error syncing scrollbars: {e}")
 
 
-    def setup_widgets(self):
+   def setup_widgets(self):
         # Input box for code
         self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10) #width and height of the outline box
-        self.code_frame.place(x=100, y=140) #x and y for input box
+        self.code_frame.place(x=100, y=94) #x and y for input box
         self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=500, #width and height of the box
                                          font=("Verdana", 10),
                                          fg_color="#ffe9db",
@@ -4735,41 +4736,47 @@ class StardewLexerGUI:
         self.code_input.pack(padx=10, pady=10)
         # self.code_input.configure(yscrollcommand=self.sync_scrollbars)
         # self.line_numbers.configure(yscrollcommand=self.sync_scrollbars)
-
         #image for Lexical Analyzer Button/Button
         self.analyze_button = Image.open("Images/Lexical.png")
         self.resize_analyze_button = self.analyze_button.resize((200,50))
         self.analyze_button_picture = ImageTk.PhotoImage(self.resize_analyze_button)
         self.image_analyze_button = tk.Button(image=self.analyze_button_picture, borderwidth=0, command=self.analyze_code_with_sound)
-        self.image_analyze_button.place(x=190, y=920)  #x and y for lexical
+        self.image_analyze_button.place(x=200, y=650)  #x and y for lexical
         
         #image for Semantic Analyzer Button/Button
         self.semantic_button = Image.open("Images/Semantic.png")
         self.resize_semantic_button = self.semantic_button.resize((200,50))
         self.semantic_button_picture = ImageTk.PhotoImage(self.resize_semantic_button)
         self.image_semantic_button = tk.Button(image=self.semantic_button_picture, borderwidth=0, command=self.semantic_input_with_sound)
-        self.image_semantic_button.place(x=450, y=920) #x and y for semantic
+        self.image_semantic_button.place(x=200, y=720) #x and y for semantic
 
         #image for Syntax Button
         self.syntax_button = Image.open("Images/Syntax.png") #placeholder for syntax button
         self.resize_syntax_button = self.syntax_button.resize((200,50))
         self.syntax_button_picture = ImageTk.PhotoImage(self.resize_syntax_button)
         self.image_syntax_button = tk.Button(image=self.syntax_button_picture, borderwidth=0, command=self.syntax_analyzer_with_sound)
-        self.image_syntax_button.place(x=710, y=920) #x and y for syntax button
+        self.image_syntax_button.place(x=500, y=650) #x and y for syntax button
+
+        #image for Output Button
+        self.output_button = Image.open("Images/Output.png") #placeholder for output button
+        self.resize_output_button = self.output_button.resize((200,50))
+        self.output_button_picture = ImageTk.PhotoImage(self.resize_output_button)
+        self.image_output_button = tk.Button(image=self.output_button_picture, borderwidth=0, command=self.output_with_sound)
+        self.image_output_button.place(x=500, y=720) #x and y for output button
 
         #image for Clear Button
         self.clear_button = Image.open("Images/Clear.png")
         self.resize_clear_button = self.clear_button.resize((40,40))
         self.clear_button_picture = ImageTk.PhotoImage(self.resize_clear_button)
         self.image_clear_button = tk.Button(image=self.clear_button_picture, borderwidth=0, command=self.clear_input_with_sound)
-        self.image_clear_button.place(x=700, y=90) #may differ in 1920x1200 resolution, x and y for clear buttons
+        self.image_clear_button.place(x=720, y=50) #may differ in 1920x1200 resolution, x and y for clear buttons
 
         #image for Undo Button
         self.undo_button = Image.open("Images/Undo.png")
         self.resize_undo_button = self.undo_button.resize((40,40))
         self.undo_button_picture = ImageTk.PhotoImage(self.resize_undo_button)
         self.image_undo_button = tk.Button(image=self.undo_button_picture, borderwidth=0, command=self.undo_input_with_sound)
-        self.image_undo_button.place(x=760, y=90) #may differ in 1920x1200 resolution, x and y for clear buttons
+        self.image_undo_button.place(x=767, y=50) #may differ in 1920x1200 resolution, x and y for clear buttons
 
 
         #Style
@@ -4793,9 +4800,9 @@ class StardewLexerGUI:
         self.token_tree.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Terminal Output
-        self.terminal_frame = ctk.CTkFrame(self.root, width=200, height=100, fg_color="#8f3901", corner_radius=10)
-        self.terminal_frame.place(x=100, y=800) #x and y for terminal
-        self.terminal_output = ctk.CTkTextbox(self.terminal_frame, width=700, height=85,
+        self.terminal_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10)
+        self.terminal_frame.place(x=100, y=750) #x and y for terminal
+        self.terminal_output = ctk.CTkTextbox(self.terminal_frame, width=700, height=150,
                                               font=PIXEL_FONT,
                                               fg_color="#ffe9db",
                                               text_color="red",
@@ -4849,6 +4856,10 @@ class StardewLexerGUI:
 
     def undo_input_with_sound(self):
         mixer.Sound.play(delete_sound)
+        self.undo_input()
+
+    def output_with_sound(self):
+        mixer.Sound.play(output_sound)
         self.undo_input()
 
 
