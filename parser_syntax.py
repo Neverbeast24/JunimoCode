@@ -32,7 +32,7 @@ TITLE_FONT = ("Stardew Valley Regular", 48)  # Large title font
 PIXEL_FONT = ("Verdana", 12, "bold" )  # Font for other UI elements
 
 # Paths for assets
-background_image_path = r"Images\background.jpg"
+background_image_path = r"Images\background.png"
 
 #Cursor
 junimo_cursor = "Stardew_Cursor.xpm" #Not Yet Working ; Maganda sana na-additional kaechosan.
