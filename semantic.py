@@ -4628,7 +4628,7 @@ TITLE_FONT = ("Stardew Valley Regular", 48)  # Large title font
 PIXEL_FONT = ("Verdana", 12, "bold" )  # Font for other UI elements
 
 # Paths for assets
-background_image_path = r"Images\background.jpg"
+background_image_path = r"Images\background.png"
 
 #Cursor
 junimo_cursor = "Stardew_Cursor.xpm" #Not Yet Working ; Maganda sana na-additional kaechosan.
@@ -4637,7 +4637,7 @@ junimo_cursor = "Stardew_Cursor.xpm" #Not Yet Working ; Maganda sana na-addition
 class StardewLexerGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Junimo Code Lexical Analyzer")
+        self.root.title("Junimo Code")
         self.root.geometry("1920x1200")
         self.root.configure(bg=BACKGROUND_COLOR)
         self.code = None
@@ -4666,7 +4666,7 @@ class StardewLexerGUI:
         self.canvas.pack(fill="both", expand=True)
         self.bg = self.canvas.create_image(0, 0, anchor="nw", image=self.bg_photo)
         
-    def update_line_numbers(self):
+ def update_line_numbers(self):
         """Synchronize line numbers with text lines in the code_input box."""
         # Enable editing for the line number widget
         self.line_numbers.configure(state=tk.NORMAL)
@@ -4685,11 +4685,11 @@ class StardewLexerGUI:
         self.line_numbers.configure(state=tk.DISABLED)
 
         # Align the font size with the code_input
-        self.line_numbers.configure(font=("Verdana", 15))  # Set font and size
+        self.line_numbers.configure(font=("Verdana", 13))  # Set font and size
 
         # Adjust spacing to add margin or padding
-        self.line_numbers.configure(spacing1=1)  # Default spacing for all lines
-        self.line_numbers.tag_configure("first_line", spacing1=25)  # Adjust first-line spacing
+        self.line_numbers.configure(spacing1=0.5)  # Default spacing for all lines
+        self.line_numbers.tag_configure("first_line", spacing1=10)  # Adjust first-line spacing
 
         # Apply custom alignment for the first line
         self.line_numbers.tag_add("first_line", "1.0", "1.end")
@@ -4728,14 +4728,16 @@ class StardewLexerGUI:
         self.code_input.bind("<KeyRelease>", lambda event: self.update_line_numbers())
         self.code_input.bind("<MouseWheel>", lambda event: self.update_line_numbers())
 
-                # Error at line numbers
-        self.line_numbers = tk.Text(self.code_frame, width=4, padx=3, takefocus=0, fg="#ffe9db",
+ # Error at line numbers
+        self.line_numbers = tk.Text(self.code_frame, width=2, padx=2, takefocus=0, fg="#ffe9db",
                                      bg="#8f3901", highlightthickness=0, state=tk.DISABLED)
         self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
 
-        self.code_input.pack(padx=10, pady=10)
+        self.code_input.pack(padx=10, pady=5)
         # self.code_input.configure(yscrollcommand=self.sync_scrollbars)
         # self.line_numbers.configure(yscrollcommand=self.sync_scrollbars)
+
+       
         #image for Lexical Analyzer Button/Button
         self.analyze_button = Image.open("Images/Lexical.png")
         self.resize_analyze_button = self.analyze_button.resize((200,50))
