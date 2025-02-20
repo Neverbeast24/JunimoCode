@@ -4666,7 +4666,7 @@ class StardewLexerGUI:
         self.canvas.pack(fill="both", expand=True)
         self.bg = self.canvas.create_image(0, 0, anchor="nw", image=self.bg_photo)
         
- def update_line_numbers(self):
+    def update_line_numbers(self):
         """Synchronize line numbers with text lines in the code_input box."""
         # Enable editing for the line number widget
         self.line_numbers.configure(state=tk.NORMAL)
@@ -4711,7 +4711,7 @@ class StardewLexerGUI:
             print(f"Error syncing scrollbars: {e}")
 
 
-   def setup_widgets(self):
+    def setup_widgets(self):
         # Input box for code
         self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10) #width and height of the outline box
         self.code_frame.place(x=100, y=94) #x and y for input box
