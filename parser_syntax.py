@@ -3493,8 +3493,50 @@ class Parser:
                     print(f"[DEBUG] Closing parenthesis for function call found")
                     self.advance()
 
+                # **Detect List Access** (Identifier followed by '[')
+                elif self.current_tok.token == "Identifier":
+                    res.append(self.current_tok.token)
+                    print(f"[DEBUG] Identifier detected: {self.current_tok.token}")
+                    self.advance()
+
+                    if self.current_tok and self.current_tok.token == "[":
+                        print(f"[DEBUG] Detected start of list access: {self.current_tok.token}")
+                        res.append(self.current_tok.token)  # Add '['
+                        self.advance()
+
+                        # Process the index inside the list access
+                        while self.current_tok and self.current_tok.token != "]":
+                            if self.current_tok.token in ("IntLit", "Identifier"):
+                                res.append(self.current_tok.token)
+                                print(f"[DEBUG] List index: {self.current_tok.token}")
+                                self.advance()
+                            elif self.current_tok.token in ("+", "-", "*", "/"):  # Handle arithmetic inside list access
+                                res.append(self.current_tok.token)
+                                print(f"[DEBUG] Arithmetic operator in list index: {self.current_tok.token}")
+                                self.advance()
+                            else:
+                                error.append(InvalidSyntaxError(
+                                    getattr(self.current_tok, 'pos_start', "Unknown"),
+                                    getattr(self.current_tok, 'pos_end', "Unknown"),
+                                    "Invalid token inside list access!"
+                                ))
+                                return res, error
+
+                        # Ensure closing bracket ']'
+                        if not self.current_tok or self.current_tok.token != "]":
+                            error.append(InvalidSyntaxError(
+                                getattr(self.current_tok, 'pos_start', "Unknown"),
+                                getattr(self.current_tok, 'pos_end', "Unknown"),
+                                "Expected ']' to close list access!"
+                            ))
+                            return res, error
+
+                        res.append(self.current_tok.token)  # Add the ']'
+                        print(f"[DEBUG] Found closing bracket for list access")
+                        self.advance()
+
                 # Accept a direct value (Identifier, String, Number, Boolean)
-                elif self.current_tok.token in ("Identifier", "StrLit", "IntLit", "FloatLit", "true", "false"):
+                elif self.current_tok.token in ("StrLit", "IntLit", "FloatLit", "true", "false"):
                     res.append(self.current_tok.token)
                     print(f"[DEBUG] Valid token added: {self.current_tok.token}")
                     self.advance()
@@ -3526,10 +3568,8 @@ class Parser:
                     if self.current_tok.token == TERMINATOR:
                         print(f"[DEBUG] Found valid '$' terminator after ')'. Statement complete.")
                         res.append(self.current_tok.token)
-                        # self.advance()
                         break
 
-                    # If we have reached the final closing parenthesis, break
                     if open_paren_count == 0:
                         break
                 else:
@@ -3542,6 +3582,7 @@ class Parser:
 
         print(f"[DEBUG] Completed parsing ship statement: {res}")
         return res, error
+
 
 
 
