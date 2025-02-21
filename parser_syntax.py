@@ -2599,7 +2599,7 @@ class Parser:
                             
                         #return True
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis! assign val 2 lparen"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
                         print("Ito: ", self.current_tok)
         # elif self.current_tok.token == INCRE or self.current_tok.token == DECRE:
         #     self.advance()
