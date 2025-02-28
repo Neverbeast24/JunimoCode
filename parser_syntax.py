@@ -2379,12 +2379,12 @@ class Parser:
                 
                 res.append("Success form ident assign!")
                 
-        # elif self.current_tok.token == TRUE:
-        #     self.advance()
-        #     return res, error
-        # elif self.current_tok.token == FALSE:
-        #     self.advance()
-        #     return res, error
+        elif self.current_tok.token == TRUE:
+            self.advance()
+            return res, error
+        elif self.current_tok.token == FALSE:
+            self.advance()
+            return res, error
         
         
         # Check for collect statement
@@ -2496,11 +2496,11 @@ class Parser:
                 # print("assign val 2 ident")
                 # print("first value in assign val is an identifier")
                 self.advance()
-                if self.in_universe == True:
+                if self.in_farmhouse == True:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
                     return res, error
                 if self.current_tok.token == LPAREN:
-                    if self.in_universe == True:
+                    if self.in_farmhouse == True:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot call form in universe declaration/initialization!"))
                         return res, error
                     # print("we assigned a function call to a variable")
