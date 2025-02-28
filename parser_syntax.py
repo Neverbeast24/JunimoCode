@@ -2339,22 +2339,28 @@ class Parser:
     #* assign a value of a variable
     # -- may string, and boolean here, id, num, void, also paren support, used in =
     def assign_val(self):
-        res=[]
-        error =[]
-        #print ("VALUE ASSIGNED FROM  ASSIGN_VAL")
-        #self.advance()
+        res = []
+        error = []
+
         if self.current_tok.token == STRING:
             self.advance()
-            if self.current_tok.token != PLUS:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected plus sign!"))
-            while self.current_tok.token in PLUS:
+
+            # If the next token is PLUS, process concatenation
+            while self.current_tok.token == PLUS:
                 self.advance()
-                if self.current_tok.token == STRING or self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == FLOAT :
+                
+                # Ensure there's a valid token after '+'
+                if self.current_tok.token == STRING or self.current_tok.token == IDENTIFIER or self.current_tok.token == FLOAT or self.current_tok.token == INTEGER:
                     self.advance()
                 else:
-                    #error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after comma!"))
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or string!"))
-            return res, error
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, or string after '+'!"))
+                    return res, error  # Return early if error is encountered
+            
+            # If no '+' is found, it's still valid; just return success
+            return res, error  
+
+        print("current token: ", self.current_tok)
+
         if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER:
             n_res, n_error = self.assign_val2([PLUS, MINUS, DIV, MODULUS, MUL])
 
