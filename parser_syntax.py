@@ -2165,11 +2165,13 @@ class Parser:
                     var, crop_error = self.crop_dec()
                     if crop_error:
                         error.extend(crop_error)
+                        print("crop error")
                         break
                     #res.append(var)
                     #self.advance()
                     
                     if self.current_tok.token != TERMINATOR:
+                        print("check", self.current_tok)
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign, comma, +, -, *, /, %"))
                         return res, error
                     else:
@@ -2343,6 +2345,8 @@ class Parser:
         #self.advance()
         if self.current_tok.token == STRING:
             self.advance()
+            if self.current_tok.token != PLUS:
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected plus sign!"))
             while self.current_tok.token in PLUS:
                 self.advance()
                 if self.current_tok.token == STRING or self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == FLOAT :
@@ -2350,11 +2354,10 @@ class Parser:
                 else:
                     #error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after comma!"))
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or string!"))
-
             return res, error
         if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER:
             n_res, n_error = self.assign_val2([PLUS, MINUS, DIV, MODULUS, MUL])
-            
+
             if n_error:
                 for err in n_error:
                     error.append(err)
@@ -2362,7 +2365,7 @@ class Parser:
                 res.append("Success form ident assign!")
 
             return res, error
-
+        
         elif self.current_tok.token == LPAREN:
             
             n_res, n_error = self.assign_val2([PLUS, MINUS, DIV, MODULUS, MUL])
@@ -2376,12 +2379,12 @@ class Parser:
                 
                 res.append("Success form ident assign!")
                 
-        elif self.current_tok.token == TRUE:
-            self.advance()
-            return res, error
-        elif self.current_tok.token == FALSE:
-            self.advance()
-            return res, error
+        # elif self.current_tok.token == TRUE:
+        #     self.advance()
+        #     return res, error
+        # elif self.current_tok.token == FALSE:
+        #     self.advance()
+        #     return res, error
         
         
         # Check for collect statement
@@ -2458,165 +2461,145 @@ class Parser:
     def assign_val2(self, ops):
         res = []
         error = []
-        num =  []
+        num = []
 
-        
-        if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER or self.current_tok.token == STRING:
-            if self.current_tok.token in (INTEGER, FLOAT):
+        print(f"[DEBUG] Starting assign_val2 with token: {self.current_tok.token}")  # Debugging start
+
+        if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER, STRING):
+            if self.current_tok.token in (INTEGER, FLOAT, STRING):
                 num.append(self.current_tok.token)
-            if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == STRING:
-                self.advance()
+            print(f"[DEBUG] Recognized value: {self.current_tok.token}")
 
-                if self.current_tok.token not in ops:
-                    return res, error
+            self.advance()
+            print(f"[DEBUG] Advanced to: {self.current_tok.token}")
+
+            if self.current_tok.token in ops:
+                print(f"[DEBUG] Found arithmetic operation: {self.current_tok.token}")
                 check, err = self.num_loop(num, ops)
-                print("after num loop: ", self.current_tok)
                 if err:
-                    # print("FOUND AN ERROR IN NUM LOOP")    
-                    for e in err:
-                        error.append(e)
-                        # print('error in num loop: ', e.as_string())
-                    # print("i'll return the num loop now")
-                    # print("error list: ", error)
-                    #self.advance()
+                    error.extend(err)
                     return [], error
                 else:
-                    # print("checked")
-                    # #self.advance()
-                    # print("after checked: ", self.current_tok)
-                    res.append(["okay yung num loop!"])
+                    res.append(["SUCCESS from arithmetic assignment!"])
                 return res, error
-                
-                
-                
-            elif self.current_tok.token == "Identifier":
-                # print("assign val 2 ident")
-                # print("first value in assign val is an identifier")
+
+            elif self.current_tok.token == IDENTIFIER:
+                print(f"[DEBUG] Found identifier after assignment: {self.current_tok.token}")
                 self.advance()
-                if self.in_farmhouse == True:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
+
+                if self.current_tok.token != TERMINATOR:
+                    print(f"[ERROR] Expected '$', found: {self.current_tok.token}")
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign ($) after assignment!"))
+                    return [], error
+
+                print("[DEBUG] Successfully assigned identifier to identifier.")
+                res.append(["SUCCESS from identifier assignment!"])
+                return res, error
+
+            return res, error
+
+        elif self.current_tok.token == IDENTIFIER:
+            print(f"[DEBUG] Found identifier: {self.current_tok.token}")
+            self.advance()
+
+            if self.current_tok.token == EQUAL:
+                print(f"[DEBUG] Found '=' after identifier.")
+                self.advance()
+
+                if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, STRING):
+                    print(f"[DEBUG] Valid assignment value: {self.current_tok.token}")
+                    self.advance()
+
+                    if self.current_tok.token != TERMINATOR:
+                        print(f"[ERROR] Expected '$', found: {self.current_tok.token}")
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign ($) after assignment!"))
+                        return [], error
+
+                    print("[DEBUG] Successfully assigned value to identifier.")
+                    res.append(["SUCCESS from identifier-to-identifier assignment!"])
                     return res, error
-                if self.current_tok.token == "(":
-                    if self.in_farmhouse == True:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot call form in farmhouse declaration/initialization!"))
-                        return res, error
-                    # print("we assigned a function call to a variable")
-                    c_form, call_craft_error = self.call_craft()
-                    # print("token after call form in assign val: ", self.current_tok.token)
-                    #self.advance()
-                    # print('call form result in assign val:', c_form)
-                    if call_craft_error:
-                        print("ERROR IN VALL FORM")
-                        for err in call_craft_error:
-                            error.append(err)
-                        
+
+                else:
+                    print(f"[ERROR] Invalid assignment value: {self.current_tok.token}")
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, or string after '='!"))
+                    return [], error
+
+            elif self.current_tok.token == LPAREN:
+                print("[DEBUG] Possible function call detected.")
+                c_form, call_craft_error = self.call_craft()
+                if call_craft_error:
+                    print("[ERROR] Function call error.")
+                    error.extend(call_craft_error)
+                else:
+                    self.advance()
+                    if self.current_tok.token in (MUL, DIV, PLUS, MINUS, MODULUS):
+                        print(f"[DEBUG] Found arithmetic operation: {self.current_tok.token}")
+                        self.advance()
+                        check, err = self.assign_val2([MUL, DIV, PLUS, MINUS, MODULUS])
+                        if err:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected semicolon!!"))
+                        else:
+                            res.append("SUCCESS from function call assignment!")
+                    return res, error
+
+            elif self.current_tok.token == SLBRACKET:
+                print("[DEBUG] List access detected.")
+                self.advance()
+                list, err = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
+                if err:
+                    error.extend(err)
+                else:
+                    if self.current_tok.token != SRBRACKET:
+                        print(f"[ERROR] Expected ']', found: {self.current_tok.token}")
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing bracket for list!"))
                     else:
                         self.advance()
-                        print("FOUND FORM CALL OPERAND HERE: ", self.current_tok)
-                        if self.current_tok.token in (MUL, DIV, PLUS, MINUS, MODULUS):
-                            # -- USED SELF.ASSIGN_VAL()
-                            self.advance()
-                            check, err = self.assign_val2([MUL, DIV, PLUS, MINUS, MODULUS])
-                            print("token after form arith: ", self.current_tok)
-                            if  err:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected semicolon!!"))
-
-                            else:
-                                res.append("Success form ident assign!")
-                        return res, error
-                elif self.current_tok.token == SLBRACKET:
-                    # print("assign val 2 list")
-                    #TODO LIST
-                    # print("you got a list")
-                    self.advance()
-                    list, err = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
-                    # print('after list index: ', self.current_tok)
-                    # print("list: ", err)
-                    if err:
-                        #error.append(err)
-                        for e in err:
-                            error.append(e)
-                        #return res, error
-                    else:
-                        if self.current_tok.token != SRBRACKET:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing bracket for list!"))
+                        num, err = self.num_loop()
+                        if err:
+                            error.append(err)
                         else:
-                            # print("Sucess from assign list")
-                            self.advance()
-                            num, err = self.num_loop()
-                            if err:
-                                error.append(err)
-                            else:
-                                res.append("Success form ident assign!")
-                # elif self.current_tok.token in (INCRE, DECRE):
-                #     if self.in_farmhouse == True:
-                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
-                #         return res, error
-                #     #self.advance()
-                    
-                #     res.append("success unary init")
-                #     self.advance()
-                #     ########
-                else:
-                    # print('FIRST OPERAND IS AN IDENTIFIER')
-                    num, err = self.num_loop()
-                    if err:
-                        error.append(err)
-                    else:
-                        res.append("Success form ident assign!")
-
-        elif self.current_tok.token == LPAREN:
-            print("PARENTHESIS IN ASSIGN")
-            self.advance()
-            if self.current_tok.token == RPAREN:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier or left parenthesis!"))   
+                            res.append("SUCCESS from list index assignment!")
             else:
-                check, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
-            #self.advance()
-                
+                print("[DEBUG] Processing identifier assignment.")
+                num, err = self.num_loop()
                 if err:
                     error.append(err)
-                    
+                else:
+                    res.append("SUCCESS from identifier assignment!")
 
+        elif self.current_tok.token == LPAREN:
+            print("[DEBUG] Parenthesis found in assignment.")
+            self.advance()
+            if self.current_tok.token == RPAREN:
+                print("[ERROR] Empty parentheses found.")
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier inside parentheses!"))
+            else:
+                check, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
+                if err:
+                    error.append(err)
                 else:
                     if self.current_tok.token == RPAREN:
-                        print("found closing")
+                        print("[DEBUG] Found closing parenthesis.")
                         self.advance()
-                        
                         if self.current_tok.token in (PLUS, MINUS, DIV, MUL, MODULUS):
-                            print("found operator  after paren")
+                            print(f"[DEBUG] Found arithmetic operation: {self.current_tok.token}")
                             self.advance()
                             num, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
-                            if  err:
-                                for e in err:
-                                    error.append(e)
-
+                            if err:
+                                error.extend(err)
                             else:
-                                res.append("Success form ident assign!")
-
+                                res.append("SUCCESS from arithmetic operation in parentheses!")
                         return res, error
-                        
-                            
-                        #return True
                     else:
+                        print("[ERROR] Missing closing parenthesis.")
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-                        print("Ito: ", self.current_tok)
-        # elif self.current_tok.token == INCRE or self.current_tok.token == DECRE:
-        #     self.advance()
-        #     if self.current_tok.token != IDENTIFIER:
-        #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier!"))
-        #     else:
-        #         self.advance()
-        # elif self.current_tok.token == TRUE:
-        #     self.advance()
-        #     return res, error
-        # elif self.current_tok.token == FALSE:
-        #     self.advance()
-        #     return res, error
+
         else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier or left parenthesis!"))
-    
+            print(f"[ERROR] Invalid assignment start: {self.current_tok.token}")
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or left parenthesis!"))
+
         return res, error
+
     
     def add_stmt(self):
         res = []
@@ -3274,7 +3257,7 @@ class Parser:
         if self.current_tok.token == LPAREN:
             print("found lparen")
             self.advance()
-            f_rel, f_err = self.star_rel()
+            f_rel, f_err = self.fall_rel()
             if f_err:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid relational operation!"))
                 return res, error
@@ -4129,29 +4112,32 @@ class StardewLexerGUI:
         self.line_numbers.delete(1.0, tk.END)
 
         # Get the number of lines in the code_input
-        code = self.code_input.get("1.0", "end-1c")  # Removing trailing newline
+        code = self.code_input.get("1.0", tk.END)
         self.code = code
-        lines = code.split("\n")  # Count lines properly
+        lines = code.split("\n")  # Count lines
 
-        # Add line numbers for each line, avoiding extra empty lines
+        # Add line numbers for each line
         for i in range(1, len(lines) + 1):
             self.line_numbers.insert(tk.END, f"{i}\n")
 
         # Ensure the line numbers are aligned with the text
         self.line_numbers.configure(state=tk.DISABLED)
 
-        # Match font size and alignment
-        self.line_numbers.configure(font=("Verdana", 15))  # Match font
-        self.line_numbers.configure(spacing1=1)  # Default spacing
+        # Align the font size with the code_input
+        self.line_numbers.configure(font=("Verdana", 11))  # Set font and size
 
-        # Apply center alignment for the numbers
+        # Adjust spacing to add margin or padding
+        self.line_numbers.configure(spacing1=3.5)  # Default spacing for all lines
+        self.line_numbers.tag_configure("first_line", spacing1=25)  # Adjust first-line spacing
+
+        # Apply custom alignment for the first line
+        self.line_numbers.tag_add("first_line", "1.0", "1.end")
         self.line_numbers.tag_configure("center", justify="center")  # Center-align numbers
         self.line_numbers.tag_add("center", "1.0", "end")
 
-        # Update scroll synchronization
+        # Update the scroll synchronization
         self.line_numbers.yview_moveto(self.code_input.yview()[0])
-        self.code_input.configure(font=("Verdana", 16))  # Ensure same font size
-
+        self.code_input.configure(font=("Verdana", 12))  # Match font size
  # Match font size
     # Match font size
            
@@ -4166,14 +4152,14 @@ class StardewLexerGUI:
 
     def setup_widgets(self):
         # Input box for code
-        self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10)
-        self.code_frame.place(x=100, y=140)
-        self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=500,
-                                         font=("Verdana", 10),
+        self.code_frame = ctk.CTkFrame(self.root, width=300, height=600, fg_color="#8f3901", corner_radius=10) #width and height of the outline box
+        self.code_frame.place(x=100, y=94) #x and y for input box
+        self.code_input = ctk.CTkTextbox(self.code_frame, width=660, height=500, #width and height of the box
+                                         font=("Verdana", 12),
                                          fg_color="#ffe9db",
                                          text_color=TEXT_COLOR,
                                          wrap="word")
-        self.code_input.configure(spacing1=2)
+        self.code_input.configure(spacing1=3.5)
         # Insert placeholder text
         self.placeholder_text = "Code will be placed here...\n"
         self.code_input.insert(tk.END, self.placeholder_text)
@@ -4194,7 +4180,7 @@ class StardewLexerGUI:
         self.resize_analyze_button = self.analyze_button.resize((200,50))
         self.analyze_button_picture = ImageTk.PhotoImage(self.resize_analyze_button)
         self.image_analyze_button = tk.Button(image=self.analyze_button_picture, borderwidth=0, command=self.analyze_code_with_sound)
-        self.image_analyze_button.place(x=190, y=920)
+        self.image_analyze_button.place(x=200, y=920)
 
         #image for Clear Analyzer Button/Button
         self.semantic_button = Image.open("Images\Clear.png")

@@ -4685,11 +4685,11 @@ class StardewLexerGUI:
         self.line_numbers.configure(state=tk.DISABLED)
 
         # Align the font size with the code_input
-        self.line_numbers.configure(font=("Verdana", 13))  # Set font and size
+        self.line_numbers.configure(font=("Verdana", 11))  # Set font and size
 
         # Adjust spacing to add margin or padding
-        self.line_numbers.configure(spacing1=0.5)  # Default spacing for all lines
-        self.line_numbers.tag_configure("first_line", spacing1=10)  # Adjust first-line spacing
+        self.line_numbers.configure(spacing1=3.5)  # Default spacing for all lines
+        self.line_numbers.tag_configure("first_line", spacing1=18)  # Adjust first-line spacing
 
         # Apply custom alignment for the first line
         self.line_numbers.tag_add("first_line", "1.0", "1.end")
@@ -4698,7 +4698,7 @@ class StardewLexerGUI:
 
         # Update the scroll synchronization
         self.line_numbers.yview_moveto(self.code_input.yview()[0])
-        self.code_input.configure(font=("Verdana", 16))  # Match font size
+        self.code_input.configure(font=("Verdana", 12))  # Match font size
  # Match font size
     # Match font size
            
@@ -4713,14 +4713,14 @@ class StardewLexerGUI:
 
     def setup_widgets(self):
         # Input box for code
-        self.code_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10) #width and height of the outline box
+        self.code_frame = ctk.CTkFrame(self.root, width=300, height=600, fg_color="#8f3901", corner_radius=10) #width and height of the outline box
         self.code_frame.place(x=100, y=94) #x and y for input box
-        self.code_input = ctk.CTkTextbox(self.code_frame, width=650, height=500, #width and height of the box
-                                         font=("Verdana", 10),
+        self.code_input = ctk.CTkTextbox(self.code_frame, width=660, height=500, #width and height of the box
+                                         font=("Verdana", 12),
                                          fg_color="#ffe9db",
                                          text_color=TEXT_COLOR,
                                          wrap="word")
-        self.code_input.configure(spacing1=2)
+        self.code_input.configure(spacing1=3.5)
         # Insert placeholder text
         self.placeholder_text = "Code will be placed here...\n"
         self.code_input.insert(tk.END, self.placeholder_text)
@@ -4729,7 +4729,7 @@ class StardewLexerGUI:
         self.code_input.bind("<MouseWheel>", lambda event: self.update_line_numbers())
 
  # Error at line numbers
-        self.line_numbers = tk.Text(self.code_frame, width=2, padx=2, takefocus=0, fg="#ffe9db",
+        self.line_numbers = tk.Text(self.code_frame, width=4, padx=2, takefocus=0, fg="#ffe9db",
                                      bg="#8f3901", highlightthickness=0, state=tk.DISABLED)
         self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
 
@@ -4743,42 +4743,42 @@ class StardewLexerGUI:
         self.resize_analyze_button = self.analyze_button.resize((200,50))
         self.analyze_button_picture = ImageTk.PhotoImage(self.resize_analyze_button)
         self.image_analyze_button = tk.Button(image=self.analyze_button_picture, borderwidth=0, command=self.analyze_code_with_sound)
-        self.image_analyze_button.place(x=200, y=650)  #x and y for lexical
+        self.image_analyze_button.place(x=300, y=850)  #x and y for lexical
         
         #image for Semantic Analyzer Button/Button
         self.semantic_button = Image.open("Images/Semantic.png")
         self.resize_semantic_button = self.semantic_button.resize((200,50))
         self.semantic_button_picture = ImageTk.PhotoImage(self.resize_semantic_button)
         self.image_semantic_button = tk.Button(image=self.semantic_button_picture, borderwidth=0, command=self.semantic_input_with_sound)
-        self.image_semantic_button.place(x=200, y=720) #x and y for semantic
+        self.image_semantic_button.place(x=300, y=780) #x and y for semantic
 
         #image for Syntax Button
         self.syntax_button = Image.open("Images/Syntax.png") #placeholder for syntax button
         self.resize_syntax_button = self.syntax_button.resize((200,50))
         self.syntax_button_picture = ImageTk.PhotoImage(self.resize_syntax_button)
         self.image_syntax_button = tk.Button(image=self.syntax_button_picture, borderwidth=0, command=self.syntax_analyzer_with_sound)
-        self.image_syntax_button.place(x=500, y=650) #x and y for syntax button
+        self.image_syntax_button.place(x=600, y=850) #x and y for syntax button
 
         #image for Output Button
         self.output_button = Image.open("Images/Output.png") #placeholder for output button
         self.resize_output_button = self.output_button.resize((200,50))
         self.output_button_picture = ImageTk.PhotoImage(self.resize_output_button)
         self.image_output_button = tk.Button(image=self.output_button_picture, borderwidth=0, command=self.output_with_sound)
-        self.image_output_button.place(x=500, y=720) #x and y for output button
+        self.image_output_button.place(x=600, y=780) #x and y for output button
 
         #image for Clear Button
         self.clear_button = Image.open("Images/Clear.png")
         self.resize_clear_button = self.clear_button.resize((40,40))
         self.clear_button_picture = ImageTk.PhotoImage(self.resize_clear_button)
         self.image_clear_button = tk.Button(image=self.clear_button_picture, borderwidth=0, command=self.clear_input_with_sound)
-        self.image_clear_button.place(x=720, y=50) #may differ in 1920x1200 resolution, x and y for clear buttons
+        self.image_clear_button.place(x=920, y=72) #may differ in 1920x1200 resolution, x and y for clear buttons
 
         #image for Undo Button
         self.undo_button = Image.open("Images/Undo.png")
         self.resize_undo_button = self.undo_button.resize((40,40))
         self.undo_button_picture = ImageTk.PhotoImage(self.resize_undo_button)
         self.image_undo_button = tk.Button(image=self.undo_button_picture, borderwidth=0, command=self.undo_input_with_sound)
-        self.image_undo_button.place(x=767, y=50) #may differ in 1920x1200 resolution, x and y for clear buttons
+        self.image_undo_button.place(x=967, y=72) #may differ in 1920x1200 resolution, x and y for clear buttons
 
 
         #Style
@@ -4803,7 +4803,7 @@ class StardewLexerGUI:
 
         # Terminal Output
         self.terminal_frame = ctk.CTkFrame(self.root, width=200, height=600, fg_color="#8f3901", corner_radius=10)
-        self.terminal_frame.place(x=100, y=750) #x and y for terminal
+        self.terminal_frame.place(x=100, y=735) #x and y for terminal
         self.terminal_output = ctk.CTkTextbox(self.terminal_frame, width=700, height=150,
                                               font=PIXEL_FONT,
                                               fg_color="#ffe9db",
