@@ -17,8 +17,8 @@ mixer.init()
 # Load sound effects
 click_sound = mixer.Sound("Interface/bigSelect.wav")
 hover_sound = mixer.Sound("Interface/select.wav")
-background_music = r"BackgroundMusic/ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3"
-
+# background_music = r"BackgroundMusic/ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3"
+background_music = r"Ambience\fall_day.wav"
 # Stardew Valley-themed colors
 BACKGROUND_COLOR = "#F5F5DC"  # Soft beige for Stardew Valley theme
 TEXT_COLOR = "#3B200E"  # Brown text for title and content
@@ -2800,178 +2800,138 @@ class Parser:
 
         print(f"[DEBUG] Starting init_craft with token: {self.current_tok.token if self.current_tok else 'None'}")
 
-        # Advance to check for form identifier
+        # Advance to check for craft identifier
         self.advance()
         if self.current_tok.token == "Identifier":
-            print(f"[DEBUG] Form name found: {self.current_tok.token}")
+            print(f"[DEBUG] Craft name found: {self.current_tok.token}")
             self.advance()
 
-            # Check for opening parenthesis '('
+            # Check for either '(' or '[' after the function name
             if self.current_tok.token == "(":
                 print(f"[DEBUG] Found opening parenthesis: {self.current_tok.token}")
                 self.advance()
 
-                # Check if first parameter is a crop
-                if self.current_tok.token == CROP:
-                    print("[DEBUG] Found 'crop' keyword in parameters")
-                    self.advance()
-
-                    # Ensure crop is followed by an identifier
-                    if self.current_tok.token == "Identifier":
-                        print(f"[DEBUG] Found identifier after 'crop': {self.current_tok.token}")
+                # Check if the function has parameters or is empty
+                if self.current_tok.token == ")":
+                    print("[DEBUG] Empty parameter list using '()' detected")
+                    self.advance()  # Move past the closing parenthesis
+                else:
+                    # Expecting parameters in the form of 'crop Identifier'
+                    while self.current_tok.token == CROP:
+                        print("[DEBUG] Found 'crop' keyword in parameters")
                         self.advance()
 
-                       # Handle comma-separated parameters
-                        while self.current_tok.token == ",":
+                        # Ensure crop is followed by an identifier
+                        if self.current_tok.token == "Identifier":
+                            print(f"[DEBUG] Found identifier after 'crop': {self.current_tok.token}")
+                            self.advance()
+                        else:
+                            error.append(InvalidSyntaxError(
+                                self.current_tok.pos_start,
+                                self.current_tok.pos_end,
+                                "Expected identifier after 'crop' in parameter list!"
+                            ))
+                            return res, error
+
+                        # Handle comma-separated parameters
+                        if self.current_tok.token == ",":
                             print(f"[DEBUG] Found comma, processing next parameter")
                             self.advance()
-                            if self.current_tok.token == CROP:
-                                print(f"[DEBUG] Found 'crop' keyword after comma")
-                                self.advance()
-                                if self.current_tok.token == "Identifier":
-                                    print(f"[DEBUG] Found identifier after 'crop': {self.current_tok.token}")
-                                    self.advance()
-                                else:
-                                    error.append(InvalidSyntaxError(
-                                        self.current_tok.pos_start,
-                                        self.current_tok.pos_end,
-                                        "Expected identifier after 'crop' in parameter list!"
-                                    ))
-                                    return res, error
-                            else:
-                                error.append(InvalidSyntaxError(
-                                    self.current_tok.pos_start,
-                                    self.current_tok.pos_end,
-                                    "Expected 'crop' after comma in parameter list!"
-                                ))
-                                return res, error
-
-                        # Ensure closing parenthesis ')'
-                        if self.current_tok.token != ")":
-                            error.append(InvalidSyntaxError(
-                                self.current_tok.pos_start,
-                                self.current_tok.pos_end,
-                                "Expected closing parenthesis in craft parameters!"
-                            ))
-                            return res, error
-                        else:
-                            print(f"[DEBUG] Found closing parenthesis: {self.current_tok.token}")
-                            self.advance()
-
-                        # Check for opening curly bracket '{'
-                        if self.current_tok.token == "{":
-                            print(f"[DEBUG] Found opening curly bracket: {self.current_tok.token}")
-                            self.advance()
-
-                            # Skip any newlines
-                            while self.current_tok.token == NEWLINE:
-                                self.advance()
-                                print("[DEBUG] pumasok na sa newline")
-                            # Verify the token after newlines
-                            print(f"[DEBUG] Token after skipping newlines: {self.current_tok.token if self.current_tok else 'None'}")
-                            print(f"[DEBUG] Token after snewline: {self.current_tok.token if self.current_tok else 'None'}")
-                            
-                            # Process the body of the craft
-                            craft_res, craft_error = self.body()
-                            if craft_error:
-                                print("[DEBUG] Error inside the craft body")
-                                error.extend(craft_error)
-                                return [], error
-                            else:
-                                print("[DEBUG] Successfully processed craft body")
-                                res.extend(craft_res)
-
-                            # Ensure closing curly bracket '}'
-                            if self.current_tok.token != "}":
-                                error.append(InvalidSyntaxError(
-                                    self.current_tok.pos_start,
-                                    self.current_tok.pos_end,
-                                    "Expected closing curly bracket in craft definition!"
-                                ))
-                                return res, error
-                            else:
-                                print(f"[DEBUG] Found closing curly bracket: {self.current_tok.token}")
-                                self.advance()
-                                res.append("SUCCESS from CRAFT!")
+                        elif self.current_tok.token == ")":
+                            break  # End of parameter list
                         else:
                             error.append(InvalidSyntaxError(
                                 self.current_tok.pos_start,
                                 self.current_tok.pos_end,
-                                "Expected opening curly bracket for craft body!"
+                                "Expected ',' or ')' in parameter list!"
                             ))
                             return res, error
-                    else:
+
+                    # Ensure closing parenthesis ')'
+                    if self.current_tok.token != ")":
                         error.append(InvalidSyntaxError(
                             self.current_tok.pos_start,
                             self.current_tok.pos_end,
-                            "Expected identifier after 'crop' in parameter list!"
+                            "Expected closing parenthesis in craft parameters!"
                         ))
                         return res, error
-                elif self.current_tok.token == "[":
-                    print(f"[DEBUG] Empty parameter list detected")
-                    self.advance()
-
-                    # Check for opening curly bracket '{'
-                    if self.current_tok.token == "{":
-                        print(f"[DEBUG] Found opening curly bracket: {self.current_tok.token}")
+                    else:
+                        print(f"[DEBUG] Found closing parenthesis: {self.current_tok.token}")
                         self.advance()
 
-                        # Skip any newlines
-                        while self.current_tok.token == "NEWLINE":
-                            self.advance()
+            elif self.current_tok.token == "[":  # Allow `[]` as an empty parameter placeholder
+                print(f"[DEBUG] Found empty parameter list notation '['")
+                self.advance()
 
-                        # Process the body of the form
-                        craft_res, craft_error = self.body()
-                        if craft_error:
-                            print("[DEBUG] Error inside the craft body")
-                            error.extend(craft_error)
-                            return [], error
-                        else:
-                            print("[DEBUG] Successfully processed craft body")
-                            res.extend(craft_res)
-
-                        # Ensure closing curly bracket '}'
-                        if self.current_tok.token != "}":
-                            error.append(InvalidSyntaxError(
-                                self.current_tok.pos_start,
-                                self.current_tok.pos_end,
-                                "Expected closing curly bracket in craft definition!"
-                            ))
-                            return res, error
-                        else:
-                            print(f"[DEBUG] Found closing curly bracket: {self.current_tok.token}")
-                            self.advance()
-                            res.append("SUCCESS from CRAFT!")
-                    else:
-                        error.append(InvalidSyntaxError(
-                            self.current_tok.pos_start,
-                            self.current_tok.pos_end,
-                            "Expected opening curly bracket for craft body!"
-                        ))
-                        return res, error
+                # Ensure closing bracket `]`
+                if self.current_tok.token == "]":
+                    print(f"[DEBUG] Found closing bracket for empty list parameter: {self.current_tok.token}")
+                    self.advance()
                 else:
                     error.append(InvalidSyntaxError(
                         self.current_tok.pos_start,
                         self.current_tok.pos_end,
-                        "Expected 'crop' or ')' in craft parameters!"
+                        "Expected ']' after '[' for empty parameter list!"
                     ))
                     return res, error
+
             else:
                 error.append(InvalidSyntaxError(
                     self.current_tok.pos_start,
                     self.current_tok.pos_end,
-                    "Expected opening parenthesis '(' for craft parameters!"
+                    "Expected '(' or '[' after craft identifier!"
+                ))
+                return res, error
+
+            # Check for opening curly bracket '{'
+            if self.current_tok.token == "{":
+                print(f"[DEBUG] Found opening curly bracket: {self.current_tok.token}")
+                self.advance()
+
+                # Skip any newlines
+                while self.current_tok.token == "NEWLINE":
+                    self.advance()
+                    print("[DEBUG] Skipping newlines before craft body")
+
+                # Process the body of the craft
+                craft_res, craft_error = self.body()
+                if craft_error:
+                    print("[DEBUG] Error inside the craft body")
+                    error.extend(craft_error)
+                    return [], error
+                else:
+                    print("[DEBUG] Successfully processed craft body")
+                    res.extend(craft_res)
+
+                # Ensure closing curly bracket '}'
+                if self.current_tok.token != "}":
+                    error.append(InvalidSyntaxError(
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        "Expected closing curly bracket in craft definition!"
+                    ))
+                    return res, error
+                else:
+                    print(f"[DEBUG] Found closing curly bracket: {self.current_tok.token}")
+                    self.advance()
+                    res.append("SUCCESS from CRAFT!")
+            else:
+                error.append(InvalidSyntaxError(
+                    self.current_tok.pos_start,
+                    self.current_tok.pos_end,
+                    "Expected opening curly bracket for craft body!"
                 ))
                 return res, error
         else:
             error.append(InvalidSyntaxError(
                 self.current_tok.pos_start,
                 self.current_tok.pos_end,
-                "Expected form identifier!"
+                "Expected craft identifier!"
             ))
             return res, error
 
         return res, error
+
 
     
     # * INITIALIZE A LIST
@@ -3586,17 +3546,11 @@ class Parser:
         print(f"[DEBUG] Completed parsing ship statement: {res}")
         return res, error
 
-
-
-
-
-
     
     def collect_stmt(self):
         res = []
         error = []
 
-        # Debugging: Print current token
         print(f"[DEBUG] Starting collect_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
 
         # Step 1: Ensure opening parenthesis '('
@@ -3612,21 +3566,48 @@ class Parser:
         self.advance()
         print(f"[DEBUG] After checking '(', token: {self.current_tok.token if self.current_tok else 'None'}")
 
-        # Step 2: Check for prompt string
+        # Step 2: Check for prompt string (First parameter)
         if not self.current_tok or self.current_tok.token != "StrLit":
             error.append(InvalidSyntaxError(
                 getattr(self.current_tok, 'pos_start', "Unknown"),
                 getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected a prompt string inside 'collect' statement!"
+                "Expected a prompt string as the first parameter in 'collect' statement!"
             ))
             return res, error
 
-        prompt_message = self.current_tok.token
+        prompt_message = self.current_tok.token  # Store the prompt message
         print(f"[DEBUG] Prompt message identified: {prompt_message}")
         res.append(prompt_message)  # Add prompt message
         self.advance()
 
-        # Step 3: Ensure closing parenthesis ')'
+        # Step 3: Ensure comma ',' after the string
+        if not self.current_tok or self.current_tok.token != ",":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected ',' after the prompt string in 'collect' statement!"
+            ))
+            return res, error
+
+        res.append(self.current_tok.token)  # Add ','
+        self.advance()
+        print(f"[DEBUG] After checking ',', token: {self.current_tok.token if self.current_tok else 'None'}")
+
+        # Step 4: Check for variable identifier (Second parameter)
+        if not self.current_tok or self.current_tok.token != "Identifier":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected an identifier (variable name) after ',' in 'collect' statement!"
+            ))
+            return res, error
+
+        variable_name = self.current_tok.token  # Store the variable name
+        print(f"[DEBUG] Variable name identified: {variable_name}")
+        res.append(variable_name)  # Add variable name
+        self.advance()
+
+        # Step 5: Ensure closing parenthesis ')'
         if not self.current_tok or self.current_tok.token != ")":
             error.append(InvalidSyntaxError(
                 getattr(self.current_tok, 'pos_start', "Unknown"),
@@ -3639,8 +3620,20 @@ class Parser:
         self.advance()
         print(f"[DEBUG] After checking ')', token: {self.current_tok.token if self.current_tok else 'None'}")
 
+        # Step 6: Ensure terminator '$'
+        if not self.current_tok or self.current_tok.token != "$":
+            error.append(InvalidSyntaxError(
+                getattr(self.current_tok, 'pos_start', "Unknown"),
+                getattr(self.current_tok, 'pos_end', "Unknown"),
+                "Expected '$' to terminate 'collect' statement!"
+            ))
+            return res, error
+
+        res.append(self.current_tok.token)  # Add '$'
+        self.advance()
         print(f"[DEBUG] Successfully processed 'collect' statement")
-        res.append(f"Processed collect statement: collect({prompt_message})")
+
+        res.append(f"Processed collect statement: collect({prompt_message}, {variable_name})$")
 
         return res, error
 
