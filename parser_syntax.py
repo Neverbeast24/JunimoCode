@@ -201,7 +201,7 @@ class Error: # do not change
         result  = f'{self.error_name}: {self.details}\n'
         fileDetail = f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
         errorDetail, arrowDetail = string_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
-        return result, fileDetail
+        return result, fileDetail, errorDetail, arrowDetail
         # return (
         #     f"Invalid Syntax: {self.details}\n"
         #     f"File {self.pos_start.fn}, line {self.pos_start.ln + 1}\n"
