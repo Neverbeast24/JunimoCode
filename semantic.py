@@ -1766,7 +1766,7 @@ class VarAssignNode:
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'VarAssignNode')
         print(spaces + '    - ', f"parent: {self.parent}")
-        print(spaces + '    - ', f"name: {self.var_name_tok.value}")
+        print(spaces + '    - ', f"name: {self.crop_name_tok.value}")
         print(spaces + '    - ', f"value: {self.value_node}")
         
         
@@ -1799,7 +1799,7 @@ class VarInitNode:
 class VarDecNode:
     def __init__(self, crop_name_tok):
         self.parent = None
-        self.var_name_tok = crop_name_tok.value
+        self.crop_name_tok = crop_name_tok.value
         self.value_node = VoidNode(crop_name_tok)
 
         self.pos_start = crop_name_tok.pos_start
@@ -1826,7 +1826,7 @@ class HarvestCallNode:
         self.parent = None
         self.value_node = value_node
         self.value = None
-        print('saturn call value node: ', value_node)
+        print('harvest call value node: ', value_node)
         if isinstance(value_node, RTResult):
             self.pos_start = self.value_node.value.pos_start
             self.pos_end = self.value_node.value.pos_end
@@ -2262,7 +2262,7 @@ class CraftNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, f"Form")
+        print(prefix, f"Craft")
         print( "  "+ prefix, f"parent: {self.parent}")
         print( "  "+ prefix, f"identifier: {self.identifier}")
         print( "  "+ prefix, f"parameters: ")
@@ -2456,7 +2456,7 @@ class Parser:
                     
                     if self.current_tok.token == CROP:
                         if self.current_tok.matches(CROP, 'crop'):
-                            multiple, craft_error = self.crop_dec()
+                            craft_result, craft_error = self.crop_dec()
                             if craft_error:
                                 craft_node.errors.extend(craft_error)
                             else:
@@ -3309,7 +3309,7 @@ class Parser:
                     craft_call.add_param(VoidNode(self.current_tok))
                     self.advance()
                 elif self.current_tok.token == IDENTIFIER:
-                    print("ident form")
+                    print("ident craft")
                     crop_name = self.current_tok
                     # self.advance()
                     # if self.current_tok.token == SLBRACKET:
@@ -3343,7 +3343,7 @@ class Parser:
                         craft_call.add_param(VoidNode(self.current_tok))
                         self.advance()
                     elif self.current_tok.token == IDENTIFIER:
-                        print("ident form")
+                        print("ident craft")
                         
                         
                         expr = self.expr()
@@ -3470,14 +3470,14 @@ class Interpreter:
                 if value.error:
                     node.errors.append(value.error)
 
-                symbol_table.set(item.var_name_tok.value, value.value)
+                symbol_table.set(item.crop_name_tok.value, value.value)
                 print("global variables: ", symbol_table.symbols)
             elif isinstance(item, CraftNode):
                 item.symbol_table = SymbolTable(f"<craft {item.identifier}>")
                 item.symbol_table.parent = symbol_table
                 node.functions.append(item)
                 for i in item.parameters:
-                    item.symbol_table.set(i.var_name_tok.value, i)
+                    item.symbol_table.set(i.crop_name_tok.value, i)
                 print("functions: ", node.functions)
                 # for i in item.body:
                 #     value = self.visit(i, item.symbol_table)
@@ -3499,7 +3499,7 @@ class Interpreter:
         # print ("global symbols: ", )
         return node
 
-    def visit_FormCallNode(self, node, symbol_table):
+    def visit_CraftCallNode(self, node, symbol_table):
         craft_call_node = node
         craft_ident =  node.identifier.value
         res = RTResult()
@@ -3559,13 +3559,13 @@ class Interpreter:
                     print("invalid number of params")
                     return res.failure(SemanticError(
                 craft_call_node.pos_start, craft_call_node.pos_end,
-                f"\nform '{craft_ident}' takes {len(item.parameters)} parameters, received {len(craft_call_node.parameters)} arguments ",
+                f"\ncraft '{craft_ident}' takes {len(item.parameters)} parameters, received {len(craft_call_node.parameters)} arguments ",
             ))
         if craft_ident == "append" or craft_ident == "remove" or craft_ident == "length":
             return res.success(craft_call_node)
         return res.failure(SemanticError(
                 craft_call_node.pos_start, craft_call_node.pos_end,
-                f"\nform '{craft_ident}' is not defined",
+                f"\ncraft '{craft_ident}' is not defined",
             ))
 
     def visit_VarAccessNode(self, node, symbol_table):
@@ -3598,7 +3598,7 @@ class Interpreter:
         return res.success(value)
 
 
-    def visit_SaturnCallNode(self, node, symbol_table):
+    def visit_HarvestCallNode(self, node, symbol_table):
         res = RTResult()
         # print("saturn call value node: ", node.value_node)
         # print("visit saturn: ", symbol_table.symbols)
@@ -3634,17 +3634,17 @@ class Interpreter:
             values.append(value.value)
         return res.success(values)
     
-    def visit_InnerNode(self, node, context):
+    def visit_CollectNode(self, node, context):
         # print("inner parent: ", node.parent)
         # print("variable node: ", node.variable_node)
         res = RTResult()
         value = self.visit(node.variable_node, context)
         if value.error:
-            print("ERROR IN INNERNODE")
+            print("ERROR IN COLLECTNODE")
             return res.failure(value.error)
         # print("value inner: ", value.value)
         # print("paren symbol table inner before setting: ", node.parent.symbol_table.symbols)
-        context.set(node.variable_node.var_name_tok.value, value.value)
+        context.set(node.variable_node.crop_name_tok.value, value.value)
         # print("paren symbol table inner: ", node.parent.symbol_table.symbols)
         return res.success(node)
     # identifier: a
@@ -3690,7 +3690,7 @@ class Interpreter:
                     f"\n'{crop_name}' is not defined",
                 ))
         else:
-            crop_name = node.var_name_tok.value
+            crop_name = node.crop_name_tok.value
             value = symbol_table.get(crop_name)
             if not value and value != 0:
                 # print("couldnt find variable")
@@ -3787,13 +3787,13 @@ class Interpreter:
         if value.error:
             return res.failure(value.error)
         return res.success(value)
-    def visit_PreUnaryNode(self, node, symbol_table):
-        # print("found post unary")
-        res = RTResult()
-        value = self.visit(node.tok, symbol_table)
-        if value.error:
-            return res.failure(value.error)
-        return res.success(value)
+    # def visit_PreUnaryNode(self, node, symbol_table):
+    #     # print("found post unary")
+    #     res = RTResult()
+    #     value = self.visit(node.tok, symbol_table)
+    #     if value.error:
+    #         return res.failure(value.error)
+    #     return res.success(value)
     def visit_BinOpNode(self, node, context):
         # print("bin op parent", node.parent)
         res = RTResult()
@@ -4001,20 +4001,20 @@ class Interpreter:
                     print("error 2")
                     return res
             return res.success(node)
-    def visit_DoWhirlNode(self, node, symbol_table):
-        # print("found a do whirl node")
-        res = RTResult()
-        for item in node.body:
-            value = self.visit(item, symbol_table)
-            if value.error:
-                return res.failure(value.error)
-        # print("do whirl condition: ", node.condition)
-        node.condition.parent = node
-        condition_value = self.visit(node.condition, symbol_table)
-        if condition_value.error:
-            return res.failure(condition_value.error)
-        return res.success(node)
-    def visit_IfNode(self, node, context):
+    # def visit_DoWhirlNode(self, node, symbol_table):
+    #     # print("found a do whirl node")
+    #     res = RTResult()
+    #     for item in node.body:
+    #         value = self.visit(item, symbol_table)
+    #         if value.error:
+    #             return res.failure(value.error)
+    #     # print("do whirl condition: ", node.condition)
+    #     node.condition.parent = node
+    #     condition_value = self.visit(node.condition, symbol_table)
+    #     if condition_value.error:
+    #         return res.failure(condition_value.error)
+    #     return res.success(node)
+    def visit_StarNode(self, node, context):
         list_of_outer = []
         res = RTResult()
         # print("node.cases: ", node.cases)
@@ -4060,10 +4060,10 @@ class Interpreter:
             return res.success(else_value)
 
         return res.success(None)
-    def visit_SkipNode(self, node, symbol_table):
+    def visit_NextNode(self, node, symbol_table):
         res = RTResult()
         return res.success(node)
-    def visit_BlastNode(self, node, symbol_table):
+    def visit_BreakNode(self, node, symbol_table):
         res = RTResult()
         return res.success(node)
 class Void:
@@ -4540,7 +4540,7 @@ def run(fn, text):
     #here i need to visit the ast nodes hahaha
     
     interpreter = Interpreter()
-    symbol_table = SymbolTable("<Cosmic Script>")
+    symbol_table = SymbolTable("<Junimo Code>")
     # context.symbol_table = global_symbol_table
     symbol_table.symbols = {}
     ast.symbol_table = symbol_table
@@ -5044,65 +5044,65 @@ class StardewLexerGUI:
 
 
                 # iffeed sa transpiler
-    def run_transpiler():
-        input_text_str = input_text.get("1.0", "end-1c")
-        list_text = input_text_str.split("\n")
-        clear_text_file()
-        write_list_to_file('get_line.txt', list_text)
-        # print("list text: ", list_text)
-        # Run lexer
-        lexer_result, lexer_error = lexer.run("<stdin>", input_text_str)
-        # Display lexer output
-        output_text.delete(0, tk.END)
-        token_text.delete(0, tk.END)
-        count = 0
-        for item in lexer_result:
-            count += 1
-            if item:
-                output_text.insert(tk.END, "%s.\t   %s" % (count,item.value))
-                token_text.insert(tk.END,  "%s.\t   %s" % (count,item.token))
+    # def run_transpiler():
+    #     input_text_str = input_text.get("1.0", "end-1c")
+    #     list_text = input_text_str.split("\n")
+    #     clear_text_file()
+    #     write_list_to_file('get_line.txt', list_text)
+    #     # print("list text: ", list_text)
+    #     # Run lexer
+    #     lexer_result, lexer_error = lexer.run("<stdin>", input_text_str)
+    #     # Display lexer output
+    #     output_text.delete(0, tk.END)
+    #     token_text.delete(0, tk.END)
+    #     count = 0
+    #     for item in lexer_result:
+    #         count += 1
+    #         if item:
+    #             output_text.insert(tk.END, "%s.\t   %s" % (count,item.value))
+    #             token_text.insert(tk.END,  "%s.\t   %s" % (count,item.token))
 
-        # Display lexer errors
-        errors_text.delete(0, tk.END)
-        # Display lexer errors if any, otherwise proceed to run the parser
-        if lexer_error:
-            for err in lexer_error:
-                errors_text.insert(tk.END, err)
-        else:
-            # Run the parser if lexer is successful
-            syntax_result, syntax_error = parser1.run("<cosmic script>", input_text_str)
-            if syntax_error:
-                for err in syntax_error:
-                    if isinstance(err, list):
-                        for e in err:
-                            errorResult, fileDetail, arrowDetail, arrows = e.as_string()
-                            errors_text.insert(tk.END, errorResult)
-                            errors_text.insert(tk.END, fileDetail)
-                            errors_text.insert(tk.END, arrowDetail)
-                            # errors_text.insert(tk.END, arrows)
-                    else:
-                        errorResult, fileDetail, arrowDetail, arrows = err.as_string()
-                        errors_text.insert(tk.END, errorResult)
-                        errors_text.insert(tk.END, fileDetail)
-                        errors_text.insert(tk.END, arrowDetail)
-                        # errors_text.insert(tk.END, arrows)
-            else:
-                # If no syntax errors, run the transpiler
-                semantic_result, semantic_error = semantic.run("<stdin>", input_text_str)
-                if semantic_error:
-                    for err in semantic_error:
-                        errorResult, fileDetail, arrowDetail = err.as_string()
-                        # errors_text.insert(tk.END, errorResult)
-                        for e in errorResult:
-                            errors_text.insert(tk.END, e)
-                        errors_text.insert(tk.END, fileDetail)
-                        errors_text.insert(tk.END, arrowDetail)
-                else:
-                    # Transpile and execute the code
-                    python_file = "generated_script.py"
-                    transpiler_result = convert_text_file_to_python_and_execute(semantic_result, python_file)
-                    # if transpiler_result:
-                    #     errors_text.insert(tk.END, transpiler_result)
+    #     # Display lexer errors
+    #     errors_text.delete(0, tk.END)
+    #     # Display lexer errors if any, otherwise proceed to run the parser
+    #     if lexer_error:
+    #         for err in lexer_error:
+    #             errors_text.insert(tk.END, err)
+    #     else:
+    #         # Run the parser if lexer is successful
+    #         syntax_result, syntax_error = parser1.run("<cosmic script>", input_text_str)
+    #         if syntax_error:
+    #             for err in syntax_error:
+    #                 if isinstance(err, list):
+    #                     for e in err:
+    #                         errorResult, fileDetail, arrowDetail, arrows = e.as_string()
+    #                         errors_text.insert(tk.END, errorResult)
+    #                         errors_text.insert(tk.END, fileDetail)
+    #                         errors_text.insert(tk.END, arrowDetail)
+    #                         # errors_text.insert(tk.END, arrows)
+    #                 else:
+    #                     errorResult, fileDetail, arrowDetail, arrows = err.as_string()
+    #                     errors_text.insert(tk.END, errorResult)
+    #                     errors_text.insert(tk.END, fileDetail)
+    #                     errors_text.insert(tk.END, arrowDetail)
+    #                     # errors_text.insert(tk.END, arrows)
+    #         else:
+    #             # If no syntax errors, run the transpiler
+    #             semantic_result, semantic_error = semantic.run("<stdin>", input_text_str)
+    #             if semantic_error:
+    #                 for err in semantic_error:
+    #                     errorResult, fileDetail, arrowDetail = err.as_string()
+    #                     # errors_text.insert(tk.END, errorResult)
+    #                     for e in errorResult:
+    #                         errors_text.insert(tk.END, e)
+    #                     errors_text.insert(tk.END, fileDetail)
+    #                     errors_text.insert(tk.END, arrowDetail)
+    #             else:
+    #                 # Transpile and execute the code
+    #                 python_file = "generated_script.py"
+    #                 transpiler_result = convert_text_file_to_python_and_execute(semantic_result, python_file)
+    #                 # if transpiler_result:
+    #                 #     errors_text.insert(tk.END, transpiler_result)
 if __name__ == "__main__":
     root = ctk.CTk()
     app = StardewLexerGUI(root)

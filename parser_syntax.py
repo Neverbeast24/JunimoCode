@@ -17,8 +17,8 @@ mixer.init()
 # Load sound effects
 click_sound = mixer.Sound("Interface/bigSelect.wav")
 hover_sound = mixer.Sound("Interface/select.wav")
-# background_music = r"BackgroundMusic/ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3"
-background_music = r"Ambience\fall_day.wav"
+background_music = r"BackgroundMusic/ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3"
+# background_music = r"Ambience\fall_day.wav"
 # Stardew Valley-themed colors
 BACKGROUND_COLOR = "#F5F5DC"  # Soft beige for Stardew Valley theme
 TEXT_COLOR = "#3B200E"  # Brown text for title and content
@@ -1979,29 +1979,29 @@ class Parser:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator, increment, decrement, or call craft!"))
                         return [], error
 
-                if self.current_tok.token == INCRE:
-                    self.advance()
-                    if self.current_tok.token == IDENTIFIER:
-                        self.advance()
-                        if self.current_tok.token != TERMINATOR:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-                        else:
-                            res.append(["SUCCESS from unary pre increment"])
-                            self.advance()
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
+                # if self.current_tok.token == INCRE:
+                #     self.advance()
+                #     if self.current_tok.token == IDENTIFIER:
+                #         self.advance()
+                #         if self.current_tok.token != TERMINATOR:
+                #             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
+                #         else:
+                #             res.append(["SUCCESS from unary pre increment"])
+                #             self.advance()
+                #     else:
+                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
 
-                if self.current_tok.token == DECRE:
-                    self.advance()
-                    if self.current_tok.token == IDENTIFIER:
-                        self.advance()
-                        if self.current_tok.token != TERMINATOR:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-                        else:
-                            res.append(["SUCCESS from unary pre decrement"])
-                            self.advance()
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
+                # if self.current_tok.token == DECRE:
+                #     self.advance()
+                #     if self.current_tok.token == IDENTIFIER:
+                #         self.advance()
+                #         if self.current_tok.token != TERMINATOR:
+                #             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
+                #         else:
+                #             res.append(["SUCCESS from unary pre decrement"])
+                #             self.advance()
+                #     else:
+                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
                 #LOOPS
                 if self.current_tok.token in FALL:
                     print("[DEBUG] pumasok sa fall")
@@ -2231,7 +2231,7 @@ class Parser:
             
             else:
                 print("[DEBUG]",self.current_tok)
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, collect, ship, identifier, star, ++, --, winter"))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, collect, ship, identifier, star, ++, --, winter, dew, stardew"))
                 break
 
 
@@ -2510,7 +2510,7 @@ class Parser:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot call form in universe declaration/initialization!"))
                         return res, error
                     # print("we assigned a function call to a variable")
-                    c_form, call_form_error = self.call_form()
+                    c_form, call_form_error = self.call_craft()
                     # print("token after call form in assign val: ", self.current_tok.token)
                     #self.advance()
                     # print('call form result in assign val:', c_form)
@@ -2608,7 +2608,7 @@ class Parser:
                             
                         #return True
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis! assign val 2 lparen"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
         # elif self.current_tok.token == INCRE or self.current_tok.token == DECRE:
         #     self.advance()
         #     if self.current_tok.token != IDENTIFIER:
@@ -3959,7 +3959,7 @@ class Parser:
                 return res, error 
             else:
                 print("ETO YUNG ERROR: ", self.current_tok)
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or logical operator or relational operator or right parenthesis!"))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected logical operator or relational operator or right parenthesis!")) #tinanggal ko yung number here
                 return res, error
         else:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, or left paren!"))
@@ -4084,7 +4084,7 @@ def run(fn, text):
     result, parseError = parser.parse()
     
 
-    return parser, parseError
+    return parser, parseError # result check
 
 class StardewLexerGUI:
     def __init__(self, root):
