@@ -167,9 +167,10 @@ class Error: # do not change
         self. details = details
 
     def as_string(self):
-        result = f'{self.error_name}: {self.details}\n'
-        result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
-        return result
+        result  = f'{self.error_name}: {self.details}\n'
+        fileDetail = f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
+        errorDetail, arrowDetail = string_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        return result, fileDetail, errorDetail, arrowDetail
 
 class IllegalCharError(Error):
     #the lexer comes across a character it doesn't support
@@ -4957,25 +4958,28 @@ class StardewLexerGUI:
             syntax_result, syntax_error = parser_syntax.run("<junimo code>", code)
             if syntax_error:
                 # self.terminal_output.insert(tk.END, syntax_error.details)
+                # for err in syntax_error:
+                #     self.terminal_output.insert(tk.END, err.as_string())
                 for err in syntax_error:
-                    if hasattr(err, "as_string") and callable(err.as_string):
+                    if isinstance(err, list):
+                        for e in err:
+                            errorResult, fileDetail, arrowDetail, arrows = e.as_string()
+                            self.terminal_output.insert(tk.END, errorResult)
+                            self.terminal_output.insert(tk.END, fileDetail)
+                            self.terminal_output.insert(tk.END, arrowDetail)
+                            self.terminal_output.insert(tk.END, arrows)
+                            # errors_text.insert(tk.END, arrows)
+                    else:
                         errorResult, fileDetail, arrowDetail, arrows = err.as_string()
-
-                        # Ensure correct formatting and remove escape characters
-                        formatted_error = errorResult.replace('\\n', '\n').replace('\\t', '\t')
-                        formatted_file = fileDetail.replace('\\n', '\n').replace('\\t', '\t')
-                        formatted_arrow = arrowDetail.replace('\\n', '\n').replace('\\t', '\t')
-                        formatted_arrows = arrows.replace('\\n', '\n').replace('\\t', '\t')
-
-                        # Insert properly formatted error messages with the arrow pointer
-                        self.terminal_output.insert(tk.END, f"{formatted_error}\n", "error")
-                        self.terminal_output.insert(tk.END, f"{formatted_file}\n", "file_detail")
-                        self.terminal_output.insert(tk.END, f"{formatted_arrow}\n", "arrow")
-                        self.terminal_output.insert(tk.END, f"{formatted_arrows}\n\n", "arrow_indicator")
+                        self.terminal_output.insert(tk.END, errorResult)
+                        self.terminal_output.insert(tk.END, fileDetail)
+                        self.terminal_output.insert(tk.END, arrowDetail)
+                        self.terminal_output.insert(tk.END, arrows)
+                        # errors_text.insert(tk.END, arrows)
             else:
-                
+
                 # for res in syntax_result:
-                self.terminal_output.insert(tk.END, "Success from Syntax")
+                self.terminal_output.insert(tk.END, "SUCCESS from syntax")
                 # errors_text.insert(tk.END, "SUCCESS")
 
     def semantic_analyzer(self):  # Semantic button

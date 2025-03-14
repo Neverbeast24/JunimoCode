@@ -2348,7 +2348,7 @@ class Parser:
             # Allow ONLY '+' for concatenation, explicitly reject *, /, %, etc.
             while self.current_tok.token in (PLUS, MUL, DIV, MODULUS, MINUS):
                 if self.current_tok.token != PLUS:  # Reject anything except '+'
-                    error.extend(InvalidSyntaxError(
+                    error.append(InvalidSyntaxError(
                         self.current_tok.pos_start, self.current_tok.pos_end,
                         f"Invalid operator '{self.current_tok.token}' in string concatenation! Only '+' is allowed."
                     ))
@@ -2360,7 +2360,7 @@ class Parser:
                 if self.current_tok.token in (STRING, IDENTIFIER, FLOAT, INTEGER):
                     self.advance()
                 else:
-                    error.extend(InvalidSyntaxError(
+                    error.append(InvalidSyntaxError(
                         self.current_tok.pos_start, self.current_tok.pos_end,
                         "Expected identifier, number, or string after '+'!"
                     ))
