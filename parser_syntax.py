@@ -2517,13 +2517,13 @@ class Parser:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot call form in universe declaration/initialization!"))
                         return res, error
                     # print("we assigned a function call to a variable")
-                    c_form, call_form_error = self.call_craft()
+                    c_craft, call_craft_error = self.call_craft()
                     # print("token after call form in assign val: ", self.current_tok.token)
                     #self.advance()
                     # print('call form result in assign val:', c_form)
-                    if call_form_error:
-                        print("ERROR IN VALL FORM")
-                        for err in call_form_error:
+                    if call_craft_error:
+                        print("ERROR IN VALL CRAFT")
+                        for err in call_craft_error:
                             error.append(err)
                         
                     else:

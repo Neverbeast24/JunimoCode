@@ -194,7 +194,7 @@ class RTError(Error):
         result  = self.generate_traceback()
         result_name = f"{self.error_name}: {self.details}"
         #result += '\n\n' + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
-        errorDetail, arrowDetail = string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        errorDetail, arrowDetail = string_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result, result_name, '\n'+ errorDetail
         #return result
 
@@ -204,7 +204,7 @@ class RTError(Error):
         # print("pos and ctx: ", self.pos_start, " ", self.context)
         
         
-        result.insert(0, f'File <Cosmic Script>, line {str(self.pos_start.ln + 1)}') 
+        result.insert(0, f'File <Junimo Code>, line {str(self.pos_start.ln + 1)}') 
         
 
         return result
@@ -220,7 +220,7 @@ class SemanticError(Error):
         result  = self.generate_traceback()
         result_name = f"{self.error_name}: {self.details}"
         #result += '\n\n' + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
-        errorDetail, arrowDetail = string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        errorDetail, arrowDetail = string_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result, result_name, '\n'+ errorDetail
         #return result
 
@@ -230,7 +230,7 @@ class SemanticError(Error):
         # print("pos and ctx: ", self.pos_start, " ", self.context)
         
         
-        result.insert(0, f'File <Cosmic Script>, line {str(self.pos_start.ln + 1)}') 
+        result.insert(0, f'File <Junimo Code>, line {str(self.pos_start.ln + 1)}') 
         
 
         return result
@@ -2777,7 +2777,10 @@ class Parser:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '('"))
                         return res, error
                     self.advance()
-                    star_res = self.star_expr()
+                    star_res, star_err = self.star_expr()
+                    if star_err:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "ETO MALI"))
+                        return res, error
                     # if if_res.error:
                     #     print("if res error: ", if_res.error.as_string())
                     #self.advance() 
@@ -3093,6 +3096,7 @@ class Parser:
         res = ParseResult()
         cases = []
         else_case = []
+        errors = []
 
         condition = res.register(self.own_if_expr())
         if res.error: 
@@ -3103,10 +3107,11 @@ class Parser:
         print("[DEBUG] token after condition: ", self.current_tok)
         if self.current_tok.token != CLBRACKET:
             print ("err { 1")
-            return res.failure(InvalidSyntaxError(
+            errors.append(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 "Expected { "
             ))
+            return [], errors
 
         
         self.advance()
@@ -3171,7 +3176,7 @@ class Parser:
 
         # self.advance()
         
-        return StarNode(cases, else_case)
+        return StarNode(cases, else_case), errors
     
     def winter_stmt(self):
         # cases = []
@@ -4536,7 +4541,7 @@ def run(fn, text):
     # print("ast: ", ast)
     #ast is a Program instance
     # print("ast body: ", ast.body)
-    # ast.display()
+    ast.display()
     #ast is a Program instance
     # -- return ast
     #here i need to visit the ast nodes hahaha
@@ -5013,17 +5018,35 @@ class StardewLexerGUI:
 
         
         # Run the Parser and obtain the AST
-        parser = parser_syntax.Parser(lexer_result)
+        syntax_result, syntax_error = parser_syntax.run("<junimo code>", self.code)
+        if syntax_error:
+            # self.terminal_output.insert(tk.END, syntax_error.details)
+            # for err in syntax_error:
+            #     self.terminal_output.insert(tk.END, err.as_string())
+            for err in syntax_error:
+                if isinstance(err, list):
+                    for e in err:
+                        errorResult, fileDetail, arrowDetail, arrows = e.as_string()
+                        self.terminal_output.insert(tk.END, errorResult)
+                        self.terminal_output.insert(tk.END, fileDetail)
+                        self.terminal_output.insert(tk.END, arrowDetail)
+                        self.terminal_output.insert(tk.END, arrows)
+                        # errors_text.insert(tk.END, arrows)
+                else:
+                    errorResult, fileDetail, arrowDetail, arrows = err.as_string()
+                    self.terminal_output.insert(tk.END, errorResult)
+                    self.terminal_output.insert(tk.END, fileDetail)
+                    self.terminal_output.insert(tk.END, arrowDetail)
+                    self.terminal_output.insert(tk.END, arrows)
+                    # errors_text.insert(tk.END, arrows)
+            return
 
-        # if parser_errors:
-            # self.terminal_output.insert(tk.END, parser_errors + "\n")
-            # return
-        new_parser = Parser(lexer_result)
-        ast = new_parser.parse()
+        # new_parser = Parser(lexer_result)
+        # ast = new_parser.parse()
         
-        # print ("AST: ", ast)
-        # Display AST in Debug Mode
-        ast.display()
+        # # print ("AST: ", ast)
+        # # Display AST in Debug Mode
+        # ast.display()
 
         # # Prepare for Interpretation
         # interpreter = Interpreter()
@@ -5031,23 +5054,32 @@ class StardewLexerGUI:
         # symbol_table.symbols = {}
         # ast.symbol_table = symbol_table
 
-        # # Run the Semantic Analyzer (Interpreter Visit)
-        # semantic_result = interpreter.visit(ast, symbol_table)
-
-        # # Handle Semantic Errors
-        # if semantic_result.errors:
-        #     self.terminal_output.insert(tk.END, "Found errors in program execution:\n")
-        #     for err in semantic_result.errors:
-        #         error_message, file_details, arrow_details = err.as_string()
-        #         self.terminal_output.insert(tk.END, error_message + "\n")
-        #         self.terminal_output.insert(tk.END, file_details + "\n")
-        #         self.terminal_output.insert(tk.END, arrow_details + "\n")
-        #     return  # Stop execution if semantic errors exist
 
         # If successful, display success message
         self.terminal_output.insert(tk.END, "Success from Semantic\n")
 
 
+        semantic_result, error = semantic.run("<stdin>", input_text)
+        # print("semantic res: ", semantic_result)
+        if error:
+            for err in error:
+                errorResult, fileDetail, arrowDetail = err.as_string()
+                for e in errorResult:
+                    self.terminal_output.insert(tk.END, e)
+                    # print(e)
+
+                self.terminal_output.insert(tk.END, fileDetail)
+                # print(errorResult)
+                # print(arrowDetail.strip())
+                # print(fileDetail)
+                # no_wp = arrowDetail.replace("\t", "").replace("\n", "").replace("\r", "")
+                # print(no_wp)
+                # print(fileDetail)
+                self.terminal_output.insert(tk.END, arrowDetail)
+                return
+            self.terminal_output.insert(tk.END, "Success from Semantic")    
+            return 
+        
                 # iffeed sa transpiler
     # def run_transpiler():
     #     input_text_str = input_text.get("1.0", "end-1c")
@@ -5075,7 +5107,7 @@ class StardewLexerGUI:
     #             errors_text.insert(tk.END, err)
     #     else:
     #         # Run the parser if lexer is successful
-    #         syntax_result, syntax_error = parser1.run("<cosmic script>", input_text_str)
+    #         syntax_result, syntax_error = parser1.run("<junimo code>", input_text_str)
     #         if syntax_error:
     #             for err in syntax_error:
     #                 if isinstance(err, list):
