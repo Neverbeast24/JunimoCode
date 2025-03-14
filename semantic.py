@@ -4908,7 +4908,7 @@ class StardewLexerGUI:
         if errors:
             self.terminal_output.insert(tk.END, "\n".join(errors) + "\n")
         else:
-            self.terminal_output.insert(tk.END, "No errors found.\n")
+            self.terminal_output.insert(tk.END, "Sucess from Lexical\n")
             
     def clear_input(self):
         """Clear the code input box"""
@@ -4984,7 +4984,7 @@ class StardewLexerGUI:
             else:
 
                 # for res in syntax_result:
-                self.terminal_output.insert(tk.END, "SUCCESS from syntax")
+                self.terminal_output.insert(tk.END, "Success from Syntax")
                 # errors_text.insert(tk.END, "SUCCESS")
 
     def semantic_analyzer(self):  # Semantic button
@@ -5055,8 +5055,8 @@ class StardewLexerGUI:
         # ast.symbol_table = symbol_table
 
 
-        # If successful, display success message
-        self.terminal_output.insert(tk.END, "Success from Semantic\n")
+        # # If successful, display success message
+        # self.terminal_output.insert(tk.END, "Success from Semantic\n")
 
 
         semantic_result, error = semantic.run("<stdin>", input_text)
@@ -5077,8 +5077,8 @@ class StardewLexerGUI:
                 # print(fileDetail)
                 self.terminal_output.insert(tk.END, arrowDetail)
                 return
-            self.terminal_output.insert(tk.END, "Success from Semantic")    
-            return 
+        self.terminal_output.insert(tk.END, "Success from Semantic")    
+        return 
         
                 # iffeed sa transpiler
     # def run_transpiler():
