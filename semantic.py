@@ -56,10 +56,11 @@ delim3 = whitespace + all_numbers + '('
 unary_delim = whitespace + all_letters + TERMINATOR + ')'
 bool_delim = whitespace + TERMINATOR + COMMA + ')' + ']'
 num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relational_ops + TERMINATOR
-id_delim = newline_delim + COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + TERMINATOR
-spacepr_delim = whitespace
+id_delim = COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + TERMINATOR # newline
+spacepr_delim = whitespace + '('
+pr_delim = '('
 break_delim = TERMINATOR + whitespace
-openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')'
+openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim
 closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops
 end_delim = whitespace + newline_delim
 opensquare_delim = whitespace + all_numbers + '"' + ']'
@@ -73,7 +74,7 @@ comment2_delim = whitespace + newline_delim + ascii
 error = []
 
 #TOKENS
-
+ENTITY = 'entity'
 #reserved words
 PLANTING = 'planting' #Start
 PERFECTION = 'perfection' #End
@@ -1062,14 +1063,14 @@ class Lexer:
                             self.advance()
                             ident_count += 1
                             if self.current_char == None:
-                                errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for fall! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
+                                errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for fall! Cause: {self.current_char}. Expected: open parenthesis'])
                                 return [], errors
-                            if self.current_char in spacepr_delim:
+                            if self.current_char in pr_delim:
                                 return Token(FALL, "fall", pos_start = self.pos), errors
                             elif self.current_char in alpha_num:
                                 continue
                             else:
-                                errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for fall! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
+                                errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for fall! Cause: {self.current_char}. Expected: open parenthesis'])
                                 return [], errors
 
                     elif self.current_char == "r": #FARMHOUSE
@@ -1363,8 +1364,8 @@ class Lexer:
                                 return [], errors
                             if self.current_char in spacepr_delim:
                                 return Token(STAR, "star", pos_start = self.pos), errors
-                            elif self.current_char in alpha_num:
-                                continue
+                            # elif self.current_char in alpha_num:
+                            #     continue
                             elif self.current_char == "d": #inde ko ma-gets paano mapasok tong stardew sa 
                                 ident += self.current_char
                                 self.advance()
@@ -1484,7 +1485,7 @@ class Lexer:
                                     if self.current_char == None:
                                         errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for winter! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
                                         return [], errors
-                                    if self.current_char in spacepr_delim:
+                                    if self.current_char in pr_delim:
                                         return Token(WINTER, "winter", pos_start = self.pos), errors
                                     elif self.current_char in alpha_num:
                                         continue
@@ -1730,7 +1731,7 @@ class VoidNode:
     def __repr__(self) -> str:
         return "void"
     
-class VarAccessNode:
+class CropAccessNode:
     def __init__(self, crop_name_tok):
         self.parent = None
         self.crop_name_tok = crop_name_tok
@@ -1741,7 +1742,7 @@ class VarAccessNode:
     def get_ln(self):
         return self.pos_start.ln+1
 
-class VarAssignNode:
+class CropAssignNode:
     def __init__(self, crop_name_tok, value_node):
         self.parent = None
         self.crop_name_tok = crop_name_tok
@@ -1764,14 +1765,14 @@ class VarAssignNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'VarAssignNode')
+        print(prefix, 'CropAssignNode')
         print(spaces + '    - ', f"parent: {self.parent}")
-        print(spaces + '    - ', f"name: {self.var_name_tok.value}")
+        print(spaces + '    - ', f"name: {self.crop_name_tok.value}")
         print(spaces + '    - ', f"value: {self.value_node}")
         
         
 
-class VarInitNode:
+class CropInitNode:
     def __init__(self, crop_name_tok, value_node, operation = Token(EQUAL, "=")):
         self.crop_name_tok = crop_name_tok
         self.value_node = value_node
@@ -1791,15 +1792,15 @@ class VarInitNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'VarInitNode')
+        print(prefix, 'CropInitNode')
         print(spaces + '    - ', f"name: {self.var_name_tok}")
         print(spaces + '    - ', f"operation: {self.operation}")
         print(spaces + '    - ', f"value: {self.value_node}")
 
-class VarDecNode:
+class CropDecNode:
     def __init__(self, crop_name_tok):
         self.parent = None
-        self.var_name_tok = crop_name_tok.value
+        self.crop_name_tok = crop_name_tok.value
         self.value_node = VoidNode(crop_name_tok)
 
         self.pos_start = crop_name_tok.pos_start
@@ -1817,7 +1818,7 @@ class VarDecNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'VarAssignNode')
+        print(prefix, 'CropAssignNode')
         print(spaces + '    - ', f"name: {self.crop_name_tok}")
         print(spaces + '    - ', f"value: {self.value_node}")
 
@@ -1826,14 +1827,14 @@ class HarvestCallNode:
         self.parent = None
         self.value_node = value_node
         self.value = None
-        print('saturn call value node: ', value_node)
+        print('harvest call value node: ', value_node)
         if isinstance(value_node, RTResult):
             self.pos_start = self.value_node.value.pos_start
             self.pos_end = self.value_node.value.pos_end
         elif isinstance(value_node, BinOpNode):
             self.pos_start = self.value_node.pos_start
             self.pos_end = self.value_node.pos_end
-        elif isinstance(value_node, VarAccessNode):
+        elif isinstance(value_node, CropAccessNode):
             self.pos_start = self.value_node.crop_name_tok.pos_start
             self.pos_end = self.value_node.crop_name_tok.pos_end
         elif isinstance(value_node, CraftCallNode):
@@ -1856,7 +1857,7 @@ class HarvestCallNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'SaturnCall')
+        print(prefix, 'HarvestCall')
         print(spaces + '    - ', f"parent: {self.parent}")
         print(spaces + '    - ', f"value/s: {self.value_node}")
         
@@ -1894,7 +1895,7 @@ class ShipNode:
 class CollectNode:
     def __init__(self, variable_node) -> None:
         self.parent = None
-        # this should be a VarAccessNode
+        # this should be a CropAccessNode
         self.variable_node = variable_node
 
     def get_level(self):
@@ -1909,7 +1910,7 @@ class CollectNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'InnerNode')
+        print(prefix, 'CollectNode')
         print(spaces + '    - ', f"value/s: {self.variable_node}, {self.variable_node_crop_tok}")
     
 class BinOpNode:
@@ -2042,7 +2043,7 @@ class StarNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, f"IfNode")
+        print(prefix, f"StarNode")
         print( "  "+ prefix, f"parent: {self.parent}")
         for item in self.cases:
             for j in item:
@@ -2079,7 +2080,7 @@ class WinterNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, f"WhirlNode")
+        print(prefix, f"WinterNode")
         print( "  "+ prefix, f"parent: {self.parent}")
         print( "  "+ prefix, f"condition: {self.condition}")
         print( "  "+ prefix, f"body: ")
@@ -2113,7 +2114,7 @@ class FallNode:
         # self.pos_start = self.condition.pos_start
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, f"ForceNode")
+        print(prefix, f"FallNode")
         print( "  "+ prefix, f"parent: {self.parent}")
         print( "  "+ prefix, f"1st statement: {self.variable}")
         print( "  "+ prefix, f"2nd statement: {self.condition}")
@@ -2140,7 +2141,7 @@ class NextNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'SkipNode')
+        print(prefix, 'NextNode')
         print(spaces + '    - ', f"value: {self.tok.value}")
         
 class BreakNode:
@@ -2161,7 +2162,7 @@ class BreakNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'BlastNode')
+        print(prefix, 'BreakNode')
         print(spaces + '    - ', f"value: {self.tok.value}")
     
 
@@ -2237,7 +2238,7 @@ class Program:
         else:
             print("WALANG PELICAN")
                 
-    #laman ng Program body is VarAssignNode/s, craftNode/s, PelicanNode
+    #laman ng Program body is CropAssignNode/s, craftNode/s, PelicanNode
     
 class CraftNode:
     def __init__(self, identifier) -> None:
@@ -2262,7 +2263,7 @@ class CraftNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, f"Form")
+        print(prefix, f"Craft")
         print( "  "+ prefix, f"parent: {self.parent}")
         print( "  "+ prefix, f"identifier: {self.identifier}")
         print( "  "+ prefix, f"parameters: ")
@@ -2456,7 +2457,7 @@ class Parser:
                     
                     if self.current_tok.token == CROP:
                         if self.current_tok.matches(CROP, 'crop'):
-                            multiple, craft_error = self.crop_dec()
+                            craft_result, craft_error = self.crop_dec()
                             if craft_error:
                                 craft_node.errors.extend(craft_error)
                             else:
@@ -2671,7 +2672,7 @@ class Parser:
                             craft_call.add_param(VoidNode(self.current_tok))
                             self.advance()
                         elif self.current_tok.token == IDENTIFIER:
-                            craft_call.add_param(VarAccessNode(self.current_tok))
+                            craft_call.add_param(CropAccessNode(self.current_tok))
                             self.advance()
                             
                         self.advance()
@@ -2710,7 +2711,7 @@ class Parser:
                         if self.current_tok.token != TERMINATOR:
                             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
                         else:
-                            res.append(PostUnaryNode(VarAccessNode(crop_name), operation))
+                            res.append(PostUnaryNode(CropAccessNode(crop_name), operation))
                             self.advance()
                     #-- if we decrement it
                     elif self.current_tok.token == DECRE:
@@ -2719,7 +2720,7 @@ class Parser:
                         if self.current_tok.token != TERMINATOR:
                             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
                         else:
-                            res.append(PostUnaryNode(VarAccessNode(crop_name), operation))
+                            res.append(PostUnaryNode(CropAccessNode(crop_name), operation))
                             self.advance()
                     # -- else no other operation for it
                     else:
@@ -2734,7 +2735,7 @@ class Parser:
                     fall(crop A = 123$ A < 10$ A++){
 
                     }
-                    [VarAssignNode, BinOpNode, UnaryNode]
+                    [CropAssignNode, BinOpNode, UnaryNode]
                     '''
                     self.advance()
                     fall_res = self.fall_stmt()
@@ -2788,7 +2789,7 @@ class Parser:
                     # (
                     self.advance()
                     #we're expecting a variable
-                    res.append(CollectNode(VarAccessNode(self.current_tok)))
+                    res.append(CollectNode(CropAccessNode(self.current_tok)))
                     self.advance()
                     # $
                     self.advance()
@@ -2923,7 +2924,7 @@ class Parser:
                 # print("we dont have an error in expr")
                 # print("current token after expr: ", self.current_tok)
                 # print("expr: ", type(expr.node))
-                return VarAssignNode(crop_name, expr.node), None
+                return CropAssignNode(crop_name, expr.node), None
             # check if it's crop a = [1, 3, true]
             if self.current_tok.token == SLBRACKET:
                 # print("assigning a list")
@@ -2948,23 +2949,23 @@ class Parser:
                     # print('found srbracket')
                     self.advance()
                     print(list_node.items)
-                    return VarAssignNode(crop_name, list_node), None
+                    return CropAssignNode(crop_name, list_node), None
 
         else:
             # print("found a comma in crop dec!: ", self.current_tok)
             if self.current_tok.token == COMMA:
-                return VarAssignNode(crop_name, VoidNode(self.current_tok)), None
-                #return result.success(VarDecNode(crop_name))
+                return CropAssignNode(crop_name, VoidNode(self.current_tok)), None
+                #return result.success(CropDecNode(crop_name))
             elif self.current_tok.token == RPAREN:
-                return VarAssignNode(crop_name, VoidNode(self.current_tok)), None
-                #return result.success(VarDecNode(crop_name))
+                return CropAssignNode(crop_name, VoidNode(self.current_tok)), None
+                #return result.success(CropDecNode(crop_name))
             elif self.current_tok.token == TERMINATOR:
-                return VarAssignNode(crop_name, VoidNode(self.current_tok)), None
+                return CropAssignNode(crop_name, VoidNode(self.current_tok)), None
             else:
                 # print("found error in variable_declaration")
                 return None, InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ), ', ' or ;!")
                 #append a ParseResult instance sa list
-                # res.append(result.success(VarDecNode(crop_name)))
+                # res.append(result.success(CropDecNode(crop_name)))
                 #self.advance()
 
     def crop_init(self, crop_name):
@@ -2986,7 +2987,7 @@ class Parser:
         
         if self.current_tok.token in (PLUS, MINUS, IDENTIFIER, INTEGER, FLOAT, LPAREN, STRING, VOIDEGG, TRUE, FALSE):
             expr = self.expr()
-            return VarInitNode(crop_name, expr.node, operation), None
+            return CropInitNode(crop_name, expr.node, operation), None
         # check if it's crop a = [1, 3, true]
         if self.current_tok.token == SLBRACKET:
             list_node = ListNode(crop_name)
@@ -3008,7 +3009,7 @@ class Parser:
                 print("[DEBUG] list node init: ", list_node.items)
                 # self.advance()
                 print("[DEBUG] tok after srbracket: ", self.current_tok)
-                return VarInitNode(crop_name, list_node, operation), None
+                return CropInitNode(crop_name, list_node, operation), None
                       
         # todo assignment operators
         
@@ -3049,7 +3050,7 @@ class Parser:
                 if self.current_tok.token in (PLUS, MINUS, IDENTIFIER, INTEGER, FLOAT, LPAREN):
                     expr = self.expr()
                     #self.advance()
-                    fall_node_variable = VarInitNode(crop_name, expr.node)
+                    fall_node_variable = CropInitNode(crop_name, expr.node)
                     self.advance()
 
                             # -----------------------------
@@ -3065,7 +3066,7 @@ class Parser:
                     # here na yung unary node
                     
                     if self.current_tok.token == IDENTIFIER:
-                        unary = PostUnaryNode(VarAccessNode(self.current_tok))
+                        unary = PostUnaryNode(CropAccessNode(self.current_tok))
                         self.advance()
                         if self.current_tok.token in (INCRE, DECRE):
                             unary.operation = self.current_tok
@@ -3280,7 +3281,7 @@ class Parser:
             identifier = self.current_tok
             factor = res.register(self.factor())
             if res.error: return res
-            return res.success(PreUnaryNode(VarAccessNode(identifier), operation))
+            return res.success(PreUnaryNode(CropAccessNode(identifier), operation))
 
         if tok.token in (INTEGER, FLOAT):
             res.register(self.advance())    
@@ -3309,7 +3310,7 @@ class Parser:
                     craft_call.add_param(VoidNode(self.current_tok))
                     self.advance()
                 elif self.current_tok.token == IDENTIFIER:
-                    print("ident form")
+                    print("ident craft")
                     crop_name = self.current_tok
                     # self.advance()
                     # if self.current_tok.token == SLBRACKET:
@@ -3319,7 +3320,7 @@ class Parser:
                     #     index = index.node
                     #     print("after index: ", self.current_tok )
                     #     self.advance()
-                    #     form_call.add_param(ListCallNode(VarAccessNode(var_name), index))
+                    #     form_call.add_param(ListCallNode(CropAccessNode(var_name), index))
                     # index = self.expr()
                     # index = index.node
                    
@@ -3343,14 +3344,14 @@ class Parser:
                         craft_call.add_param(VoidNode(self.current_tok))
                         self.advance()
                     elif self.current_tok.token == IDENTIFIER:
-                        print("ident form")
+                        print("ident craft")
                         
                         
                         expr = self.expr()
                         expr = expr.node
                         craft_call.add_param(expr.node)
 
-                            # form_call.add_param(VarAccessNode(var_name))
+                            # form_call.add_param(CropAccessNode(var_name))
                 #this should be a ) token
                 self.advance()
                 # self.advance()
@@ -3367,11 +3368,11 @@ class Parser:
                     print("error in list cond")
                 index = index.node
                 self.advance()
-                return res.success(ListCallNode(VarAccessNode(crop_name), index))
+                return res.success(ListCallNode(CropAccessNode(crop_name), index))
             if self.current_tok.token in (INCRE, DECRE):
-                return res.success(PostUnaryNode(VarAccessNode(tok), self.current_tok))
+                return res.success(PostUnaryNode(CropAccessNode(tok), self.current_tok))
             else:
-                return res.success(VarAccessNode(tok))
+                return res.success(CropAccessNode(tok))
         
         elif tok.token == LPAREN:
             res.register(self.advance())
@@ -3465,19 +3466,19 @@ class Interpreter:
     def visit_Program(self, node, symbol_table):
 
         for item in node.body:
-            if isinstance(item, VarAssignNode):
+            if isinstance(item, CropAssignNode):
                 value = self.visit(item, symbol_table)
                 if value.error:
                     node.errors.append(value.error)
 
-                symbol_table.set(item.var_name_tok.value, value.value)
+                symbol_table.set(item.crop_name_tok.value, value.value)
                 print("global variables: ", symbol_table.symbols)
             elif isinstance(item, CraftNode):
                 item.symbol_table = SymbolTable(f"<craft {item.identifier}>")
                 item.symbol_table.parent = symbol_table
                 node.functions.append(item)
                 for i in item.parameters:
-                    item.symbol_table.set(i.var_name_tok.value, i)
+                    item.symbol_table.set(i.crop_name_tok.value, i)
                 print("functions: ", node.functions)
                 # for i in item.body:
                 #     value = self.visit(i, item.symbol_table)
@@ -3499,7 +3500,7 @@ class Interpreter:
         # print ("global symbols: ", )
         return node
 
-    def visit_FormCallNode(self, node, symbol_table):
+    def visit_CraftCallNode(self, node, symbol_table):
         craft_call_node = node
         craft_ident =  node.identifier.value
         res = RTResult()
@@ -3559,16 +3560,16 @@ class Interpreter:
                     print("invalid number of params")
                     return res.failure(SemanticError(
                 craft_call_node.pos_start, craft_call_node.pos_end,
-                f"\nform '{craft_ident}' takes {len(item.parameters)} parameters, received {len(craft_call_node.parameters)} arguments ",
+                f"\ncraft '{craft_ident}' takes {len(item.parameters)} parameters, received {len(craft_call_node.parameters)} arguments ",
             ))
         if craft_ident == "append" or craft_ident == "remove" or craft_ident == "length":
             return res.success(craft_call_node)
         return res.failure(SemanticError(
                 craft_call_node.pos_start, craft_call_node.pos_end,
-                f"\nform '{craft_ident}' is not defined",
+                f"\ncraft '{craft_ident}' is not defined",
             ))
 
-    def visit_VarAccessNode(self, node, symbol_table):
+    def visit_CropAccessNode(self, node, symbol_table):
         # print("in crop access node")
         res = RTResult()
 
@@ -3598,7 +3599,7 @@ class Interpreter:
         return res.success(value)
 
 
-    def visit_SaturnCallNode(self, node, symbol_table):
+    def visit_HarvestCallNode(self, node, symbol_table):
         res = RTResult()
         # print("saturn call value node: ", node.value_node)
         # print("visit saturn: ", symbol_table.symbols)
@@ -3634,23 +3635,23 @@ class Interpreter:
             values.append(value.value)
         return res.success(values)
     
-    def visit_InnerNode(self, node, context):
+    def visit_CollectNode(self, node, context):
         # print("inner parent: ", node.parent)
         # print("variable node: ", node.variable_node)
         res = RTResult()
         value = self.visit(node.variable_node, context)
         if value.error:
-            print("ERROR IN INNERNODE")
+            print("ERROR IN COLLECTNODE")
             return res.failure(value.error)
         # print("value inner: ", value.value)
         # print("paren symbol table inner before setting: ", node.parent.symbol_table.symbols)
-        context.set(node.variable_node.var_name_tok.value, value.value)
+        context.set(node.variable_node.crop_name_tok.value, value.value)
         # print("paren symbol table inner: ", node.parent.symbol_table.symbols)
         return res.success(node)
     # identifier: a
 
     
-    def visit_VarAssignNode(self, node, symbol_table):
+    def visit_CropAssignNode(self, node, symbol_table):
         # print("in var assign node: ", node.var_name_tok)
         res = RTResult()
         crop_name = node.crop_name_tok.value
@@ -3677,7 +3678,7 @@ class Interpreter:
         return res.success(node)
     
     
-    def visit_VarInitNode(self, node, symbol_table):
+    def visit_CropInitNode(self, node, symbol_table):
         res = RTResult()
         if isinstance(node.crop_name_tok, ListCallNode):
 
@@ -3690,7 +3691,7 @@ class Interpreter:
                     f"\n'{crop_name}' is not defined",
                 ))
         else:
-            crop_name = node.var_name_tok.value
+            crop_name = node.crop_name_tok.value
             value = symbol_table.get(crop_name)
             if not value and value != 0:
                 # print("couldnt find variable")
@@ -3717,7 +3718,7 @@ class Interpreter:
         #returns rtresult
         return res.success(value)
 
-    def visit_VarDecNode(self, token, context):
+    def visit_CropDecNode(self, token, context):
         res = RTResult()
         crop_name = token.crop_name_tok
         # print("var name: ", var_name)
@@ -3787,13 +3788,13 @@ class Interpreter:
         if value.error:
             return res.failure(value.error)
         return res.success(value)
-    def visit_PreUnaryNode(self, node, symbol_table):
-        # print("found post unary")
-        res = RTResult()
-        value = self.visit(node.tok, symbol_table)
-        if value.error:
-            return res.failure(value.error)
-        return res.success(value)
+    # def visit_PreUnaryNode(self, node, symbol_table):
+    #     # print("found post unary")
+    #     res = RTResult()
+    #     value = self.visit(node.tok, symbol_table)
+    #     if value.error:
+    #         return res.failure(value.error)
+    #     return res.success(value)
     def visit_BinOpNode(self, node, context):
         # print("bin op parent", node.parent)
         res = RTResult()
@@ -4001,20 +4002,20 @@ class Interpreter:
                     print("error 2")
                     return res
             return res.success(node)
-    def visit_DoWhirlNode(self, node, symbol_table):
-        # print("found a do whirl node")
-        res = RTResult()
-        for item in node.body:
-            value = self.visit(item, symbol_table)
-            if value.error:
-                return res.failure(value.error)
-        # print("do whirl condition: ", node.condition)
-        node.condition.parent = node
-        condition_value = self.visit(node.condition, symbol_table)
-        if condition_value.error:
-            return res.failure(condition_value.error)
-        return res.success(node)
-    def visit_IfNode(self, node, context):
+    # def visit_DoWhirlNode(self, node, symbol_table):
+    #     # print("found a do whirl node")
+    #     res = RTResult()
+    #     for item in node.body:
+    #         value = self.visit(item, symbol_table)
+    #         if value.error:
+    #             return res.failure(value.error)
+    #     # print("do whirl condition: ", node.condition)
+    #     node.condition.parent = node
+    #     condition_value = self.visit(node.condition, symbol_table)
+    #     if condition_value.error:
+    #         return res.failure(condition_value.error)
+    #     return res.success(node)
+    def visit_StarNode(self, node, context):
         list_of_outer = []
         res = RTResult()
         # print("node.cases: ", node.cases)
@@ -4060,10 +4061,10 @@ class Interpreter:
             return res.success(else_value)
 
         return res.success(None)
-    def visit_SkipNode(self, node, symbol_table):
+    def visit_NextNode(self, node, symbol_table):
         res = RTResult()
         return res.success(node)
-    def visit_BlastNode(self, node, symbol_table):
+    def visit_BreakNode(self, node, symbol_table):
         res = RTResult()
         return res.success(node)
 class Void:
@@ -4540,7 +4541,7 @@ def run(fn, text):
     #here i need to visit the ast nodes hahaha
     
     interpreter = Interpreter()
-    symbol_table = SymbolTable("<Cosmic Script>")
+    symbol_table = SymbolTable("<Junimo Code>")
     # context.symbol_table = global_symbol_table
     symbol_table.symbols = {}
     ast.symbol_table = symbol_table
@@ -4957,25 +4958,24 @@ class StardewLexerGUI:
             if syntax_error:
                 # self.terminal_output.insert(tk.END, syntax_error.details)
                 for err in syntax_error:
-                    self.terminal_output.insert(tk.END, err.as_string())
-                # for err in syntax_error:
-                #     if isinstance(err, list):
-                #         for e in err:
-                #             errorResult, fileDetail, arrowDetail, arrows = e.as_string()
-                #             self.terminal_output.insert(tk.END, errorResult)
-                #             self.terminal_output.insert(tk.END, fileDetail)
-                #             self.terminal_output.insert(tk.END, arrowDetail)
-                #             # errors_text.insert(tk.END, arrows)
-                #     else:
-                #         errorResult, fileDetail, arrowDetail, arrows = err.as_string()
-                #         self.terminal_output.insert(tk.END, errorResult)
-                #         self.terminal_output.insert(tk.END, fileDetail)
-                #         self.terminal_output.insert(tk.END, arrowDetail)
-                #         # errors_text.insert(tk.END, arrows)
+                    if hasattr(err, "as_string") and callable(err.as_string):
+                        errorResult, fileDetail, arrowDetail, arrows = err.as_string()
+
+                        # Ensure correct formatting and remove escape characters
+                        formatted_error = errorResult.replace('\\n', '\n').replace('\\t', '\t')
+                        formatted_file = fileDetail.replace('\\n', '\n').replace('\\t', '\t')
+                        formatted_arrow = arrowDetail.replace('\\n', '\n').replace('\\t', '\t')
+                        formatted_arrows = arrows.replace('\\n', '\n').replace('\\t', '\t')
+
+                        # Insert properly formatted error messages with the arrow pointer
+                        self.terminal_output.insert(tk.END, f"{formatted_error}\n", "error")
+                        self.terminal_output.insert(tk.END, f"{formatted_file}\n", "file_detail")
+                        self.terminal_output.insert(tk.END, f"{formatted_arrow}\n", "arrow")
+                        self.terminal_output.insert(tk.END, f"{formatted_arrows}\n\n", "arrow_indicator")
             else:
                 
                 # for res in syntax_result:
-                self.terminal_output.insert(tk.END, "SUCCESS from syntax")
+                self.terminal_output.insert(tk.END, "Success from Syntax")
                 # errors_text.insert(tk.END, "SUCCESS")
 
     def semantic_analyzer(self):  # Semantic button
@@ -5016,6 +5016,7 @@ class StardewLexerGUI:
             # return
         new_parser = Parser(lexer_result)
         ast = new_parser.parse()
+        
         # print ("AST: ", ast)
         # Display AST in Debug Mode
         ast.display()
@@ -5040,69 +5041,69 @@ class StardewLexerGUI:
         #     return  # Stop execution if semantic errors exist
 
         # If successful, display success message
-        self.terminal_output.insert(tk.END, "SUCCESS from semantic analysis\n")
+        self.terminal_output.insert(tk.END, "Success from Semantic\n")
 
 
                 # iffeed sa transpiler
-    def run_transpiler():
-        input_text_str = input_text.get("1.0", "end-1c")
-        list_text = input_text_str.split("\n")
-        clear_text_file()
-        write_list_to_file('get_line.txt', list_text)
-        # print("list text: ", list_text)
-        # Run lexer
-        lexer_result, lexer_error = lexer.run("<stdin>", input_text_str)
-        # Display lexer output
-        output_text.delete(0, tk.END)
-        token_text.delete(0, tk.END)
-        count = 0
-        for item in lexer_result:
-            count += 1
-            if item:
-                output_text.insert(tk.END, "%s.\t   %s" % (count,item.value))
-                token_text.insert(tk.END,  "%s.\t   %s" % (count,item.token))
+    # def run_transpiler():
+    #     input_text_str = input_text.get("1.0", "end-1c")
+    #     list_text = input_text_str.split("\n")
+    #     clear_text_file()
+    #     write_list_to_file('get_line.txt', list_text)
+    #     # print("list text: ", list_text)
+    #     # Run lexer
+    #     lexer_result, lexer_error = lexer.run("<stdin>", input_text_str)
+    #     # Display lexer output
+    #     output_text.delete(0, tk.END)
+    #     token_text.delete(0, tk.END)
+    #     count = 0
+    #     for item in lexer_result:
+    #         count += 1
+    #         if item:
+    #             output_text.insert(tk.END, "%s.\t   %s" % (count,item.value))
+    #             token_text.insert(tk.END,  "%s.\t   %s" % (count,item.token))
 
-        # Display lexer errors
-        errors_text.delete(0, tk.END)
-        # Display lexer errors if any, otherwise proceed to run the parser
-        if lexer_error:
-            for err in lexer_error:
-                errors_text.insert(tk.END, err)
-        else:
-            # Run the parser if lexer is successful
-            syntax_result, syntax_error = parser1.run("<cosmic script>", input_text_str)
-            if syntax_error:
-                for err in syntax_error:
-                    if isinstance(err, list):
-                        for e in err:
-                            errorResult, fileDetail, arrowDetail, arrows = e.as_string()
-                            errors_text.insert(tk.END, errorResult)
-                            errors_text.insert(tk.END, fileDetail)
-                            errors_text.insert(tk.END, arrowDetail)
-                            # errors_text.insert(tk.END, arrows)
-                    else:
-                        errorResult, fileDetail, arrowDetail, arrows = err.as_string()
-                        errors_text.insert(tk.END, errorResult)
-                        errors_text.insert(tk.END, fileDetail)
-                        errors_text.insert(tk.END, arrowDetail)
-                        # errors_text.insert(tk.END, arrows)
-            else:
-                # If no syntax errors, run the transpiler
-                semantic_result, semantic_error = semantic.run("<stdin>", input_text_str)
-                if semantic_error:
-                    for err in semantic_error:
-                        errorResult, fileDetail, arrowDetail = err.as_string()
-                        # errors_text.insert(tk.END, errorResult)
-                        for e in errorResult:
-                            errors_text.insert(tk.END, e)
-                        errors_text.insert(tk.END, fileDetail)
-                        errors_text.insert(tk.END, arrowDetail)
-                else:
-                    # Transpile and execute the code
-                    python_file = "generated_script.py"
-                    transpiler_result = convert_text_file_to_python_and_execute(semantic_result, python_file)
-                    # if transpiler_result:
-                    #     errors_text.insert(tk.END, transpiler_result)
+    #     # Display lexer errors
+    #     errors_text.delete(0, tk.END)
+    #     # Display lexer errors if any, otherwise proceed to run the parser
+    #     if lexer_error:
+    #         for err in lexer_error:
+    #             errors_text.insert(tk.END, err)
+    #     else:
+    #         # Run the parser if lexer is successful
+    #         syntax_result, syntax_error = parser1.run("<cosmic script>", input_text_str)
+    #         if syntax_error:
+    #             for err in syntax_error:
+    #                 if isinstance(err, list):
+    #                     for e in err:
+    #                         errorResult, fileDetail, arrowDetail, arrows = e.as_string()
+    #                         errors_text.insert(tk.END, errorResult)
+    #                         errors_text.insert(tk.END, fileDetail)
+    #                         errors_text.insert(tk.END, arrowDetail)
+    #                         # errors_text.insert(tk.END, arrows)
+    #                 else:
+    #                     errorResult, fileDetail, arrowDetail, arrows = err.as_string()
+    #                     errors_text.insert(tk.END, errorResult)
+    #                     errors_text.insert(tk.END, fileDetail)
+    #                     errors_text.insert(tk.END, arrowDetail)
+    #                     # errors_text.insert(tk.END, arrows)
+    #         else:
+    #             # If no syntax errors, run the transpiler
+    #             semantic_result, semantic_error = semantic.run("<stdin>", input_text_str)
+    #             if semantic_error:
+    #                 for err in semantic_error:
+    #                     errorResult, fileDetail, arrowDetail = err.as_string()
+    #                     # errors_text.insert(tk.END, errorResult)
+    #                     for e in errorResult:
+    #                         errors_text.insert(tk.END, e)
+    #                     errors_text.insert(tk.END, fileDetail)
+    #                     errors_text.insert(tk.END, arrowDetail)
+    #             else:
+    #                 # Transpile and execute the code
+    #                 python_file = "generated_script.py"
+    #                 transpiler_result = convert_text_file_to_python_and_execute(semantic_result, python_file)
+    #                 # if transpiler_result:
+    #                 #     errors_text.insert(tk.END, transpiler_result)
 if __name__ == "__main__":
     root = ctk.CTk()
     app = StardewLexerGUI(root)

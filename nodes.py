@@ -1,7 +1,7 @@
 
 import subprocess
 import semantic
-from semantic import ShipNode, VarAssignNode, VarInitNode, VarDecNode, VarAccessNode
+from semantic import ShipNode, CropAssignNode, CropInitNode, CropDecNode, CropAccessNode
 # import subprocess
 # import sys
 import os
