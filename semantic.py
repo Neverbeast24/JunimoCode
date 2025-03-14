@@ -1065,7 +1065,7 @@ class Lexer:
                             if self.current_char == None:
                                 errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for fall! Cause: {self.current_char}. Expected: open parenthesis'])
                                 return [], errors
-                            if self.current_char in pr_delim:
+                            if self.current_char in pr_delim or self.current_char.isspace():
                                 return Token(FALL, "fall", pos_start = self.pos), errors
                             elif self.current_char in alpha_num:
                                 continue
@@ -1485,7 +1485,7 @@ class Lexer:
                                     if self.current_char == None:
                                         errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for winter! Cause: {self.current_char}. Expected: whitespace, open parenthesis'])
                                         return [], errors
-                                    if self.current_char in pr_delim:
+                                    if self.current_char in pr_delim or self.current_char.isspace():
                                         return Token(WINTER, "winter", pos_start = self.pos), errors
                                     elif self.current_char in alpha_num:
                                         continue
