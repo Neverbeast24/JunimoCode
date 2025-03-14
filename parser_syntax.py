@@ -2345,20 +2345,27 @@ class Parser:
         if self.current_tok.token == STRING:
             self.advance()
 
-            # If the next token is PLUS, process concatenation
-            while self.current_tok.token == PLUS:
+            # Allow ONLY '+' for concatenation, explicitly reject *, /, %, etc.
+            while self.current_tok.token in (PLUS, MUL, DIV, MODULUS, MINUS):
+                if self.current_tok.token != PLUS:  # Reject anything except '+'
+                    error.extend(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        f"Invalid operator '{self.current_tok.token}' in string concatenation! Only '+' is allowed."
+                    ))
+                    return res, error  # Stop parsing and return error
+
                 self.advance()
-                
+
                 # Ensure there's a valid token after '+'
-                if self.current_tok.token == STRING or self.current_tok.token == IDENTIFIER or self.current_tok.token == FLOAT or self.current_tok.token == INTEGER:
+                if self.current_tok.token in (STRING, IDENTIFIER, FLOAT, INTEGER):
                     self.advance()
                 else:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, or string after '+'!"))
+                    error.extend(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        "Expected identifier, number, or string after '+'!"
+                    ))
                     return res, error  # Return early if error is encountered
-            
-            # If no '+' is found, it's still valid; just return success
-            return res, error  
-
+            return res, error 
         print("current token: ", self.current_tok)
 
         if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER:
