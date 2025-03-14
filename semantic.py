@@ -742,10 +742,10 @@ class Lexer:
             elif self.current_char == '{':
                 self.advance()
                 if self.current_char == None:
-                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline_delim "])
+                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline "])
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline_delim "])
+                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for 'opening curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline"])
                     continue
                 tokens.append(Token(CLBRACKET, "{", pos_start = self.pos))
             elif self.current_char == '}':
@@ -754,7 +754,7 @@ class Lexer:
                     tokens.append(Token(CRBRACKET, "}", pos_start = self.pos))
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for 'closing curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline_delim "])
+                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for 'closing curly bracket'. Cause: ' {self.current_char} '. Expected: \' \', alphanumeric characters or newline"])
                     continue
                 tokens.append(Token(CRBRACKET, "}", pos_start = self.pos))
 
@@ -782,7 +782,7 @@ class Lexer:
                     tokens.append(Token(TERMINATOR, "$", pos_start = self.pos))
                     continue
                 if self.current_char not in end_delim:
-                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' $ '. Cause: ' {self.current_char} '. Expected: space or newline_delim "])
+                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' $ '. Cause: ' {self.current_char} '. Expected: space or newline "])
                     continue
                 tokens.append(Token(TERMINATOR, "$", pos_start = self.pos))
             else:
@@ -1175,7 +1175,7 @@ class Lexer:
                             elif self.current_char in alpha_num:
                                 continue
                             else:
-                                errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for pelican! Cause: {self.current_char}. Expected: open parenthesis '])
+                                errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for next! Cause: {self.current_char}. Expected: space or TERMINATOR '])
                                 return [], errors
             elif self.current_char == "p": #PELICAN, PERFECTION, PLANTING
                 ident += self.current_char
