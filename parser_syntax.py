@@ -292,10 +292,10 @@ class Lexer:
             """ if self.current_char in special_chars:
                 errors.extend([f"Invalid symbol: {self.current_char}"])
                 self.advance() """
-            if self.current_char in '\t':
-                tokens.append(Token(NEWTAB, "\\t", pos_start = self.pos))
-                self.advance()
-            elif self.current_char  == '\n':
+            # if self.current_char in '\t':
+            #     tokens.append(Token(NEWTAB, "\\t", pos_start = self.pos))
+            #     self.advance()
+            if self.current_char  == '\n':
                 tokens.append(Token(NEWLINE, "\\n", pos_start = self.pos))
                 self.advance()
             elif self.current_char.isspace():
@@ -2184,6 +2184,7 @@ class Parser:
                 
                 if self.current_tok.token == HARVEST:
                     self.advance()
+                    print("HARVEST CHAR: ", self.current_tok)
                     if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOIDEGG and self.current_tok.token != FLOAT and self.current_tok.token != None:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, left parenthesis, true, false, string or voidegg!"))
                         break
@@ -3294,7 +3295,7 @@ class Parser:
 
         elif self.current_tok.token == IDENTIFIER:
             self.advance()
-            if self.current_tok.token in REL_OP:
+            if self.current_tok.token in (E_EQUAL , NOT_EQUAL , LESS_THAN , GREATER_THAN , LESS_THAN_EQUAL , GREATER_THAN_EQUAL):
                 self.advance()
                 if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER, LPAREN):
                 
@@ -3684,7 +3685,7 @@ class Parser:
         res = []
         error = []
         self.advance()
-        if self.current_tok.token == "(":
+        if self.current_tok.token == LPAREN:
             self.advance()
             c_ces, c_error = self.star_winter_condition()
             if c_error:
@@ -3692,11 +3693,11 @@ class Parser:
                     error.append(err)
             else:
                 
-                if self.current_tok.token == ")":
+                if self.current_tok.token == RPAREN:
                     self.advance()
                     # if self.current_tok.token == NEWLINE:
                     #     self.advance()
-                    if self.current_tok.token == "{":
+                    if self.current_tok.token == CLBRACKET:
                         self.advance()
                         star_res, star_error = self.body()
                         # print("if res: ", res)
@@ -3894,77 +3895,125 @@ class Parser:
                         return res, error
                 else:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-        elif self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, STRING) : 
-            # dito ko nilagay yung string concat rule and comparison
-            if self.current_tok.token == STRING:
-                print("STRING DETECTED, CHECKING VALIDITY...")
+        elif self.current_tok.token in (IDENTIFIER, STRING):
+            print("STRING/IDENTIFIER DETECTED, CHECKING VALIDITY...")
 
-                self.advance()  # Move to the next token
+            self.advance()  # Move to the next token
 
-                # If the next token is a mathematical operator other than '+', immediately throw an error
-                if self.current_tok.token in (MINUS, MUL, DIV, MODULUS, LESS_THAN, GREATER_THAN,
-                                            LESS_THAN_EQUAL, GREATER_THAN_EQUAL, AND_OP, OR_OP, PLUS_EQUAL, MINUS_EQUAL, MUL_EQUAL, DIV_EQUAL, NOT_OP):
+            # ✅ If IDENTIFIER, allow comparison (`==`, `!=`, `>`, `<`, `>=`, `<=`)
+            if self.current_tok.token in (E_EQUAL, NOT_EQUAL, LESS_THAN, GREATER_THAN, LESS_THAN_EQUAL, GREATER_THAN_EQUAL):
+                self.advance()  # Move past the operator
+
+                # Ensure the right-hand side is also an IDENTIFIER, INTEGER, FLOAT, or STRING
+                if self.current_tok.token not in (IDENTIFIER, INTEGER, FLOAT, STRING):
                     error.append(InvalidSyntaxError(
                         self.current_tok.pos_start, self.current_tok.pos_end,
-                        "Strings can only be concatenated using '+' or compared using '==' and '!='."
+                        "Identifiers must be compared with another identifier, number, or string."
                     ))
                     return res, error  # Stop execution
 
-                # Enforce strict string concatenation rules
+                self.advance()  # Move past the valid comparison value
+
+                # Allow logical operations (`||`, `&&`) after a valid comparison
+                while self.current_tok.token in (AND_OP, OR_OP):
+                    self.advance()  # Move past the logical operator
+
+                    # Ensure another valid comparison follows (IDENTIFIER, STRING, INTEGER with a valid comparison operator)
+                    if self.current_tok.token not in (IDENTIFIER, STRING, INTEGER, FLOAT):
+                        error.append(InvalidSyntaxError(
+                            self.current_tok.pos_start, self.current_tok.pos_end,
+                            "Logical operators ('||', '&&') must connect valid comparisons."
+                        ))
+                        return res, error  # Stop execution
+
+                    self.advance()  # Move past the next identifier, string, or number
+
+                    if self.current_tok.token not in (E_EQUAL, NOT_EQUAL, LESS_THAN, GREATER_THAN, LESS_THAN_EQUAL, GREATER_THAN_EQUAL):
+                        error.append(InvalidSyntaxError(
+                            self.current_tok.pos_start, self.current_tok.pos_end,
+                            "Expected '==', '!=', '>', '<', '>=', or '<=' after identifier, string, or number in logical comparison."
+                        ))
+                        return res, error  # Stop execution
+
+                    self.advance()  # Move past the comparison operator
+
+                    if self.current_tok.token not in (IDENTIFIER, STRING, INTEGER, FLOAT):
+                        error.append(InvalidSyntaxError(
+                            self.current_tok.pos_start, self.current_tok.pos_end,
+                            "Invalid comparison: Expected an identifier, number, or string after the comparison operator."
+                        ))
+                        return res, error  # Stop execution
+
+                    self.advance()  # Move past the valid right-side value
+
+                return res, error  # ✅ Valid case (identifier comparison or logical conditions)
+
+            # ✅ Allow concatenation using '+' ONLY with STRING or IDENTIFIER
+            elif self.current_tok.token == PLUS:
                 while self.current_tok.token == PLUS:
                     self.advance()  # Move past '+'
 
-                    # Ensure the next token is **only** a string (reject numbers, identifiers, booleans)
+                    # Ensure the next token is **only** STRING or IDENTIFIER
                     if self.current_tok.token not in (STRING, IDENTIFIER):
                         error.append(InvalidSyntaxError(
                             self.current_tok.pos_start, self.current_tok.pos_end,
-                            "Strings can only be concatenated with strings or identifier."
+                            "Strings can only be concatenated with other strings or identifiers."
                         ))
                         return res, error  # Stop execution
 
-                    self.advance()  # Move past the second string
+                    self.advance()  # Move past the valid concatenation value
 
-                # Allow `==` and `!=` **ONLY** after valid concatenation
+                # ✅ Allow `==` and `!=` **ONLY** after valid concatenation
                 if self.current_tok.token in (E_EQUAL, NOT_EQUAL):
                     self.advance()  # Move past the operator
 
-                    # Ensure the right side is also a valid string **or** a concatenation
+                    # Ensure the right-hand side is also a valid string or identifier **or another concatenation**
                     if self.current_tok.token not in (STRING, IDENTIFIER):
                         error.append(InvalidSyntaxError(
                             self.current_tok.pos_start, self.current_tok.pos_end,
-                            "Strings can only be compared to strings or identifier."
+                            "Strings can only be compared to other strings or identifiers using '==' or '!='."
                         ))
                         return res, error  # Stop execution
 
-                    self.advance()  # Move past the valid second string
+                    self.advance()  # Move past the valid second string or identifier
 
-                    # Allow concatenation after comparison (e.g., "hello" + "world" == "hello" + "world")
+                    # Allow concatenation **after** comparison (e.g., `"hello" + "world" == "hello" + "world"`)
                     while self.current_tok.token == PLUS:
                         self.advance()
 
-                        if self.current_tok.token != STRING:  # Ensure next token is a string
+                        if self.current_tok.token not in (STRING, IDENTIFIER):  # Ensure next token is valid
                             error.append(InvalidSyntaxError(
                                 self.current_tok.pos_start, self.current_tok.pos_end,
-                                "Strings can only be concatenated with strings or identifier."
+                                "Strings can only be concatenated with other strings or identifiers."
                             ))
                             return res, error  # Stop execution
 
-                        self.advance()  # Move past the valid string
+                        self.advance()  # Move past the valid concatenated string or identifier
 
-                return res, error  # Valid case
-            if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
-                n_res, n_error = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
-                # print("assign val in arith rel op left 1: ", self.current_tok)
-                if n_error:
-                    # print("ERROR IN assign val in arith rel op left")
-                    for err in n_error:
-                        error.append(err)
-                    return res, error
-                # print("going to check the value now: ", self.current_tok)
-                #self.advance()
+                return res, error  # ✅ Valid case (concatenation or comparison)
+
+            else:
+                error.append(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected '==', '!=', '>', '<', '>=', '<=', or valid string concatenation."
+                ))
+                return res, error  # Stop execution
+
+
+
+        elif self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
+            n_res, n_error = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
+            # print("assign val in arith rel op left 1: ", self.current_tok)
+            if n_error:
+                # print("ERROR IN assign val in arith rel op left")
+                for err in n_error:
+                    error.append(err)
+                return res, error
+            # print("going to check the value now: ", self.current_tok)
+            #self.advance()
             if self.current_tok.token == STRING:
                 self.advance()
-            if self.current_tok.token in REL_OP:
+            if self.current_tok.token in (E_EQUAL , NOT_EQUAL , LESS_THAN , GREATER_THAN , LESS_THAN_EQUAL , GREATER_THAN_EQUAL):
                 self.advance()
                 if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, TRUE, STRING, FALSE):
                     if self.current_tok.token == TRUE:

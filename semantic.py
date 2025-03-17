@@ -309,10 +309,10 @@ class Lexer:
             """ if self.current_char in special_chars:
                 errors.extend([f"Invalid symbol: {self.current_char}"])
                 self.advance() """
-            if self.current_char in '\t':
-                tokens.append(Token(NEWTAB, "\\t", pos_start = self.pos))
-                self.advance()
-            elif self.current_char  == '\n':
+            # if self.current_char in '\t':
+            #     tokens.append(Token(NEWTAB, "\\t", pos_start = self.pos))
+            #     self.advance()
+            if self.current_char  == '\n':
                 tokens.append(Token(NEWLINE, "\\n", pos_start = self.pos))
                 self.advance()
             elif self.current_char.isspace():
@@ -2975,7 +2975,7 @@ class Parser:
                 #STRING
                 prompt = self.current_tok
                 self.advance()
-                return CollectNode(CropAssignNode(crop_name, crop_name), prompt), None
+                return CropDecNode(crop_name), None
 
         else:
             # print("found a comma in crop dec!: ", self.current_tok)
@@ -3124,7 +3124,7 @@ class Parser:
         condition = res.register(self.own_if_expr())
         if res.error: 
             print("[DEBUG] error in condition")
-            return res
+            return [], errors
         condition = condition.node
         self.advance()
         print("[DEBUG] token after condition: ", self.current_tok)
@@ -3142,14 +3142,15 @@ class Parser:
         #need to append it to cases as a tuple of (condition, [body result])
         cases.append((condition, result))
         if body_error:
-            return res.failure(InvalidSyntaxError(
+            errors.append(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 "Error in body "
             ))
+            return [], errors
         
         #return result.success(if_res_body)
         if res.error: 
-            return res
+            return [], errors
         
         #self.advance()
         #self.advance()
@@ -3163,17 +3164,18 @@ class Parser:
             stardew_condition = res.register(self.own_if_expr())
             stardew_condition = stardew_condition.node
             if res.error: 
-                return res
+                return [], errors
 
             self.advance()
 
 
             if self.current_tok.token != CLBRACKET:
                 print("[DEBUG] err { 2")
-                return res.failure(InvalidSyntaxError(
+                errors.append(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
                     "Expected { "
                 ))
+                return [], errors
             self.advance()
             #todo need to append this its body
             result, body_error = self.body()
@@ -3755,7 +3757,7 @@ class Interpreter:
         if res.error: return res
 
         
-        context.symbol_table.set(crop_name, Void(None).set_context(context).set_pos(token.pos_start, token.pos_end))
+        context.set(crop_name, Void(None).set_context(context).set_pos(token.pos_start, token.pos_end))
         
         # return res.value
         return RTResult().success(
@@ -4561,6 +4563,7 @@ def run(fn, text):
     # todo semantic parser
     ast = parser.parse()
     print("AST: ", ast)
+    print(ast[1][0].as_string()) #dito raw error
     # print("ast: ", ast)
     #ast is a Program instance
     # print("ast body: ", ast.body)
