@@ -60,7 +60,7 @@ id_delim = COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + 
 spacepr_delim = whitespace + '('
 pr_delim = '('
 break_delim = TERMINATOR + whitespace
-openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim
+openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim + '!'
 closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops
 end_delim = whitespace + newline_delim
 opensquare_delim = whitespace + all_numbers + '"' + ']'
@@ -120,6 +120,7 @@ DIV_EQUAL = '/='
 #unary operators | done
 INCRE = '++'
 DECRE = '--'
+NEGATIVE = '~'
 #relational operators | done
 E_EQUAL = '=='
 NOT_EQUAL = '!='
@@ -394,12 +395,14 @@ class Lexer:
 
             elif self.current_char == '~':
                 self.advance()
-                if self.current_char is not None and self.current_char in negative_delim:
+                if self.current_char in all_numbers:
                     result, error = self.make_number()
-                    result = Token(result.token, "~" + str(result.value), pos_start = self.pos)
-                    tokens.append(result)
+                    #result = Token(result.token, result.value * -1, pos_start, self.pos)
+                    result = Token(result.token, result.value * -1, pos_start, self.pos)
+                    tokens.append(result)  
+
                 else:
-                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ~ '. Cause: ' {self.current_char} '. Expected:  {number}"])
+                    errors.extend([f"Invalid delimiter for ' ~ '. Cause: ' {self.current_char} '. Expected:  123456789"])
 
             elif self.current_char == '<': #relational operator
                 self.advance()
@@ -1612,11 +1615,11 @@ class PostUnaryNode:
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'PostUnaryNode')
-        print(spaces + '    - ', f"name: {self.tocrope_tok.value}")
+        print(spaces + '    - ', f"name: {self.tok.crop_name_tok.value}")
         print(spaces + '    - ', f"operation: {self.operation}")
 
     def __repr__(self):   
-        return f"PostUnaryNode: identifier: '{self.tocrope_tok.value}', operation: '{self.operation}',"
+        return f"PostUnaryNode: identifier: '{self.tok.crop_name_tok.value}', operation: '{self.operation}',"
     
 class StringNode:
     def __init__(self, tok):
@@ -1746,6 +1749,7 @@ class CropAccessNode:
 class CropAssignNode:
     def __init__(self, crop_name_tok, value_node):
         self.parent = None
+        self.prompt = None
         self.crop_name_tok = crop_name_tok
         self.value_node = value_node
         self.pos_start = self.crop_name_tok.pos_start
@@ -1894,8 +1898,9 @@ class ShipNode:
         print(spaces + '    - ', f"value/s: {self.body}")
 
 class CollectNode:
-    def __init__(self, variable_node) -> None:
+    def __init__(self, variable_node, prompt) -> None:
         self.parent = None
+        self.prompt = prompt
         # this should be a CropAccessNode
         self.variable_node = variable_node
 
@@ -1912,7 +1917,7 @@ class CollectNode:
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'CollectNode')
-        print(spaces + '    - ', f"value/s: {self.variable_node}, {self.variable_node_crop_tok}")
+        print(spaces + '    - ', f"value/s: {self.variable_node}, {self.variable_node}")
     
 class BinOpNode:
     def __init__(self, left_node, op_tok, right_node):
@@ -2020,11 +2025,11 @@ class CraftCallNode:
         return f"craftCallNode, name: {self.identifier}, parameters: {self.parameters}, parent: {self.parent}"
     
 class StarNode:
-    def __init__(self, cases, else_case, ):
+    def __init__(self, cases, dew_case, ):
         self.parent = None
         #cases should be a a list of tuples with conditions, statements
         self.cases = cases
-        self.else_case = else_case
+        self.dew_case = dew_case
         self.body = []
         self.pos_start = self.cases[0][0].pos_start
         
@@ -2055,7 +2060,7 @@ class StarNode:
                     for stmt in j:
                         self.add_child(stmt)
                         stmt.print_tree()
-        print( "  "+ prefix, f"else cases: {self.else_case} ")
+        print( "  "+ prefix, f"dew cases: {self.dew_case} ")
         
 class WinterNode:
     def __init__(self, condition):
@@ -2419,13 +2424,15 @@ class Parser:
                 
                     if self.current_tok.token in CROP: 
                         if self.current_tok.matches(CROP, 'crop'):
+                            print("GLOBAL FARMHOUSE")
                             multiple, farmhouse_error = self.crop_dec()
                             if farmhouse_error:
+                                print("FARMHOUSE ERROR")
                                 program.error(farmhouse_error)
                             else:
                                 program.add_child(multiple)
                                 
-                        while self.current_tok.token != COMMA:
+                        while self.current_tok.token == COMMA:
                             multiple, farmhouse_error = self.crop_dec()
                             if farmhouse_error:
                                 program.error(farmhouse_error)
@@ -2777,7 +2784,7 @@ class Parser:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '('"))
                         return res, error
                     self.advance()
-                    star_res, star_err = self.star_expr()
+                    star_res, star_err = self.star_expr() # TypeError: cannot unpack non-iterable ParseResult object
                     if star_err:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "ETO MALI"))
                         return res, error
@@ -2903,6 +2910,7 @@ class Parser:
     
     def crop_dec(self):
         self.advance()
+        print("current token in crop dec: ", self.current_tok)
         if self.current_tok.token != IDENTIFIER:
             return None, InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -2915,19 +2923,23 @@ class Parser:
         # print("crop name: ", crop_name)
         #res.register_advancement()
         self.advance()
-        # print("this is current variable: ", crop_name)
+        print("this is current variable: ", crop_name)
         if self.current_tok.token == EQUAL:
-            # print("FOUND AN EQUAL IN VAR DEC")
+            print("FOUND AN EQUAL IN VAR DEC")
             #res.register_advancement()
             self.advance()
             # this only gets the node from expr, not the ParserResult
             # so NumberNode lang tong expr
             # todo if number, plus, minus, identifier, use expr
-            if self.current_tok.token in (PLUS, MINUS, IDENTIFIER, INTEGER, FLOAT, LPAREN, STRING, VOIDEGG, INCRE, DECRE, negative, TRUE, FALSE):
+            print("current token before expr: ", self.current_tok)
+            if self.current_tok.token in (PLUS, MINUS, IDENTIFIER, INTEGER, FLOAT, LPAREN, STRING, VOIDEGG, INCRE, DECRE, NEGATIVE, TRUE, FALSE):
+                
                 expr = self.expr()
                 # print("we dont have an error in expr")
                 # print("current token after expr: ", self.current_tok)
                 # print("expr: ", type(expr.node))
+                print("current token after expr: ", self.current_tok)
+                
                 return CropAssignNode(crop_name, expr.node), None
             # check if it's crop a = [1, 3, true]
             if self.current_tok.token == SLBRACKET:
@@ -2954,6 +2966,16 @@ class Parser:
                     self.advance()
                     print(list_node.items)
                     return CropAssignNode(crop_name, list_node), None
+                
+            if self.current_tok.token == COLLECT:
+                print("found collect in crop dec!")
+                self.advance()
+                #(
+                self.advance()
+                #STRING
+                prompt = self.current_tok
+                self.advance()
+                return CollectNode(CropAssignNode(crop_name, crop_name), prompt), None
 
         else:
             # print("found a comma in crop dec!: ", self.current_tok)
@@ -2966,7 +2988,8 @@ class Parser:
             elif self.current_tok.token == TERMINATOR:
                 return CropAssignNode(crop_name, VoidNode(self.current_tok)), None
             else:
-                # print("found error in variable_declaration")
+                
+                print("found error in variable_declaration")
                 return None, InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ), ', ' or ;!")
                 #append a ParseResult instance sa list
                 # res.append(result.success(CropDecNode(crop_name)))
@@ -3035,7 +3058,7 @@ class Parser:
             self.advance()
             if self.current_tok.token == CROP:
                 if self.current_tok.matches(CROP, 'crop'):
-                    cropdec_result, cropdec_error = self.variable_declaration()
+                    cropdec_result, cropdec_error = self.crop_dec()
                     if cropdec_error:
                         print("found error in: ", cropdec_error.as_string())
                         
@@ -3095,7 +3118,7 @@ class Parser:
     def star_expr(self):
         res = ParseResult()
         cases = []
-        else_case = []
+        dew_case = []
         errors = []
 
         condition = res.register(self.own_if_expr())
@@ -3167,7 +3190,7 @@ class Parser:
             self.advance()
             result, body_error = self.body()
             for item in result:
-                else_case.append(item)
+                dew_case.append(item)
             
             #return result.success(if_res_body)
             
@@ -3176,7 +3199,7 @@ class Parser:
 
         # self.advance()
         
-        return StarNode(cases, else_case), errors
+        return StarNode(cases, dew_case), errors
     
     def winter_stmt(self):
         # cases = []
@@ -3280,14 +3303,14 @@ class Parser:
         
         # if tok.token in IDENTIFIER:
         #     return res.success(tok.token)
-        
-        if tok.token in (INCRE, negative, DECRE):
-            operation = self.current_tok
-            res.register(self.advance())
-            identifier = self.current_tok
-            factor = res.register(self.factor())
-            if res.error: return res
-            return res.success(PreUnaryNode(CropAccessNode(identifier), operation))
+        # commented dani
+        # if tok.token in (INCRE, negative, DECRE):
+        #     operation = self.current_tok
+        #     res.register(self.advance())
+        #     identifier = self.current_tok
+        #     factor = res.register(self.factor())
+        #     if res.error: return res
+        #     return res.success(PreUnaryNode(CropAccessNode(identifier), operation))
 
         if tok.token in (INTEGER, FLOAT):
             res.register(self.advance())    
@@ -4052,9 +4075,9 @@ class Interpreter:
                         return res
                 return res.success(list_of_outer)
         # print("floating")
-        if node.else_case:
+        if node.dew_case:
             # print("we have an else case")
-            for item in node.else_case:
+            for item in node.dew_case:
                 else_value = res.register(self.visit(item, context))
                 if isinstance(item, HarvestCallNode):
                     # print("saturn call in if")
@@ -4555,7 +4578,10 @@ def run(fn, text):
     
     if res.errors:
         print("found error in program")
-        return None, res.errors
+        print("found error: ", res.errors)
+        for error in res.errors:
+            print(error.as_string())
+        return res, res.errors
     return res, None
 
 '''
@@ -4620,8 +4646,8 @@ click_sound = mixer.Sound("Interface/bigSelect.wav")
 hover_sound = mixer.Sound("Interface/select.wav")
 delete_sound = mixer.Sound("Interface/bigDeSelect.wav")
 output_sound = mixer.Sound("Interface/newRecipe.wav")
-background_music = r"BackgroundMusic/ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3"
-
+#background_music = r"BackgroundMusic/ConcernedApe - Stardew Valley OST - 01 Stardew Valley Overture.mp3"
+background_music = r"Ambience\fall_day.wav"
 # Stardew Valley-themed colors
 BACKGROUND_COLOR = "#F5F5DC"  # Soft beige for Stardew Valley theme
 TEXT_COLOR = "#3B200E"  # Brown text for title and content
