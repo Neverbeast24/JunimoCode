@@ -2529,7 +2529,7 @@ class Parser:
                     program.error(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Pelican function already declared!, Only one pelican function is allowed!"))
                     return program
                 self.advance()
-            
+                
                 if self.current_tok.token == CLBRACKET:
                     print("found curly bracket")
                     self.advance()
@@ -2780,6 +2780,7 @@ class Parser:
                     self.in_condition = True
 
                     self.advance()
+                    print("current token in star: ", self.current_tok)
                     if self.current_tok.token != LPAREN:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '('"))
                         return res, error
@@ -2866,7 +2867,7 @@ class Parser:
                 if self.current_tok.token == HARVEST:
                     result = ParseResult()
                     self.advance()
-                    if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOID and self.current_tok.token != FLOAT:
+                    if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOIDEGG and self.current_tok.token != FLOAT:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, left parenthesis, true, false, string or voidegg!"))
                         break
                     else:
@@ -2893,7 +2894,7 @@ class Parser:
                         #self.advance()
                         return res, error
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Semicolon expected for 'landing'!"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Dollar sign expected for 'perfection'!"))
 
                 if self.current_tok.token == CRBRACKET:
                     break
@@ -2903,7 +2904,7 @@ class Parser:
                     break
             
             else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, inner, outer, identifier, if, ++, --, force, do, whirl"))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, collect, ship, identifier, star, ++, --, fall, winter, dew, stardew"))
                 break
 
         return res, error
@@ -4563,7 +4564,7 @@ def run(fn, text):
     # todo semantic parser
     ast = parser.parse()
     print("AST: ", ast)
-    print(ast[1][0].as_string()) #dito raw error
+    # print(ast[1][0].as_string()) #dito raw error
     # print("ast: ", ast)
     #ast is a Program instance
     # print("ast body: ", ast.body)
