@@ -60,11 +60,11 @@ id_delim = COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + 
 spacepr_delim = whitespace + '('
 pr_delim = '('
 break_delim = TERMINATOR + whitespace
-openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim + '!'
-closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops
+openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim + '!' + '+' + '-' ','
+closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops + ','
 end_delim = whitespace + newline_delim
-opensquare_delim = whitespace + all_numbers + '"' + ']'
-closesquare_delim = whitespace + TERMINATOR + ')'
+opensquare_delim = whitespace + all_numbers + '"' + ']' + alpha_capital
+closesquare_delim = whitespace + TERMINATOR + ')' + ','
 negative_delim = alpha_capital + all_numbers + '('
 
 comment1_delim = whitespace + ascii_comment
@@ -398,7 +398,7 @@ class Lexer:
                 if self.current_char in all_numbers:
                     result, error = self.make_number()
                     #result = Token(result.token, result.value * -1, pos_start, self.pos)
-                    result = Token(result.token, result.value * -1, pos_start, self.pos)
+                    result = Token(result.token, result.value * -1, pos_start = self.pos)
                     tokens.append(result)  
 
                 else:
@@ -1592,7 +1592,35 @@ class NumberNode:
 
     def __repr__(self):
         return f'NumberNode: value: {self.tok.value}'
+    
+class PreUnaryNode:
+    def __init__(self, tok, operation = None, adjust_by = 1):
+        self.tok = tok
+        self.operation = operation
+        self.adjust_by = adjust_by
 
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+
+        return level
+
+    def print_tree(self):
+        spaces = ' ' * self.get_level() * 3
+        prefix = spaces + "|__" if self.parent else ""
+        print(prefix, 'PreUnaryNode')
+        print(spaces + '    - ', f"name: {self.tok.crop_name_tok.value}")
+        print(spaces + '    - ', f"operation: {self.operation}")
+
+    def __repr__(self):   
+        return f"PreUnaryNode: operation: '{self.operation}', identifier: '{self.tok.crop_name_tok.value}'"
+    
 class PostUnaryNode:
     def __init__(self, tok, operation = None, adjust_by = 1):
         self.tok = tok
@@ -1798,12 +1826,12 @@ class CropInitNode:
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'CropInitNode')
-        print(spaces + '    - ', f"name: {self.var_name_tok}")
+        print(spaces + '    - ', f"name: {self.crop_name_tok}")
         print(spaces + '    - ', f"operation: {self.operation}")
         print(spaces + '    - ', f"value: {self.value_node}")
 
 class CropDecNode:
-    def __init__(self, crop_name_tok):
+    def __init__(self, crop_name_tok=None, collect_node=None):
         self.parent = None
         self.crop_name_tok = crop_name_tok.value
         self.value_node = VoidNode(crop_name_tok)
@@ -1823,7 +1851,7 @@ class CropDecNode:
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
-        print(prefix, 'CropAssignNode')
+        print(prefix, 'CropDecNode')
         print(spaces + '    - ', f"name: {self.crop_name_tok}")
         print(spaces + '    - ', f"value: {self.value_node}")
 
@@ -1899,6 +1927,7 @@ class ShipNode:
 
 class CollectNode:
     def __init__(self, variable_node, prompt) -> None:
+        self.pos_end = variable_node.pos_end
         self.parent = None
         self.prompt = prompt
         # this should be a CropAccessNode
@@ -2534,7 +2563,7 @@ class Parser:
                     print("found curly bracket")
                     self.advance()
                     result, body_error = self.body()
-                    
+                    print("RESULT: ", result)
                     if body_error:
                         pelican_node.errors = body_error
                     
@@ -2627,6 +2656,7 @@ class Parser:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected parentheses for parameters!"))
             return res, error
         # okay here we need to wrap this in a parseResult
+        print("RESULT craft from pelican: ", result)
         return result.success(craft_res)
 
     # body of the function, definition
@@ -2635,7 +2665,8 @@ class Parser:
         print("CURRENT TOKEN IN BODY: ", self.current_tok)
         res =  []
         error = []
-
+        # while self.current_tok.token != NEWLINE:
+        #     self.advance()
         
         # * basically yung parse lang pero walang craft
 
@@ -2735,6 +2766,22 @@ class Parser:
                         print("[DEBUG] error token: ", self.current_tok)
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator, increment, decrement, or call craft!"))
                         return [], error
+                    
+                if self.current_tok.token in (INCRE, DECRE):
+                    operation = self.current_tok
+                    self.advance()
+                    if self.current_tok.token == IDENTIFIER:
+                        identifier = self.current_tok
+                        self.advance()
+
+                        if self.current_tok.token != TERMINATOR:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
+                        else:
+                            res.append(PreUnaryNode(CropAccessNode(identifier), operation))
+                            self.advance()
+                    else:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
+
 
                 #LOOPS
                 # for loop (fall)
@@ -2776,6 +2823,7 @@ class Parser:
                 #CONDITIONAL
                 # star (if)
                 if self.current_tok.token in STAR:
+                    print("FOUND STARR")
                    #need this for checking skip and continue
                     self.in_condition = True
 
@@ -2786,17 +2834,21 @@ class Parser:
                         return res, error
                     self.advance()
                     star_res, star_err = self.star_expr() # TypeError: cannot unpack non-iterable ParseResult object
+                    print("DONE STAR EXPR")
                     if star_err:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "ETO MALI"))
+                        # error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "ETO MALI"))
+                        print("STAR ERR: ", star_err[0].as_string())
                         return res, error
                     # if if_res.error:
                     #     print("if res error: ", if_res.error.as_string())
                     #self.advance() 
+                    print("STAR RES: ", star_res)
                     res.append(star_res)
 
                 #INPUT OUTPUT 
                 # COLLECT
                 if self.current_tok.token in COLLECT: 
+                    
                     self.advance()
                     # (
                     self.advance()
@@ -2823,7 +2875,7 @@ class Parser:
                         else:
                             expr = result.register(self.expr())
                             list_of_nodes.append(expr)
-                            #self.advance()
+                            self.advance()
                             # i should append this to a list
                             # print(list_of_nodes)
 
@@ -2836,11 +2888,16 @@ class Parser:
                 if self.current_tok.token in CROP: 
                     if self.current_tok.matches(CROP, 'crop'):
                         craft_result, craft_error = self.crop_dec() 
+                        print("TOKEN AFTER CROP DEC: ", self.current_tok)
                         if craft_error:
+                            print("ERROR AFTER CROP DEC")
                             error.append(craft_error)
                             return res, error
                         else:
+                            self.advance()
                             res.append(craft_result)
+                            print("CROP DEC RESULT: ", self.current_tok)
+                            
                            
                             while self.current_tok.token == COMMA:
                                 #self.advance()
@@ -2882,8 +2939,10 @@ class Parser:
                         #     self.advance()
                         # else:
                         #     self.advance()
-                        self.advance()
+                        # self.advance()
+                        # self.advance()
                         print("[DEBUG] current val after harvest: ", self.current_tok)
+                        return res, error
                         # return res, error
                         
                 # perfection (end statement)
@@ -2904,6 +2963,7 @@ class Parser:
                     break
             
             else:
+                print("ERROR IN BODY TOKEN: ", self.current_tok)
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, collect, ship, identifier, star, ++, --, fall, winter, dew, stardew"))
                 break
 
@@ -2940,7 +3000,7 @@ class Parser:
                 # print("current token after expr: ", self.current_tok)
                 # print("expr: ", type(expr.node))
                 print("current token after expr: ", self.current_tok)
-                
+                print("EXPR NODE: ", expr.node)
                 return CropAssignNode(crop_name, expr.node), None
             # check if it's crop a = [1, 3, true]
             if self.current_tok.token == SLBRACKET:
@@ -2963,7 +3023,7 @@ class Parser:
                         list_node.add_item(expr.node)
                     # print("token after comma loop:", self.current_tok)
                 if self.current_tok.token == SRBRACKET:
-                    # print('found srbracket')
+                    print('found srbracket')
                     self.advance()
                     print(list_node.items)
                     return CropAssignNode(crop_name, list_node), None
@@ -2976,10 +3036,15 @@ class Parser:
                 #STRING
                 prompt = self.current_tok
                 self.advance()
-                return CropDecNode(crop_name), None
+                # self.advance()
+                print("current token after collect: ", self.current_tok)
+                self.advance()
+                print("crop name: ", crop_name, self.current_tok)
+                #CropDecNode value: Collect(node)
+                return CropAssignNode(crop_name, CollectNode(crop_name, prompt)), None
 
         else:
-            # print("found a comma in crop dec!: ", self.current_tok)
+            print("found a comma in crop dec!: ", self.current_tok)
             if self.current_tok.token == COMMA:
                 return CropAssignNode(crop_name, VoidNode(self.current_tok)), None
                 #return result.success(CropDecNode(crop_name))
@@ -3137,16 +3202,17 @@ class Parser:
             ))
             return [], errors
 
-        
         self.advance()
+        print("BEFORE GOING INTO BODY: ", self.current_tok)
         result, body_error = self.body()
         #need to append it to cases as a tuple of (condition, [body result])
         cases.append((condition, result))
         if body_error:
-            errors.append(InvalidSyntaxError(
-                self.current_tok.pos_start, self.current_tok.pos_end,
-                "Error in body "
-            ))
+            # errors.append(InvalidSyntaxError(
+            #     self.current_tok.pos_start, self.current_tok.pos_end,
+            #     "Error in body "
+            # ))
+            print("BODY ERROR: ", body_error[0].as_string())
             return [], errors
         
         #return result.success(if_res_body)
@@ -3200,7 +3266,7 @@ class Parser:
                 
             self.advance()
 
-        # self.advance()
+        self.advance()
         
         return StarNode(cases, dew_case), errors
     
@@ -3305,15 +3371,15 @@ class Parser:
        
         
         # if tok.token in IDENTIFIER:
-        #     return res.success(tok.token)
-        # commented dani
-        # if tok.token in (INCRE, negative, DECRE):
-        #     operation = self.current_tok
-        #     res.register(self.advance())
-        #     identifier = self.current_tok
-        #     factor = res.register(self.factor())
-        #     if res.error: return res
-        #     return res.success(PreUnaryNode(CropAccessNode(identifier), operation))
+        #     return res.success(IdentifierNode(tok))
+        
+        if tok.token in (INCRE, negative, DECRE):
+            operation = self.current_tok
+            res.register(self.advance())
+            identifier = self.current_tok
+            factor = res.register(self.factor())
+            if res.error: return res
+            return res.success(PreUnaryNode(CropAccessNode(identifier), operation))
 
         if tok.token in (INTEGER, FLOAT):
             res.register(self.advance())    
@@ -3388,6 +3454,7 @@ class Parser:
                 self.advance()
                 # self.advance()
                 #this is a semicolon
+                
                 
                 return res.success(craft_call)
             elif self.current_tok.token == SLBRACKET:
@@ -3677,14 +3744,16 @@ class Interpreter:
             return res.failure(value.error)
         # print("value inner: ", value.value)
         # print("paren symbol table inner before setting: ", node.parent.symbol_table.symbols)
-        context.set(node.variable_node.crop_name_tok.value, value.value)
+        print("CROP NAME TOk: ", node.variable_node.crop_name_tok)
+        context.set(node.variable_node.crop_name_tok, value.value)
         # print("paren symbol table inner: ", node.parent.symbol_table.symbols)
         return res.success(node)
     # identifier: a
 
     
     def visit_CropAssignNode(self, node, symbol_table):
-        # print("in var assign node: ", node.var_name_tok)
+        print("in var assign node: ", node.crop_name_tok)
+        print("Node value: ", node.value_node)
         res = RTResult()
         crop_name = node.crop_name_tok.value
         if isinstance(node.value_node, CraftCallNode):
@@ -3695,16 +3764,21 @@ class Interpreter:
             node.value_node.parent = node.parent
         if isinstance(node.value_node, ListNode):
             pass
+        if isinstance(node.value_node, CollectNode):
+            print("Value is Collect Node")
+            symbol_table.set(crop_name, node.value_node.prompt)
+        else:
             # print("ASSIGNED A LIST")
             # node.value_node.parent = node.parent
-        value = res.register(self.visit(node.value_node, symbol_table))
+            value = res.register(self.visit(node.value_node, symbol_table))
+            symbol_table.set(crop_name, value)
         # print("value of list : ", value)
         # print(f"assign value type {value}: {type(value)}")
         if res.error: 
             print("error var assign")
             return res
 
-        symbol_table.set(crop_name, value)
+        
         # print("symbol table var assign: ", symbol_table.symbols)
         #returns rtresult
         return res.success(node)
@@ -3820,13 +3894,13 @@ class Interpreter:
         if value.error:
             return res.failure(value.error)
         return res.success(value)
-    # def visit_PreUnaryNode(self, node, symbol_table):
-    #     # print("found post unary")
-    #     res = RTResult()
-    #     value = self.visit(node.tok, symbol_table)
-    #     if value.error:
-    #         return res.failure(value.error)
-    #     return res.success(value)
+    def visit_PreUnaryNode(self, node, symbol_table):
+        # print("found post unary")
+        res = RTResult()
+        value = self.visit(node.tok, symbol_table)
+        if value.error:
+            return res.failure(value.error)
+        return res.success(value)
     def visit_BinOpNode(self, node, context):
         # print("bin op parent", node.parent)
         res = RTResult()

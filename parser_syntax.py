@@ -90,12 +90,13 @@ bool_delim = whitespace + TERMINATOR + COMMA + ')' + ']'
 num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relational_ops + TERMINATOR
 id_delim = COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + TERMINATOR # newline
 spacepr_delim = whitespace + '('
+pr_delim = '('
 break_delim = TERMINATOR + whitespace
-openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim + '!'
-closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops
+openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim + '!' + '+' + '-' ','
+closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops + ','
 end_delim = whitespace + newline_delim
-opensquare_delim = whitespace + all_numbers + '"' + ']'
-closesquare_delim = whitespace + TERMINATOR + ')'
+opensquare_delim = whitespace + all_numbers + '"' + ']' + alpha_capital
+closesquare_delim = whitespace + TERMINATOR + ')' + ','
 negative_delim = alpha_capital + all_numbers + '('
 
 comment1_delim = whitespace + ascii_comment
@@ -1978,29 +1979,29 @@ class Parser:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator, increment, decrement, or call craft!"))
                         return [], error
 
-                # if self.current_tok.token == INCRE:
-                #     self.advance()
-                #     if self.current_tok.token == IDENTIFIER:
-                #         self.advance()
-                #         if self.current_tok.token != TERMINATOR:
-                #             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-                #         else:
-                #             res.append(["SUCCESS from unary pre increment"])
-                #             self.advance()
-                #     else:
-                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
+                if self.current_tok.token == INCRE:
+                    self.advance()
+                    if self.current_tok.token == IDENTIFIER:
+                        self.advance()
+                        if self.current_tok.token != TERMINATOR:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
+                        else:
+                            res.append(["SUCCESS from unary pre increment"])
+                            self.advance()
+                    else:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
 
-                # if self.current_tok.token == DECRE:
-                #     self.advance()
-                #     if self.current_tok.token == IDENTIFIER:
-                #         self.advance()
-                #         if self.current_tok.token != TERMINATOR:
-                #             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
-                #         else:
-                #             res.append(["SUCCESS from unary pre decrement"])
-                #             self.advance()
-                #     else:
-                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
+                if self.current_tok.token == DECRE:
+                    self.advance()
+                    if self.current_tok.token == IDENTIFIER:
+                        self.advance()
+                        if self.current_tok.token != TERMINATOR:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
+                        else:
+                            res.append(["SUCCESS from unary pre decrement"])
+                            self.advance()
+                    else:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid unary statement!"))
                 #LOOPS
                 if self.current_tok.token in FALL:
                     print("[DEBUG] pumasok sa fall")
@@ -2063,7 +2064,7 @@ class Parser:
                         else:
                             self.advance()
                 
-                elif self.current_tok.token in PLUCK:
+                if self.current_tok.token in PLUCK:
                     pluck_res, pluck_error = self.pluck_stmt()
                     if pluck_error:
                         error.extend(pluck_error)
@@ -2075,6 +2076,7 @@ class Parser:
                         else:
                             self.advance()
                 if self.current_tok.token == BREAK:
+                    print("current break: ", self.current_tok)
                     self.advance()
                     if self.in_loop == True and self.in_condition == True:
                         
@@ -2088,6 +2090,7 @@ class Parser:
                         self.advance()
 
                 if self.current_tok.token == NEXT: # not yet implemented on docs
+                    print("current next: ", self.current_tok)
                     self.advance()
                     if self.in_loop == True and self.in_condition == True:
                         if self.current_tok.token == TERMINATOR:
@@ -2102,6 +2105,7 @@ class Parser:
 
                 #CONDITIONAL
                 if self.current_tok.token in STAR:
+                    print("FOUND STAR")
                     self.in_condition = True
                     star_res, star_error = self.star_stmt()
                     #self.advance() 
@@ -2113,6 +2117,7 @@ class Parser:
                             res.append(star_res)
                             #self.advance()
                             self.in_condition = False
+                        
 
                 if self.current_tok.token in DEW:
                     dew_res, dew_error = self.dew_stmt()
@@ -2175,6 +2180,7 @@ class Parser:
                         return res, error
                     else:
                         self.advance()
+                        print('SUCCESS FROM VARIABLE DEC')
                         res.append(["SUCCESS from variable declaration!"])
                 
                 
@@ -2342,7 +2348,7 @@ class Parser:
     def assign_val(self):
         res = []
         error = []
-
+        print("pumasok sa assign val: ", self.current_tok)
         if self.current_tok.token == STRING:
             print("PUMASOK SA UNANG STRING: ", self.current_tok)
             self.advance()
@@ -2356,7 +2362,7 @@ class Parser:
 
             return res, error
 
-        if self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER:
+        elif self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER:
             n_res, n_error = self.assign_val2([PLUS, MINUS, DIV, MODULUS, MUL])
 
             if n_error:
@@ -2379,7 +2385,7 @@ class Parser:
             else:
                 
                 res.append("Success form ident assign!")
-                
+        
         elif self.current_tok.token == TRUE:
             self.advance()
             return res, error
@@ -2394,7 +2400,7 @@ class Parser:
             self.advance()
 
             # Ensure opening parenthesis
-            if not self.current_tok or self.current_tok.token != "(":
+            if not self.current_tok or self.current_tok.token != LPAREN:
                 error.append(InvalidSyntaxError(
                     getattr(self.current_tok, 'pos_start', "Unknown"),
                     getattr(self.current_tok, 'pos_end', "Unknown"),
@@ -2405,7 +2411,7 @@ class Parser:
             self.advance()
             print(f"[DEBUG] Opening parenthesis detected: {self.current_tok.token}")
             # Ensure string prompt
-            if not self.current_tok or self.current_tok.token != "StrLit":
+            if not self.current_tok or self.current_tok.token != STRING:
                 error.append(InvalidSyntaxError(
                     getattr(self.current_tok, 'pos_start', "Unknown"),
                     getattr(self.current_tok, 'pos_end', "Unknown"),
@@ -2420,7 +2426,7 @@ class Parser:
             self.advance()
 
             # Ensure closing parenthesis
-            if not self.current_tok or self.current_tok.token != ")":
+            if not self.current_tok or self.current_tok.token != RPAREN:
                 error.append(InvalidSyntaxError(
                     getattr(self.current_tok, 'pos_start', "Unknown"),
                     getattr(self.current_tok, 'pos_end', "Unknown"),
@@ -2433,25 +2439,26 @@ class Parser:
             return res, error
         
         elif self.current_tok.token == SLBRACKET:
+            print("INIT LIST")
             l_res, l_err = self.init_list()
             if l_err:
                 for err in l_err:
                     error.append(err)
             else:
-                res.append("Success form list init!")
+                res.append("Success list init!")
                 self.advance()
         elif self.current_tok.token == VOIDEGG:
             self.advance()
             return res, error
-        # elif self.current_tok.token == INCRE or self.current_tok.token == DECRE:
-        #     if self.in_farmhouse == True:
-        #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
-        #         return res, error
-        #     self.advance()
-        #     if self.current_tok.token != IDENTIFIER:
-        #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier!"))
-        #     else:
-        #         self.advance()
+        elif self.current_tok.token == INCRE or self.current_tok.token == DECRE:
+            if self.in_farmhouse == True:
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
+                return res, error
+            self.advance()
+            if self.current_tok.token != IDENTIFIER:
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier!"))
+            else:
+                self.advance()
 
         else:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, boolean, string, list, or void!"))
@@ -2531,8 +2538,9 @@ class Parser:
                 elif self.current_tok.token == SLBRACKET:
                     # print("assign val 2 list")
                     #TODO LIST
-                    # print("you got a list")
+                    print("you got a list")
                     self.advance()
+                    print("after list: ", self.current_tok)
                     list, err = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
                     # print('after list index: ', self.current_tok)
                     # print("list: ", err)
@@ -2624,7 +2632,7 @@ class Parser:
 
         # Parse `add` keyword
         self.advance()
-        if self.current_tok.token != "(":
+        if self.current_tok.token != LPAREN:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' after 'add'!"))
             return res, error
 
@@ -2632,7 +2640,7 @@ class Parser:
         print(f"[DEBUG] Parsing add parameters, token: {self.current_tok.token}")
 
         # Parse the first identifier or value
-        if self.current_tok.token in ("Identifier", "StrLit", "IntLit", "FloatLit"):
+        if self.current_tok.token in (IDENTIFIER, STRING, INTEGER, FLOAT):
             res.append(self.current_tok.token)
             self.advance()
         else:
@@ -2640,9 +2648,9 @@ class Parser:
             return res, error
 
         # Parse additional comma-separated values
-        while self.current_tok.token == ",":
+        while self.current_tok.token == COMMA:
             self.advance()
-            if self.current_tok.token in ("Identifier", "StrLit", "IntLit", "FloatLit"):
+            if self.current_tok.token in (IDENTIFIER, STRING, INTEGER, FLOAT):
                 res.append(self.current_tok.token)
                 self.advance()
             else:
@@ -2650,7 +2658,7 @@ class Parser:
                 return res, error
 
         # Parse closing parenthesis
-        if self.current_tok.token != ")":
+        if self.current_tok.token != RPAREN:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')' to close 'add' statement!"))
             return res, error
 
@@ -2666,7 +2674,7 @@ class Parser:
 
         # Parse `pluck` keyword
         self.advance()
-        if self.current_tok.token != "(":
+        if self.current_tok.token != LPAREN:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' after 'pluck'!"))
             return res, error
 
@@ -2674,7 +2682,7 @@ class Parser:
         print(f"[DEBUG] Parsing pluck parameters, token: {self.current_tok.token}")
 
         # Parse the first identifier
-        if self.current_tok.token == "Identifier":
+        if self.current_tok.token == IDENTIFIER:
             res.append(self.current_tok.token)
             self.advance()
         else:
@@ -2682,7 +2690,7 @@ class Parser:
             return res, error
 
         # Parse additional comma-separated values
-        while self.current_tok.token == ",":
+        while self.current_tok.token == COMMA:
             self.advance()
             if self.current_tok.token in ("Identifier", "StrLit", "IntLit", "FloatLit"):
                 res.append(self.current_tok.token)
@@ -2692,7 +2700,7 @@ class Parser:
                 return res, error
 
         # Parse closing parenthesis
-        if self.current_tok.token != ")":
+        if self.current_tok.token != RPAREN:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')' to close 'pluck' statement!"))
             return res, error
 
@@ -2800,17 +2808,17 @@ class Parser:
 
         # Advance to check for craft identifier
         self.advance()
-        if self.current_tok.token == "Identifier":
+        if self.current_tok.token == IDENTIFIER:
             print(f"[DEBUG] Craft name found: {self.current_tok.token}")
             self.advance()
 
             # Check for either '(' or '[' after the function name
-            if self.current_tok.token == "(":
+            if self.current_tok.token == LPAREN:
                 print(f"[DEBUG] Found opening parenthesis: {self.current_tok.token}")
                 self.advance()
 
                 # Check if the function has parameters or is empty
-                if self.current_tok.token == ")":
+                if self.current_tok.token == RPAREN:
                     print("[DEBUG] Empty parameter list using '()' detected")
                     self.advance()  # Move past the closing parenthesis
                 else:
@@ -2820,7 +2828,7 @@ class Parser:
                         self.advance()
 
                         # Ensure crop is followed by an identifier
-                        if self.current_tok.token == "Identifier":
+                        if self.current_tok.token == IDENTIFIER:
                             print(f"[DEBUG] Found identifier after 'crop': {self.current_tok.token}")
                             self.advance()
                         else:
@@ -2832,10 +2840,10 @@ class Parser:
                             return res, error
 
                         # Handle comma-separated parameters
-                        if self.current_tok.token == ",":
+                        if self.current_tok.token == COMMA:
                             print(f"[DEBUG] Found comma, processing next parameter")
                             self.advance()
-                        elif self.current_tok.token == ")":
+                        elif self.current_tok.token == RPAREN:
                             break  # End of parameter list
                         else:
                             error.append(InvalidSyntaxError(
@@ -2846,7 +2854,7 @@ class Parser:
                             return res, error
 
                     # Ensure closing parenthesis ')'
-                    if self.current_tok.token != ")":
+                    if self.current_tok.token != RPAREN:
                         error.append(InvalidSyntaxError(
                             self.current_tok.pos_start,
                             self.current_tok.pos_end,
@@ -2857,12 +2865,12 @@ class Parser:
                         print(f"[DEBUG] Found closing parenthesis: {self.current_tok.token}")
                         self.advance()
 
-            elif self.current_tok.token == "[":  # Allow `[]` as an empty parameter placeholder
+            elif self.current_tok.token == SLBRACKET:  # Allow `[]` as an empty parameter placeholder
                 print(f"[DEBUG] Found empty parameter list notation '['")
                 self.advance()
 
                 # Ensure closing bracket `]`
-                if self.current_tok.token == "]":
+                if self.current_tok.token == SRBRACKET:
                     print(f"[DEBUG] Found closing bracket for empty list parameter: {self.current_tok.token}")
                     self.advance()
                 else:
@@ -2882,12 +2890,12 @@ class Parser:
                 return res, error
 
             # Check for opening curly bracket '{'
-            if self.current_tok.token == "{":
+            if self.current_tok.token == CLBRACKET:
                 print(f"[DEBUG] Found opening curly bracket: {self.current_tok.token}")
                 self.advance()
 
                 # Skip any newlines
-                while self.current_tok.token == "NEWLINE":
+                while self.current_tok.token == NEWLINE:
                     self.advance()
                     print("[DEBUG] Skipping newlines before craft body")
 
@@ -2902,7 +2910,7 @@ class Parser:
                     res.extend(craft_res)
 
                 # Ensure closing curly bracket '}'
-                if self.current_tok.token != "}":
+                if self.current_tok.token != CRBRACKET:
                     error.append(InvalidSyntaxError(
                         self.current_tok.pos_start,
                         self.current_tok.pos_end,
@@ -2972,14 +2980,16 @@ class Parser:
 
         return res, error
     
-    #* CALLING A FORM
+    #* CALLING A CRAFT
     def call_craft(self):
         res = []
         error = []
         
         self.advance()
+        print("FUNC CALL TOK: ", self.current_tok)
         if self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == STRING or self.current_tok.token == TRUE or self.current_tok.token == FALSE or self.current_tok.token == FLOAT or self.current_tok.token == VOIDEGG:
-        
+            print("tok after ident: ", self.current_tok)
+            
             val, err = self.assign_val2([PLUS,MINUS, DIV, MUL, MODULUS])
             if err:
                 error.append(err)
@@ -2996,15 +3006,18 @@ class Parser:
                     else: 
 
                         res.append(["SUCCESS from function call!"])
-                            
-            elif self.current_tok.token == RPAREN:
+                 
+            print(f"[DEBUG] In call_craft(), current token before RPAREN check: {self.current_tok.token}")
+            if self.current_tok.token == RPAREN:
+                print(f"[DEBUG] Matched RPAREN correctly")
                 res.append(["SUCCESS from function call!"])
-                    
             else:
+                print(f"[DEBUG] DID NOT match RPAREN, got: {self.current_tok.token}")
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
 
+    
         elif self.current_tok.token == RPAREN:
-            
+            print("rparen found")
             res.append(["SUCCESS from function call!"])         
 
         else:
@@ -3027,11 +3040,13 @@ class Parser:
         res = []
         error = []
         #error = False
+        print("pumasok sa list literal: ", self.current_tok)
         while self.current_tok.token  == COMMA:
             self.advance()
             if self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == STRING or self.current_tok.token == TRUE or self.current_tok.token == FALSE or self.current_tok.token==FLOAT :
+                print("PASOK SA LOOP: ", self.current_tok)
                 self.advance()
-                
+                print("after ng loop: ", self.current_tok)
             else:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, string, or boolean value!"))
 
@@ -3364,281 +3379,77 @@ class Parser:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected condition for winter!"))
 
         return res, error
-    
+        
     def ship_stmt(self):
         res = []
         error = []
 
         print(f"[DEBUG] Starting ship_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
 
-        # Step 1: Check for '(' after 'ship'
-        self.advance()
-        print(f"[DEBUG] After advancing, token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        if not self.current_tok or self.current_tok.token != "(":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected '(' after 'ship'!"
-            ))
+        self.advance()  # Skip 'ship'
+        if not self.current_tok or self.current_tok.token != LPAREN:
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '(' after 'ship'!"))
             return res, error
 
-        res.append(self.current_tok.token)  # Add '('
+        res.append(self.current_tok.token)
         self.advance()
 
-        # CONTENTS OF 'SHIP' STATEMENT
-        expecting_value = True
-        open_paren_count = 1  # Track open parentheses
+        expecting_arg = True
 
         while self.current_tok:
-            print(f"[DEBUG] Looping, current token: {self.current_tok.token if self.current_tok else 'None'}")
+            if self.current_tok.token == RPAREN:
+                if expecting_arg:
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Trailing comma without argument in ship()!"))
+                    return res, error
+                res.append(self.current_tok.token)
+                self.advance()
+                break
 
-            if expecting_value:
-                # **Detect Function Call** (Identifier followed by '(')
-                if self.current_tok.token == "Identifier" and self.tokens[self.tok_idx + 1].token == "(":
-                    print(f"[DEBUG] Function call detected: {self.current_tok.token}")
-                    res.append(self.current_tok.token)  # Add function name
-                    self.advance()  # Move to '('
-
-                    if self.current_tok.token != "(":
-                        error.append(InvalidSyntaxError(
-                            getattr(self.current_tok, 'pos_start', "Unknown"),
-                            getattr(self.current_tok, 'pos_end', "Unknown"),
-                            "Expected '(' after function name!"
-                        ))
+            if expecting_arg:
+                if self.current_tok.token in (
+                    STRING, TRUE, FALSE, IDENTIFIER, INTEGER, FLOAT,
+                    LPAREN, SLBRACKET, VOIDEGG, COLLECT
+                ):
+                    print(f"[DEBUG] Parsing argument using assign_val: {self.current_tok.token}")
+                    val_tokens, val_errors = self.assign_val()
+                    if val_errors:
+                        error.extend(val_errors)
                         return res, error
-
-                    open_paren_count += 1  # Increase open parentheses count
-                    res.append(self.current_tok.token)
-                    self.advance()
-
-                    # Parse function arguments
-                    while self.current_tok and self.current_tok.token not in (")", "EOF"):
-                        if self.current_tok.token in ("Identifier", "StrLit", "IntLit", "FloatLit", "BoolLit", "true", "false"):
-                            res.append(self.current_tok.token)
-                            print(f"[DEBUG] Function argument detected: {self.current_tok.token}")
-                            self.advance()
-
-                            # After processing an argument, expect either a ',' or ')'
-                            if self.current_tok.token == ",":
-                                print(f"[DEBUG] Function argument separator found")
-                                res.append(self.current_tok.token)
-                                self.advance()
-                            elif self.current_tok.token == ")":
-                                break
-                            else:
-                                error.append(InvalidSyntaxError(
-                                    getattr(self.current_tok, 'pos_start', "Unknown"),
-                                    getattr(self.current_tok, 'pos_end', "Unknown"),
-                                    f"Expected ',' or ')' after function argument but got '{self.current_tok.token}'!"
-                                ))
-                                return res, error
-                        else:
-                            error.append(InvalidSyntaxError(
-                                getattr(self.current_tok, 'pos_start', "Unknown"),
-                                getattr(self.current_tok, 'pos_end', "Unknown"),
-                                f"Invalid argument inside function call in 'ship': {self.current_tok.token}"
-                            ))
-                            return res, error
-
-                    # Ensure function call ends correctly
-                    if not self.current_tok or self.current_tok.token != ")":
-                        error.append(InvalidSyntaxError(
-                            getattr(self.current_tok, 'pos_start', "Unknown"),
-                            getattr(self.current_tok, 'pos_end', "Unknown"),
-                            "Expected ')' to close function call in 'ship'!"
-                        ))
-                        return res, error
-
-                    res.append(self.current_tok.token)  # Add ')'
-                    print(f"[DEBUG] Closing parenthesis for function call found")
-                    self.advance()
-
-                # **Detect List Access** (Identifier followed by '[')
-                elif self.current_tok.token == "Identifier":
-                    res.append(self.current_tok.token)
-                    print(f"[DEBUG] Identifier detected: {self.current_tok.token}")
-                    self.advance()
-
-                    if self.current_tok and self.current_tok.token == "[":
-                        print(f"[DEBUG] Detected start of list access: {self.current_tok.token}")
-                        res.append(self.current_tok.token)  # Add '['
-                        self.advance()
-
-                        # Process the index inside the list access
-                        while self.current_tok and self.current_tok.token != "]":
-                            if self.current_tok.token in ("IntLit", "Identifier"):
-                                res.append(self.current_tok.token)
-                                print(f"[DEBUG] List index: {self.current_tok.token}")
-                                self.advance()
-                            elif self.current_tok.token in ("+", "-", "*", "/"):  # Handle arithmetic inside list access
-                                res.append(self.current_tok.token)
-                                print(f"[DEBUG] Arithmetic operator in list index: {self.current_tok.token}")
-                                self.advance()
-                            else:
-                                error.append(InvalidSyntaxError(
-                                    getattr(self.current_tok, 'pos_start', "Unknown"),
-                                    getattr(self.current_tok, 'pos_end', "Unknown"),
-                                    "Invalid token inside list access!"
-                                ))
-                                return res, error
-
-                        # Ensure closing bracket ']'
-                        if not self.current_tok or self.current_tok.token != "]":
-                            error.append(InvalidSyntaxError(
-                                getattr(self.current_tok, 'pos_start', "Unknown"),
-                                getattr(self.current_tok, 'pos_end', "Unknown"),
-                                "Expected ']' to close list access!"
-                            ))
-                            return res, error
-
-                        res.append(self.current_tok.token)  # Add the ']'
-                        print(f"[DEBUG] Found closing bracket for list access")
-                        self.advance()
-
-                # Accept a direct value (Identifier, String, Number, Boolean)
-                elif self.current_tok.token in ("StrLit", "IntLit", "FloatLit", "true", "false"):
-                    res.append(self.current_tok.token)
-                    print(f"[DEBUG] Valid token added: {self.current_tok.token}")
-                    self.advance()
-
+                    res.extend(val_tokens)
+                    expecting_arg = False
                 else:
-                    error.append(InvalidSyntaxError(
-                        getattr(self.current_tok, 'pos_start', "Unknown"),
-                        getattr(self.current_tok, 'pos_end', "Unknown"),
-                        f"Expected a valid value inside 'ship', but got '{self.current_tok.token}'!"
-                    ))
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,
+                                                    f"Unexpected token in ship() arguments: {self.current_tok.token}"))
                     return res, error
 
-                expecting_value = False  # After a value, expect a comma or closing parenthesis
+            elif self.current_tok.token == COMMA:
+                print(f"[DEBUG] Comma found")
+                res.append(self.current_tok.token)
+                self.advance()
+                expecting_arg = True
 
             else:
-                # Accept a comma or a closing parenthesis
-                if self.current_tok.token == ",":
-                    res.append(self.current_tok.token)
-                    print(f"[DEBUG] Comma found: {self.current_tok.token}")
-                    self.advance()
-                    expecting_value = True  # After a comma, expect another value
-                elif self.current_tok.token == ")":
-                    open_paren_count -= 1  # Decrease open parentheses count
-                    print(f"[DEBUG] Closing parenthesis found. Remaining open_paren_count: {open_paren_count}")
-                    res.append(self.current_tok.token)
-                    self.advance()
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,
+                                                f"Expected ',' or ')' after argument, got: {self.current_tok.token}"))
+                return res, error
 
-                    # **Allow `$` immediately after final closing `)`**
-                    if self.current_tok.token == TERMINATOR:
-                        print(f"[DEBUG] Found valid '$' terminator after ')'. Statement complete.")
-                        res.append(self.current_tok.token)
-                        break
-
-                    if open_paren_count == 0:
-                        break
-                else:
-                    error.append(InvalidSyntaxError(
-                        getattr(self.current_tok, 'pos_start', "Unknown"),
-                        getattr(self.current_tok, 'pos_end', "Unknown"),
-                        f"Expected ',' or ')' but got '{self.current_tok.token}'!"
-                    ))
-                    return res, error
+        # # ✅ Terminator $
+        # if self.current_tok.token == TERMINATOR:
+        #     print(f"[DEBUG] Found terminator")
+        #     res.append(self.current_tok.token)
+        #     self.advance()
+        # else:
+        #     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '$' after 'ship' statement!"))
+        #     return res, error
 
         print(f"[DEBUG] Completed parsing ship statement: {res}")
-        return res, error
-
-    
-    def collect_stmt(self):
-        res = []
-        error = []
-
-        print(f"[DEBUG] Starting collect_stmt with token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Step 1: Ensure opening parenthesis '('
-        if not self.current_tok or self.current_tok.token != "(":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected '(' after 'collect'!"
-            ))
-            return res, error
-
-        res.append(self.current_tok.token)  # Add '('
-        self.advance()
-        print(f"[DEBUG] After checking '(', token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Step 2: Check for prompt string (First parameter)
-        if not self.current_tok or self.current_tok.token != "StrLit":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected a prompt string as the first parameter in 'collect' statement!"
-            ))
-            return res, error
-
-        prompt_message = self.current_tok.token  # Store the prompt message
-        print(f"[DEBUG] Prompt message identified: {prompt_message}")
-        res.append(prompt_message)  # Add prompt message
-        self.advance()
-
-        # Step 3: Ensure comma ',' after the string
-        if not self.current_tok or self.current_tok.token != ",":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected ',' after the prompt string in 'collect' statement!"
-            ))
-            return res, error
-
-        res.append(self.current_tok.token)  # Add ','
-        self.advance()
-        print(f"[DEBUG] After checking ',', token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Step 4: Check for variable identifier (Second parameter)
-        if not self.current_tok or self.current_tok.token != "Identifier":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected an identifier (variable name) after ',' in 'collect' statement!"
-            ))
-            return res, error
-
-        variable_name = self.current_tok.token  # Store the variable name
-        print(f"[DEBUG] Variable name identified: {variable_name}")
-        res.append(variable_name)  # Add variable name
-        self.advance()
-
-        # Step 5: Ensure closing parenthesis ')'
-        if not self.current_tok or self.current_tok.token != ")":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected ')' to close 'collect' statement!"
-            ))
-            return res, error
-
-        res.append(self.current_tok.token)  # Add ')'
-        self.advance()
-        print(f"[DEBUG] After checking ')', token: {self.current_tok.token if self.current_tok else 'None'}")
-
-        # Step 6: Ensure terminator '$'
-        if not self.current_tok or self.current_tok.token != "$":
-            error.append(InvalidSyntaxError(
-                getattr(self.current_tok, 'pos_start', "Unknown"),
-                getattr(self.current_tok, 'pos_end', "Unknown"),
-                "Expected '$' to terminate 'collect' statement!"
-            ))
-            return res, error
-
-        res.append(self.current_tok.token)  # Add '$'
-        self.advance()
-        print(f"[DEBUG] Successfully processed 'collect' statement")
-
-        res.append(f"Processed collect statement: collect({prompt_message}, {variable_name})$")
-
         return res, error
 
     
     #*CONDITIONAL
     #FUNC FOR IF, ELSE, ELSEIF
     def star_stmt(self):
+        print("IN STAR STATEMENT")
         res = []
         error = []
         self.advance()
@@ -3853,7 +3664,7 @@ class Parser:
                         return res, error
                 else:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-        elif self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, STRING) :
+        elif self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, STRING) : 
             if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER, STRING):
                 if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
                     n_res, n_error = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
@@ -3879,6 +3690,7 @@ class Parser:
                                 return res, error  
                             return res, error  # ✅ Valid Concatenation
                     else:
+                        comparison_seen = False
                         # ✅ Fully Process Concatenation Before `==`
                         while self.current_tok.token == PLUS:
                             self.advance()
@@ -3896,33 +3708,51 @@ class Parser:
 
                         # ✅ Now, Process Comparison Operators (`==`, `!=`)
                         if self.current_tok.token in (E_EQUAL, NOT_EQUAL):
-                            self.advance()
-
-                            # Ensure valid comparison: Strings only with Strings or Identifiers
-                            if self.current_tok.token not in (STRING, IDENTIFIER):
+                            if comparison_seen:
                                 error.append(InvalidSyntaxError(
                                     self.current_tok.pos_start, self.current_tok.pos_end,
-                                    "Strings can only be compared to other strings or identifiers using '==' or '!='."
+                                    "Only one '==' or '!=' is allowed in a star condition."
                                 ))
-                                return res, error  
+                                return res, error
 
-                            # ✅ Advance after valid comparison
+                            comparison_seen = True
                             self.advance()
 
-                            # ✅ Handle further concatenation after `==` or `!=`
+                            # Validate type of right-hand operand
+                            if self.current_tok.token in (INTEGER, FLOAT, TRUE, FALSE):
+                                error.append(InvalidSyntaxError(
+                                    self.current_tok.pos_start, self.current_tok.pos_end,
+                                    "Cannot compare string to number or boolean using '==' or '!='."
+                                ))
+                                return res, error
+                            elif self.current_tok.token not in (STRING, IDENTIFIER):
+                                error.append(InvalidSyntaxError(
+                                    self.current_tok.pos_start, self.current_tok.pos_end,
+                                    "Expected a string or identifier on the right side of comparison."
+                                ))
+                                return res, error
+
+                            self.advance()
+
+                            # ✅ Handle optional string concatenation
                             while self.current_tok.token == PLUS:
                                 self.advance()
-
-                                # Ensure valid concatenation after `==`
                                 if self.current_tok.token not in (STRING, IDENTIFIER):
                                     error.append(InvalidSyntaxError(
                                         self.current_tok.pos_start, self.current_tok.pos_end,
-                                        "Invalid concatenation: Strings can only be concatenated with other strings or identifiers."
+                                        "Only strings or identifiers can be concatenated."
                                     ))
-                                    return res, error  
-
-                                # ✅ Advance after valid concatenation
+                                    return res, error
                                 self.advance()
+
+                            # ✅ BLOCK any chained comparisons like == "2" > 0
+                            if self.current_tok.token in REL_OP:
+                                error.append(InvalidSyntaxError(
+                                    self.current_tok.pos_start, self.current_tok.pos_end,
+                                    "Invalid chained comparison."
+                                ))
+                                return res, error
+
                         else: 
                             if self.current_tok.token in (AND_OP, OR_OP):
                                 print("LOGICAL OPERATOR DETECTED WITHOUT COMPARISON OPERATOR: ", self.current_tok)
