@@ -3041,7 +3041,7 @@ class Parser:
                 self.advance()
                 print("crop name: ", crop_name, self.current_tok)
                 #CropDecNode value: Collect(node)
-                return CropAssignNode(crop_name, CollectNode(crop_name, prompt)), None
+                return CropAssignNode(crop_name, CropAccessNode(crop_name)), None
 
         else:
             print("found a comma in crop dec!: ", self.current_tok)
@@ -3676,6 +3676,7 @@ class Interpreter:
         value = symbol_table.get(crop_name)
         # print("value crop access: ", value)
         # print("crop access symbol table: ", symbol_table.symbols)
+        
         if not value and value != 0 and not isinstance(value, list):
             # print("couldnt find variable")
             if symbol_table.parent:
@@ -3756,6 +3757,7 @@ class Interpreter:
         print("Node value: ", node.value_node)
         res = RTResult()
         crop_name = node.crop_name_tok.value
+        symbol_table.set(crop_name, Number(0))
         if isinstance(node.value_node, CraftCallNode):
             # print("assigning a function")
             node.value_node.parent = node.parent
@@ -3772,6 +3774,7 @@ class Interpreter:
             # node.value_node.parent = node.parent
             value = res.register(self.visit(node.value_node, symbol_table))
             symbol_table.set(crop_name, value)
+        
         # print("value of list : ", value)
         # print(f"assign value type {value}: {type(value)}")
         if res.error: 
@@ -4006,7 +4009,7 @@ class Interpreter:
             if isinstance(left or right, list):
                 list_res = RTResult()
                 return list_res.success(Number(1))
-            
+            print("LEFT: ", left)
             result, error = left.get_comparison_gt(right)
         elif node.op_tok.token == LESS_THAN_EQUAL:
             if isinstance(left or right, list):
