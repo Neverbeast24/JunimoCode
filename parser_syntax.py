@@ -3104,7 +3104,7 @@ class Parser:
         #TODO create 
         if self.current_tok.token == LPAREN:
             self.advance()
-            crop, crop_error = self.if_first_condition()
+            crop, crop_error = self.fall_first_condition()
             print("[DEBUG] ok na sa first condition")
             if crop_error:
                 error.extend(crop_error)
@@ -3130,7 +3130,7 @@ class Parser:
                         return res, error
                     
                     # * nasa identifier tayo rn
-                    rel2, rel2_error = self.star_iteration()
+                    rel2, rel2_error = self.fall_iteration()
                     #nasa r paren tayo if ever nag assign value tayo sa iteration
                     #self.advance()
                     if rel2_error:
@@ -3169,7 +3169,7 @@ class Parser:
         return res, error
 
     # -- need a function for the var dec of 
-    def if_crop_dec(self):
+    def fall_crop_dec(self):
         res = []
         error = []
         # -- token when entering this function is 'var'
@@ -3234,12 +3234,12 @@ class Parser:
 
         return res, error
     # combine lang  init and var
-    def if_first_condition(self):
+    def fall_first_condition(self):
         res = []
         error = []
         if self.current_tok.token == CROP:
             # print("this is a var token")
-            crop, crop_error = self.if_crop_dec()
+            crop, crop_error = self.fall_crop_dec()
             if crop_error:
                 error.extend(crop_error)
                 return res, error
@@ -3317,7 +3317,7 @@ class Parser:
         return res, error
 
     # -- need unary statement for 
-    def star_iteration(self):
+    def fall_iteration(self):
         res = []
         error = []
         #--INITIALIZATION OF IDENTIFIERS

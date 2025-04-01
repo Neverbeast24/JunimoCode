@@ -1069,7 +1069,7 @@ class Lexer:
                             if self.current_char == None:
                                 errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for fall! Cause: {self.current_char}. Expected: open parenthesis'])
                                 return [], errors
-                            if self.current_char in pr_delim or self.current_char.isspace():
+                            if self.current_char in spacepr_delim:
                                 return Token(FALL, "fall", pos_start = self.pos), errors
                             elif self.current_char in alpha_num:
                                 continue
@@ -1900,8 +1900,8 @@ class ShipNode:
         self.parent = None
         self.body = body
         # self.list_of_nodes = list_of_nodes
-        self.pos_start = self.body[0].pos_start
-        self.pos_end = self.body[len(body)-1].pos_end
+        self.pos_start = ship_tok.pos_start
+        self.pos_end = ship_tok.pos_end
     
     def add_child(self, node):
         node.parent = self
@@ -2788,14 +2788,12 @@ class Parser:
                 #LOOPS
                 # for loop (fall)
                 if self.current_tok.token in FALL:
-                    '''
-                    fall(crop A = 123$ A < 10$ A++){
-
-                    }
-                    [CropAssignNode, BinOpNode, UnaryNode]
-                    '''
+                    print("IN FALL")
                     self.advance()
+                    print("before fall stmt: ", self.current_tok)
                     fall_res = self.fall_stmt()
+                    print("[DEBUG] end of fall: ", self.current_tok)
+                    self.advance()
                     print("[DEBUG] end of fall: ", self.current_tok)
                     self.advance()
                     res.append(fall_res)
@@ -2867,9 +2865,12 @@ class Parser:
                     list_of_nodes = []
                     result = ParseResult()
                     self.advance()
+                    self.advance()
                     #this is for <<
                     # self.advance()
-                    while self.current_tok.token == "(":
+                    self.advance()
+                    print("current token in ship: ", self.current_tok)
+                    while self.current_tok.token == ",":
                         self.advance()
                         if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOIDEGG and self.current_tok.token != FLOAT:
                             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, left parenthesis, true, false, string or void!"))
@@ -2880,9 +2881,13 @@ class Parser:
                             self.advance()
                             # i should append this to a list
                             # print(list_of_nodes)
+                        # print("last token in loop: ", self.current_tok)
 
                     res.append(ShipNode(list_of_nodes, ship_tok))
                     self.advance()
+                    self.advance()
+                    # self.advance()
+                    # self.advance()
 
 
                         
@@ -2896,10 +2901,10 @@ class Parser:
                             error.append(craft_error)
                             return res, error
                         else:
-                            self.advance()
+                            # self.advance()
                             res.append(craft_result)
                             print("CROP DEC RESULT: ", self.current_tok)
-                            
+                            self.advance()
                            
                             while self.current_tok.token == COMMA:
                                 #self.advance()
@@ -3066,6 +3071,7 @@ class Parser:
     def crop_init(self, crop_name):
         #test
         # self.advance()
+        print("Crop init: ", self.current_tok)  
         if self.current_tok.token == EQUAL:
             operation = self.current_tok
         elif self.current_tok.token == PLUS_EQUAL:
@@ -3079,10 +3085,10 @@ class Parser:
         # todo assignment operators
 
         self.advance()
-        
+        print("current token after equal: ", self.current_tok)
         if self.current_tok.token in (PLUS, MINUS, IDENTIFIER, INTEGER, FLOAT, LPAREN, STRING, VOIDEGG, TRUE, FALSE):
             expr = self.expr()
-            return CropInitNode(crop_name, expr.node, operation), None
+            return CropInitNode(crop_name, expr.node), None
         # check if it's crop a = [1, 3, true]
         if self.current_tok.token == SLBRACKET:
             list_node = ListNode(crop_name)
@@ -3105,7 +3111,20 @@ class Parser:
                 # self.advance()
                 print("[DEBUG] tok after srbracket: ", self.current_tok)
                 return CropInitNode(crop_name, list_node, operation), None
-                      
+        if self.current_tok.token == COLLECT:
+            print("found collect in crop init!")
+            self.advance()
+            #(
+            self.advance()
+            #STRING
+            prompt = self.current_tok
+            self.advance()
+            # self.advance()
+            print("current token after collect: ", self.current_tok)
+            self.advance()
+            print("crop name: ", crop_name, self.current_tok)
+            #CropDecNode value: Collect(node)
+            return CropAssignNode(crop_name, CropAccessNode(crop_name)), None
         # todo assignment operators
         
         
@@ -3120,7 +3139,7 @@ class Parser:
     # fall loop (for loop)
     def fall_stmt(self):
         #return a list of []
-        
+        print("FALL STATEMENT: ", self.current_tok)
         #TODO create force
         if self.current_tok.token == LPAREN:
             self.advance()
@@ -3170,11 +3189,12 @@ class Parser:
                             #;
                             self.advance()
                             #)
-                            self.advance()
-                            # {
+                            # self.advance()
+                            # # {
                             self.advance()
                             # call body
                     fall_node.unary = unary
+                    print("fall body: ", self.current_tok)
                     result, body_error = self.body()
                     for item in result:
                         fall_node.add_child(item)
@@ -3393,6 +3413,7 @@ class Parser:
             #comment
             crop_name = self.current_tok
             self.advance()
+            # print("next length: ",)
             if self.current_tok.token == LPAREN:
                 craft_call = CraftCallNode(tok)
                 self.advance()
@@ -4062,20 +4083,20 @@ class Interpreter:
             # print('final: ', final.value)
             return res
 
-    # def visit_UnaryOpNode(self, node, context):
-    #     res = RTResult()
-    #     number = res.register(self.visit(node.node, context))
-    #     if res.error: return res
+    def visit_UnaryOpNode(self, node, context):
+        res = RTResult()
+        number = res.register(self.visit(node.node, context))
+        if res.error: return res
 
-    #     error = None
+        error = None
 
-    #     if node.op_tok.token == MINUS:
-    #         number, error = number.multed_by(Number(-1))
+        if node.op_tok.token == MINUS:
+            number, error = number.multed_by(Number(-1))
 
-    #     if error:
-    #         return res.failure(error)
-    #     else:
-    #         return res.success(number.set_pos(node.pos_start, node.pos_end))
+        if error:
+            return res.failure(error)
+        else:
+            return res.success(number.set_pos(node.pos_start, node.pos_end))
     def visit_FallNode(self, node, symbol_table):
         res = RTResult()
         value = self.visit(node.variable, symbol_table)
