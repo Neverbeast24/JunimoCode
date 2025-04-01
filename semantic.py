@@ -2426,8 +2426,10 @@ class Parser:
                 
             if self.current_tok.token != SINGLELINE and self.current_tok.token != EOF and self.current_tok.token != NEWLINE and self.current_tok.token != SINGLELINE and self.current_tok.token != FARMHOUSE and self.current_tok.token != CRAFT and self.current_tok.token != PELICAN and self.current_tok.token != MULTILINE_OPEN and self.current_tok.token != MULTILINE_CLOSE and self.current_tok.token != PERFECTION and self.current_tok.token !=  COMMENT:
                 if self.is_pelican == True:
+                    
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected perfection!"))
                 else:
+                    print("ERROR: ", self.current_tok)
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected craft, or pelican, or farmhouse!"))
 
                 break
@@ -3661,11 +3663,11 @@ class Interpreter:
                 craft_call_node.pos_start, craft_call_node.pos_end,
                 f"\ncraft '{craft_ident}' takes {len(item.parameters)} parameters, received {len(craft_call_node.parameters)} arguments ",
             ))
-        if craft_ident == "append" or craft_ident == "remove" or craft_ident == "length":
+        if craft_ident == "add" or craft_ident == "pluck" or craft_ident == "length":
             return res.success(craft_call_node)
         return res.failure(SemanticError(
                 craft_call_node.pos_start, craft_call_node.pos_end,
-                f"\ncraft '{craft_ident}' is not defined",
+                f"\n '{craft_ident}' is not defined",
             ))
 
     def visit_CropAccessNode(self, node, symbol_table):
@@ -4125,7 +4127,7 @@ class Interpreter:
     #         return res.failure(condition_value.error)
     #     return res.success(node)
     def visit_StarNode(self, node, context):
-        list_of_outer = []
+        list_of_ship = []
         res = RTResult()
         # print("node.cases: ", node.cases)
         for condition, expr in node.cases:
@@ -4146,28 +4148,28 @@ class Interpreter:
                         return res.success(HarvestCallNode(expr_value))
                     if isinstance(item, ShipNode):
                         # print("outer in if")
-                        list_of_outer.append(ShipNode(expr_value))
+                        list_of_ship.append(ShipNode(expr_value))
                     # print("expr in if node: ", expr)
                     '''
                     res.append(result.success(SaturnCallNode(expr)))
                     '''
                     if res.error: 
                         return res
-                return res.success(list_of_outer)
+                return res.success(list_of_ship)
         # print("floating")
         if node.dew_case:
             # print("we have an else case")
             for item in node.dew_case:
-                else_value = res.register(self.visit(item, context))
+                dew_value = res.register(self.visit(item, context))
                 if isinstance(item, HarvestCallNode):
                     # print("saturn call in if")
-                    # print("else value type: ", type(else_value))
-                    return res.success(HarvestCallNode(else_value))
+                    # print("else value type: ", type(dew_value))
+                    return res.success(HarvestCallNode(dew_value))
                 if isinstance(item,ShipNode):
                     # print("outer in else")
-                    return res.success(ShipNode(else_value))
+                    return res.success(ShipNode(dew_value))
             if res.error: return res
-            return res.success(else_value)
+            return res.success(dew_value)
 
         return res.success(None)
     def visit_NextNode(self, node, symbol_table):

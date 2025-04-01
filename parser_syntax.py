@@ -2175,7 +2175,7 @@ class Parser:
                     #self.advance()
                     
                     if self.current_tok.token != TERMINATOR:
-                        print("check", self.current_tok)
+                        print("check crop dec", self.current_tok)
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign, comma, +, -, *, /, %"))
                         return res, error
                     else:
@@ -2352,15 +2352,33 @@ class Parser:
         if self.current_tok.token == STRING:
             print("PUMASOK SA UNANG STRING: ", self.current_tok)
             self.advance()
-            while self.current_tok.token in PLUS:
+            
+            # If next token is PLUS, proceed with concat handling
+            while self.current_tok.token == PLUS:
                 self.advance()
+                print("pumasok sa string concat: ", self.current_tok)
+
                 if self.current_tok.token == STRING or self.current_tok.token == IDENTIFIER:
                     self.advance()
                 else:
-                    #error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after comma!"))
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or string!"))
+                    error.append(InvalidSyntaxError(
+                        self.current_tok.pos_start, 
+                        self.current_tok.pos_end, 
+                        "Expected identifier or string after '+'!"
+                    ))
+                    return res, error
+
+            # Error: If after a string there's another operator that is NOT plus
+            if self.current_tok.token in (MINUS, DIV, MODULUS, MUL, E_EQUAL , NOT_EQUAL , LESS_THAN , GREATER_THAN , LESS_THAN_EQUAL , GREATER_THAN_EQUAL, NOT_OP, AND_OP, OR_OP ):
+                error.append(InvalidSyntaxError(
+                    self.current_tok.pos_start, 
+                    self.current_tok.pos_end, 
+                    "Only '+' is allowed for string concatenation!"
+                ))
+                return res, error
 
             return res, error
+
 
         elif self.current_tok.token == INTEGER or self.current_tok.token == FLOAT or self.current_tok.token == IDENTIFIER:
             n_res, n_error = self.assign_val2([PLUS, MINUS, DIV, MODULUS, MUL])
@@ -2639,25 +2657,30 @@ class Parser:
         self.advance()
         print(f"[DEBUG] Parsing add parameters, token: {self.current_tok.token}")
 
-        # Parse the first identifier or value
-        if self.current_tok.token in (IDENTIFIER, STRING, INTEGER, FLOAT):
+        # First token must be IDENTIFIER
+        if self.current_tok.token == IDENTIFIER:
             res.append(self.current_tok.token)
             self.advance()
         else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected a valid identifier or value after 'add'!"))
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier as the first argument in 'add'!"))
             return res, error
 
-        # Parse additional comma-separated values
-        while self.current_tok.token == COMMA:
-            self.advance()
-            if self.current_tok.token in (IDENTIFIER, STRING, INTEGER, FLOAT):
-                res.append(self.current_tok.token)
-                self.advance()
-            else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected a valid value after ',' in 'add'!"))
-                return res, error
+        # Must have a comma next
+        if self.current_tok.token != COMMA:
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' after identifier in 'add'!"))
+            return res, error
 
-        # Parse closing parenthesis
+        self.advance()
+
+        # Now expect a valid second argument (list value: number or literal)
+        if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER, STRING, TRUE, FALSE):
+            res.append(self.current_tok.token)
+            self.advance()
+        else:
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected a list value after ',' in 'add'!"))
+            return res, error
+
+        # Closing parenthesis
         if self.current_tok.token != RPAREN:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')' to close 'add' statement!"))
             return res, error
@@ -2666,6 +2689,8 @@ class Parser:
         self.advance()
 
         return res, error
+
+    
     def pluck_stmt(self):
         res = []
         error = []
@@ -2692,7 +2717,7 @@ class Parser:
         # Parse additional comma-separated values
         while self.current_tok.token == COMMA:
             self.advance()
-            if self.current_tok.token in ("Identifier", "StrLit", "IntLit", "FloatLit"):
+            if self.current_tok.token in (IDENTIFIER, STRING, INTEGER, FLOAT, TRUE, FALSE):
                 res.append(self.current_tok.token)
                 self.advance()
             else:
