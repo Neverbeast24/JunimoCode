@@ -2593,14 +2593,14 @@ class Parser:
                                 error.append(err)
                             else:
                                 res.append("Success form ident assign!")
-                # elif self.current_tok.token in (INCRE, DECRE):
-                #     if self.in_universe == True:
-                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
-                #         return res, error
-                #     #self.advance()
+                elif self.current_tok.token in (INCRE, DECRE):
+                    if self.in_farmhouse == True:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
+                        return res, error
+                    #self.advance()
                     
-                #     res.append("success unary init")
-                #     self.advance()
+                    res.append("success unary init")
+                    self.advance()
                 #     ########
                 else:
                     print('FIRST OPERAND IS AN IDENTIFIER')

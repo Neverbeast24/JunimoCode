@@ -2701,6 +2701,7 @@ class Parser:
                         craft_call = CraftCallNode(crop_name)
                         self.advance()
                         if self.current_tok.token in (INTEGER, FLOAT):
+                            print("NUMBER ARGUMENT: ", self.current_tok)
                             craft_call.add_param(NumberNode(self.current_tok))
                             self.advance()
                         if self.current_tok.token == STRING:
@@ -2715,6 +2716,23 @@ class Parser:
                         elif self.current_tok.token == IDENTIFIER:
                             craft_call.add_param(CropAccessNode(self.current_tok))
                             self.advance()
+                        
+                        while self.current_tok.token == COMMA:
+                            self.advance()
+                            if self.current_tok.token in (INTEGER, FLOAT):
+                                craft_call.add_param(NumberNode(self.current_tok))
+                                self.advance()
+                            elif self.current_tok.token == STRING:
+                                craft_call.add_param(StringNode(self.current_tok))
+                                self.advance()
+                            elif self.current_tok.token in (TRUE, FALSE):
+                                craft_call.add_param(BooleanNode(self.current_tok))
+                                self.advance()
+                            elif self.current_tok.token == VOIDEGG:
+                                craft_call.add_param(VoidNode(self.current_tok))
+                                self.advance()
+                            elif self.current_tok.token == IDENTIFIER:
+                                print("ident craft")
                             
                         self.advance()
                         res.append(craft_call)
@@ -2884,6 +2902,7 @@ class Parser:
                         # print("last token in loop: ", self.current_tok)
 
                     res.append(ShipNode(list_of_nodes, ship_tok))
+                    self.advance()
                     self.advance()
                     self.advance()
                     # self.advance()
@@ -3073,8 +3092,10 @@ class Parser:
         # self.advance()
         print("Crop init: ", self.current_tok)  
         if self.current_tok.token == EQUAL:
+            print("found equal")
             operation = self.current_tok
         elif self.current_tok.token == PLUS_EQUAL:
+            print("found plus equal")
             operation = self.current_tok
         elif self.current_tok.token == MINUS_EQUAL:
             operation = self.current_tok
@@ -3124,7 +3145,7 @@ class Parser:
             self.advance()
             print("crop name: ", crop_name, self.current_tok)
             #CropDecNode value: Collect(node)
-            return CropAssignNode(crop_name, CropAccessNode(crop_name)), None
+            return CropInitNode(crop_name, CropAccessNode(crop_name)), None
         # todo assignment operators
         
         
@@ -3230,10 +3251,10 @@ class Parser:
         #need to append it to cases as a tuple of (condition, [body result])
         cases.append((condition, result))
         if body_error:
-            # errors.append(InvalidSyntaxError(
-            #     self.current_tok.pos_start, self.current_tok.pos_end,
-            #     "Error in body "
-            # ))
+            errors.append(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Error in body "
+            ))
             print("BODY ERROR: ", body_error[0].as_string())
             return [], errors
         
@@ -3419,6 +3440,7 @@ class Parser:
                 self.advance()
                 #look for 1, "string", true, false, void
                 if self.current_tok.token in (INTEGER, FLOAT):
+                    print("found number in craft call: ", self.current_tok)
                     craft_call.add_param(NumberNode(self.current_tok))
                     self.advance()
                 elif self.current_tok.token == STRING:
@@ -3447,7 +3469,8 @@ class Parser:
                    
                     expr = self.expr()
                     expr = expr.node
-                    craft_call.add_param(expr)
+                craft_call.add_param(expr)
+                print("craft call add param: ", self.current_tok)
                     # self.advance()
                 
                 while self.current_tok.token == COMMA:
@@ -3826,7 +3849,7 @@ class Interpreter:
             crop_name = node.crop_name_tok.value
             value = symbol_table.get(crop_name)
             if not value and value != 0:
-                # print("couldnt find variable")
+                print("couldnt find variable")
                 return res.failure(SemanticError(
                     node.pos_start, node.pos_end,
                     f"\n'{crop_name}' is not defined",
@@ -4151,13 +4174,14 @@ class Interpreter:
         list_of_ship = []
         res = RTResult()
         # print("node.cases: ", node.cases)
+        print("node body: ", node.body)
         for condition, expr in node.cases:
             # print("visiting nodes now")
             condition.parent = node
             condition_value = res.register(self.visit(condition, context))
-            # print("condition value: ", condition_value)
+            print("condition value: ", condition_value)
             if res.error: 
-                # print("error in visit node")
+                print("error in visit star node")
                 return res
 
             if condition_value.is_true():
@@ -4177,6 +4201,13 @@ class Interpreter:
                     if res.error: 
                         return res
                 return res.success(list_of_ship)
+        for i in node.body:
+            i.parent = node.parent
+            value = res.register(self.visit(i, i.parent.symbol_table))
+            if res.error:
+                print("error in pelican()")
+                # node.errors.append(value.error)
+                return res
         # print("floating")
         if node.dew_case:
             # print("we have an else case")
