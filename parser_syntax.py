@@ -1636,6 +1636,11 @@ class Parser:
         self.in_fall = False
         self.in_farmhouse = False
         self.in_star = False
+        
+        self.found_planting = False
+        self.found_pelican = False
+        self.found_perfection = False
+
 
     def advance(self):
         self.tok_idx += 1
@@ -1768,7 +1773,7 @@ class Parser:
                 if self.is_pelican == True:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Only one pelican function allowed!"))
                     return res, error
-
+                self.found_pelican = True
                 self.is_pelican = True
                 g_res, g_error = self.pelican()
 
@@ -1780,18 +1785,38 @@ class Parser:
                     res.extend(g_res)
 
             if self.current_tok.token == PERFECTION:
+                if self.found_perfection:
+                    error.append(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        "Duplicate 'perfection' found! Only one is allowed."
+                    ))
+                    return res, error
+                self.found_perfection = True
                 self.advance()
                 if self.current_tok.token == TERMINATOR:
                     self.perfection = True
                     if self.is_pelican == False:
-                        print("[DEBUG] Current Token: ", self.current_tok)
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "No pelican function found!"))
+                        return res, error
+                    self.advance()
+
+                    # ✅ After perfection$, allow only newlines then EOF
+                    while self.current_tok.token == NEWLINE:
                         self.advance()
+
+                    if self.current_tok.token != EOF:
+                        error.append(InvalidSyntaxError(
+                            self.current_tok.pos_start, self.current_tok.pos_end,
+                            "No code should follow after 'perfection$'. This marks the end of the program."
+                        ))
                         return res, error
-                    else:
-                        return res, error
+                    return res, error
+
                 else:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Dollar sign expected for 'perfection'!"))
+                    return res, error
+
+
             
             # if self.current_tok.token == CRBRACKET:
             #     break
@@ -2234,14 +2259,14 @@ class Parser:
                                     res.append(["SUCCESS! from harvest"])
                                     self.advance()
                         
-                if self.current_tok.token == PERFECTION:
-                    self.advance()
-                    if self.current_tok.token == TERMINATOR:
-                        self.perfection = True
-                        #self.advance()
-                        return res, error
-                    else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Dollar sign expected for 'perfection'!"))
+                # if self.current_tok.token == PERFECTION:
+                #     self.advance()
+                #     if self.current_tok.token == TERMINATOR:
+                #         self.perfection = True
+                #         #self.advance()
+                #         return res, error
+                #     else:
+                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Dollar sign expected for 'perfection'!"))
 
                 if self.current_tok.token == CRBRACKET:
                     break
