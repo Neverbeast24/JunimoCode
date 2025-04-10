@@ -516,12 +516,12 @@ def read_nodes(item, symbol_table, current_indention = 0):
                 
             current_indention -= 4
         # print("else case: ", item.else_case)
-        if item.else_case:
+        if item.dew_case:
             line_tracker.advance()
             line_tracker.set(item.pos_start.ln+1)
             else_case_code.append(f"{' ' * current_indention}else:")
             current_indention += 4
-            for j in item.else_case:
+            for j in item.dew_case:
                 
                 else_case_code.append(read_nodes(j, symbol_table, current_indention))
                 

@@ -2482,6 +2482,7 @@ class Parser:
             # craft for subfunctions
             # craft syntax
             if self.current_tok.token == CRAFT:
+                print("FOUND CRAFT1")
                 if self.is_pelican == True:
                     program.error(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please declare craft before pelican!"))
                     break
@@ -2531,7 +2532,7 @@ class Parser:
                                     while self.current_tok.token != NEWLINE:
                                         self.advance()  
                                         
-                                    self.advance()
+                                    # self.advance()
                                     # return program
                                     
                     if self.current_tok.token == RPAREN:
@@ -2972,7 +2973,7 @@ class Parser:
                         # else:
                         #     self.advance()
                         self.advance()
-                        self.advance()
+                        # self.advance()
                         print("[DEBUG] current val after harvest: ", self.current_tok)
                         return res, error
                         # return res, error
@@ -3821,7 +3822,7 @@ class Interpreter:
             pass
         if isinstance(node.value_node, CollectNode):
             print("Value is Collect Node")
-            symbol_table.set(crop_name, node.value_node.prompt)
+            # symbol_table.set(crop_name, node.value_node.prompt)
         else:
             # print("ASSIGNED A LIST")
             # node.value_node.parent = node.parent
@@ -4942,7 +4943,7 @@ class StardewLexerGUI:
         self.resize_output_button = self.output_code_button.resize((200,50))
         self.output_button_picture = ImageTk.PhotoImage(self.resize_output_button)
         self.image_output_button = tk.Button(image=self.output_button_picture, borderwidth=0, command=self.output_with_sound)
-        self.image_output_button.place(x=600, y=780) #x and y for output button
+        self.image_output_button.place(x=600, y=900) #x and y for output button ito lang pala dear
 
         #image for Clear Button
         self.clear_button = Image.open("Images/Clear.png")

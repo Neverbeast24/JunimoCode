@@ -4,8 +4,31 @@ import traceback
 line_map = load_dict_from_file('line_map.txt')
 lines = read_list_from_file('get_line.txt')
 try:
-    def ComputePerimeter (Width,Height):
-        pass
+    def Multiply (Val1,Val2):
+        Product = (Val1*Val2)
+        return Product
+    def Divide (Val1,Val2):
+        Quotient = (Val1*Val2)
+        return Quotient
+    def Add (A,B):
+        Sum = (A+B)
+        return Sum
+    def Subtract (A,B):
+        Difference = (A-B)
+        return Difference
+    A =  custom_input("Enter first number: ")
+    B =  custom_input("Enter second number: ")
+    Product = Multiply(A,B)
+    Quotient = Divide(A,B)
+    Sum = Add(A,B)
+    Difference = Subtract(A,B)
+    custom_print("Product: ",Product)
+    custom_print("\n")
+    custom_print("Quotient: ",Quotient)
+    custom_print("\n")
+    custom_print("Sum:  ",Sum)
+    custom_print("\n")
+    custom_print("Difference:  ",Difference)
 except Exception as e:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb = traceback.extract_tb(e.__traceback__)
