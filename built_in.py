@@ -1,5 +1,5 @@
-def custom_input():
-    value_str = input()
+def custom_input(prompt = ''): 
+    value_str = input(prompt)
     
     # Check for integer
     if value_str.isdigit() or (value_str[0] in ('-', '+') and value_str[1:].isdigit()):

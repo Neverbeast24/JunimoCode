@@ -1,9 +1,10 @@
 
 import subprocess
 import semantic
-from semantic import ShipNode, CropAssignNode, CropInitNode, CropDecNode, CropAccessNode
+# from semantic import ShipNode, CropAssignNode, CropInitNode, CropDecNode, CropAccessNode
 # import subprocess
 # import sys
+
 import os
 
 import sys
@@ -30,20 +31,20 @@ class LineTracker:
 line_tracker = LineTracker()
 def read_value_nodes(node):
     pass
-    #if VarAccessNode
+    #if CropAccessNode
     #if BinOpNode
     #if ValueNodes
 
 
 def read_nodes(item, symbol_table, current_indention = 0):
     condition_to_list = []
-    if isinstance(item, semantic.OuterNode):
+    if isinstance(item, semantic.ShipNode):
         string = "" #dawnsantos
         print_items = []
         for output in item.body:
 
-            if isinstance(output, VarAccessNode):
-                print_items.append(f"{output.var_name_tok.value}")
+            if isinstance(output, semantic.CropAccessNode):
+                print_items.append(f"{output.crop_name_tok.value}")
                 
             elif isinstance(output, semantic.BinOpNode):
                 # print("found bin op!")
@@ -86,17 +87,17 @@ def read_nodes(item, symbol_table, current_indention = 0):
                     else:
                         print_items.append(f"{left}+{right}")
                     # print("print_items: ", print_items)
-            elif isinstance(output, semantic.FormCallNode):
+            elif isinstance(output, semantic.CraftCallNode):
                 params = []
                 for call_param in output.parameters:
                     # Convert call_param.tok.value to string explicitly
                     if isinstance(call_param, semantic.ListCallNode):
                         index = read_nodes(call_param.index, {}, symbol_table)
-                        param_value = f"{call_param.var_name.var_name_tok.value}[{index}]"
+                        param_value = f"{call_param.crop_name.crop_name_tok.value}[{index}]"
                         params.append(param_value)
-                    elif isinstance(call_param, semantic.VarAccessNode):
+                    elif isinstance(call_param, semantic.CropAccessNode):
                         
-                        param_value = f"{call_param.var_name_tok.value}"
+                        param_value = f"{call_param.crop_name_tok.value}"
                         params.append(param_value)
                     else:
                         param_value = str(call_param.tok.value)
@@ -111,25 +112,25 @@ def read_nodes(item, symbol_table, current_indention = 0):
                     print_items.append(f"{output.identifier.value}({parameters})")
                     
             elif isinstance(output, semantic.ListCallNode):
-                if is_python_keyword(output.var_name.var_name_tok.value):
-                    print_items.append(f"{output.var_name.var_name_tok.value}1[{output.index.value}]")
+                if is_python_keyword(output.crop_name.crop_name_tok.value):
+                    print_items.append(f"{output.crop_name.crop_name_tok.value}1[{output.index.value}]")
                     # print_items.append(f"{output.identifier.value}1({parameters})")
                     
                 else:
                     if isinstance(output.index, semantic.BinOpNode):
                         index = read_nodes(output.index, {}, symbol_table)
-                        print_items.append(f"{output.var_name.var_name_tok.value}[{index}]")
-                    elif isinstance(output.index, semantic.VarAccessNode):
-                        print_items.append(f"{output.var_name.var_name_tok.value}[{output.index.var_name_tok.value}]")
+                        print_items.append(f"{output.crop_name.crop_name_tok.value}[{index}]")
+                    elif isinstance(output.index, semantic.CropAccessNode):
+                        print_items.append(f"{output.crop_name.crop_name_tok.value}[{output.index.crop_name_tok.value}]")
                     elif isinstance(output.index, semantic.NumberNode):
-                        print_items.append(f"{output.var_name.var_name_tok.value}[{output.index.tok.value}]")
+                        print_items.append(f"{output.crop_name.crop_name_tok.value}[{output.index.tok.value}]")
                     else:
                     # print_items.append(f"{output.identifier.value}({parameters})")
-                # index = read_nodes(output.var_name)
-                        print_items.append(f"{output.var_name.var_name_tok.value}[{output.index.value}]")
+                # index = read_nodes(output.crop_name)
+                        print_items.append(f"{output.crop_name.crop_name_tok.value}[{output.index.value}]")
             else:  
                 string += str(output.tok.value)
-                print_items.append(f"\"{output.tok.value}\"")
+                print_items.append(f"{output.tok.value}")
                 # print("string token position: ", output.tok.pos_start.ln+1)
                 # python_code.append(f"{' ' * current_indentation}print('{string}')")
         x = ",".join(print_items)
@@ -309,24 +310,24 @@ def read_nodes(item, symbol_table, current_indention = 0):
         if item.op_tok.token == semantic.OR_OP:
             return f"({left} or {right})"
         # print("reached the end of the bin op: ", item.op_tok.token)
-    elif isinstance (item, VarAssignNode):
+    elif isinstance (item, semantic.CropAssignNode):
         # print("var assign line tracker: ", line_tracker.current_line)
-        line_tracker.set(item.var_name_tok.pos_start.ln+1)
+        line_tracker.set(item.crop_name_tok.pos_start.ln+1)
         line_tracker.advance()
         # print("in var assign node transpiler: ", item.value_node)
         if isinstance(item.value_node, semantic.VoidNode):
             # print("found void node")
-            if is_python_keyword(item.var_name_tok.value):
+            if is_python_keyword(item.crop_name_tok.value):
             
-                return f"{' '* current_indention}{item.var_name_tok.value}1 = void()"
+                return f"{' '* current_indention}{item.crop_name_tok.value}1 = void()"
             else:
-                return f"{' '* current_indention}{item.var_name_tok.value} = void()"
+                return f"{' '* current_indention}{item.crop_name_tok.value} = void()"
         #key error wala sha sa dict
         
         # print("symbol table call: ", symbol_table.symbols)
-        # value = symbol_table.symbols[item.var_name_tok.value]
+        # value = symbol_table.symbols[item.crop_name_tok.value]
         # print("var assign value node: ", item.value_node)
-        elif isinstance(item.value_node, semantic.FormCallNode):
+        elif isinstance(item.value_node, semantic.CraftCallNode):
             form_params = []
             # should append the function call
             for param in item.value_node.parameters:
@@ -339,74 +340,75 @@ def read_nodes(item, symbol_table, current_indention = 0):
                     bin_op_param = read_nodes(param, {}, symbol_table)
                     form_params.append(f"{bin_op_param}")
                 else:
-                    form_params.append(f"{param.var_name_tok.value}")
+                    form_params.append(f"{param.crop_name_tok.value}")
             # print("form param: ", form_params)
-            # print(f"assign form call: {item.var_name_tok.value} = '{value.value.value}'")
+            # print(f"assign form call: {item.crop_name_tok.value} = '{value.value.value}'")
             if is_python_keyword(item.value_node.identifier.value):
                 # print_items.append(f"{output.identifier.value}1({parameters})")
-                return f"{' '* current_indention}{item.var_name_tok.value} = {item.value_node.identifier.value}1({','.join(form_params)})"
+                return f"{' '* current_indention}{item.crop_name_tok.value} = {item.value_node.identifier.value}1({','.join(form_params)})"
                     
             else:
                 # print_items.append(f"{output.identifier.value}({parameters})")
-                return f"{' '* current_indention}{item.var_name_tok.value} = {item.value_node.identifier.value}({','.join(form_params)})"
+                return f"{' '* current_indention}{item.crop_name_tok.value} = {item.value_node.identifier.value}({','.join(form_params)})"
         elif isinstance(item.value_node, semantic.ListCallNode):
-            if isinstance(item.value_node.index, VarAccessNode):
-                return f"{' '* current_indention}{item.var_name_tok.value} = {item.value_node.var_name.var_name_tok.value}[{item.value_node.index.var_name_tok.value}]"
+            if isinstance(item.value_node.index, CropAccessNode):
+                return f"{' '* current_indention}{item.crop_name_tok.value} = {item.value_node.crop_name.crop_name_tok.value}[{item.value_node.index.crop_name_tok.value}]"
             else:
-                return f"{' '* current_indention}{item.var_name_tok.value} = {item.value_node.var_name.var_name_tok.value}[{item.value_node.index.value}]"
+                return f"{' '* current_indention}{item.crop_name_tok.value} = {item.value_node.crop_name.crop_name_tok.value}[{item.value_node.index.value}]"
         value = read_nodes(item.value_node, symbol_table, current_indention)
         # print("value type var assign: ", type(value))
         
         
         if isinstance(value, list):
             # print("found list transpiler")
-            if is_python_keyword(item.var_name_tok.value):
+            if is_python_keyword(item.crop_name_tok.value):
             
-                return f"{' '* current_indention}{item.var_name_tok.value}1 = {value}"
+                return f"{' '* current_indention}{item.crop_name_tok.value}1 = {value}"
             else:
-                return f"{' '* current_indention}{item.var_name_tok.value} = {value}"
+                return f"{' '* current_indention}{item.crop_name_tok.value} = {value}"
             
         else:
-            if is_python_keyword(item.var_name_tok.value):
+            if is_python_keyword(item.crop_name_tok.value):
                 
-                return f"{' '* current_indention}{item.var_name_tok.value}1 = {value}"
+                return f"{' '* current_indention}{item.crop_name_tok.value}1 = {value}"
             else:
-                return f"{' '* current_indention}{item.var_name_tok.value} = {value}"
+                return f"{' '* current_indention}{item.crop_name_tok.value} = {value}"
 
-    elif isinstance(item, semantic.InnerNode):
+    elif isinstance(item, semantic.CollectNode):
+        print("FOUND COLLECT NODE TRANSPILER")
         # print("inner node pos: ", line_tracker.current_line)
         line_tracker.set(item.variable_node.pos_start.ln+1)
         line_tracker.advance()
-        ##var_name = i.variable_node.var_name_tok.value
+        ##crop_name = i.variable_node.crop_name_tok.value
         var_node = item.variable_node
-        if isinstance(var_node, VarAccessNode):
-            # print("found varaccessnode")
-            var_name_tok = var_node.var_name_tok
-            return f"{' ' * current_indention}{var_name_tok.value} = custom_input()"
-    elif isinstance(item, VarInitNode):
-        # print("var init: ", type(item.var_name_tok))
+        if isinstance(var_node, semantic.CropAccessNode):
+            print("found varaccessnode")
+            crop_name_tok = var_node.crop_name_tok
+            return f" custom_input({item.prompt.value})"
+    elif isinstance(item, semantic.CropInitNode):
+        # print("var init: ", type(item.crop_name_tok))
         line_tracker.set(item.pos_start.ln+1)
         line_tracker.advance()
         if isinstance(item.value_node, semantic.VoidNode):
             # print("found void node")
-            if isinstance(item.var_name_tok, semantic.ListCallNode):
-                index = read_nodes(item.var_name_tok.index, {}, symbol_table)
-                if is_python_keyword(item.var_name_tok.var_name.value):
-                    return f"{' '* current_indention}{item.var_name_tok.var_name.value}1[{index}] = void()"
+            if isinstance(item.crop_name_tok, semantic.ListCallNode):
+                index = read_nodes(item.crop_name_tok.index, {}, symbol_table)
+                if is_python_keyword(item.crop_name_tok.crop_name.value):
+                    return f"{' '* current_indention}{item.crop_name_tok.crop_name.value}1[{index}] = void()"
                 else:
-                    return f"{' '* current_indention}{item.var_name_tok.var_name.value}[{index}] = void()"
+                    return f"{' '* current_indention}{item.crop_name_tok.crop_name.value}[{index}] = void()"
             else:
-                if is_python_keyword(item.var_name_tok.value):
+                if is_python_keyword(item.crop_name_tok.value):
                 
-                    return f"{' '* current_indention}{item.var_name_tok.value}1 = void()"
+                    return f"{' '* current_indention}{item.crop_name_tok.value}1 = void()"
                 else:
-                    return f"{' '* current_indention}{item.var_name_tok.value} = void()"
+                    return f"{' '* current_indention}{item.crop_name_tok.value} = void()"
         #key error wala sha sa dict
         
         # print("symbol table call: ", symbol_table.symbols)
-        # value = symbol_table.symbols[item.var_name_tok.value]
+        # value = symbol_table.symbols[item.crop_name_tok.value]
         # print("var assign value node: ", item.value_node)
-        elif isinstance(item.value_node, semantic.FormCallNode):
+        elif isinstance(item.value_node, semantic.CraftCallNode):
             form_params = []
             # should append the function call
             for param in item.value_node.parameters:
@@ -414,52 +416,52 @@ def read_nodes(item, symbol_table, current_indention = 0):
                 if isinstance(param, semantic.NumberNode):
                     form_params.append(f"{param.tok.value}")
                 else:
-                    form_params.append(f"{param.var_name_tok.value}")
+                    form_params.append(f"{param.crop_name_tok.value}")
             # print("form param: ", form_params)
-            # print(f"assign form call: {item.var_name_tok.value} = '{value.value.value}'")
-            return f"{' '* current_indention}{item.var_name_tok.value} = {item.value_node.identifier.value}({','.join(form_params)})"
+            # print(f"assign form call: {item.crop_name_tok.value} = '{value.value.value}'")
+            return f"{' '* current_indention}{item.crop_name_tok.value} = {item.value_node.identifier.value}({','.join(form_params)})"
         #if value us a list
         elif isinstance(item.value_node, semantic.ListCallNode):
             index = read_nodes(item.value_node.index, {}, symbol_table)
-            if not isinstance(item.var_name_tok, semantic.Token):
-                index = read_nodes(item.var_name_tok.index, {}, symbol_table)
-                if isinstance(item.var_name_tok, semantic.ListCallNode):
-                    return f"{' '* current_indention}{item.var_name_tok.var_name.value}[{index}] {item.operation.value} {item.value_node.var_name.var_name_tok.value}[{item.value_node.index.var_name_tok.value}]"
+            if not isinstance(item.crop_name_tok, semantic.Token):
+                index = read_nodes(item.crop_name_tok.index, {}, symbol_table)
+                if isinstance(item.crop_name_tok, semantic.ListCallNode):
+                    return f"{' '* current_indention}{item.crop_name_tok.crop_name.value}[{index}] {item.operation.value} {item.value_node.crop_name.crop_name_tok.value}[{item.value_node.index.crop_name_tok.value}]"
                 else:
-                    return f"{' '* current_indention}{item.var_name_tok.value} {item.operation.value} {item.value_node.var_name.var_name_tok.value}[{item.value_node.index.value}]"
+                    return f"{' '* current_indention}{item.crop_name_tok.value} {item.operation.value} {item.value_node.crop_name.crop_name_tok.value}[{item.value_node.index.value}]"
             else:
-                return f"{' '* current_indention}{item.var_name_tok.value} {item.operation.value}  {item.value_node.var_name.var_name_tok.value}[{index}]"
+                return f"{' '* current_indention}{item.crop_name_tok.value} {item.operation.value}  {item.value_node.crop_name.crop_name_tok.value}[{index}]"
 
         value = read_nodes(item.value_node, {}, current_indention)
         #if the name is not a token
-        if not isinstance(item.var_name_tok, semantic.Token):
+        if not isinstance(item.crop_name_tok, semantic.Token):
             # print("here")
-            if isinstance(item.var_name_tok.index, semantic.BinOpNode):
-                index = read_nodes(item.var_name_tok.index, {}, symbol_table)
-                return f"{' '* current_indention}{item.var_name_tok.var_name.value}[{index}] {item.operation.value} {value}"
-        if isinstance(item.var_name_tok, semantic.ListCallNode):
+            if isinstance(item.crop_name_tok.index, semantic.BinOpNode):
+                index = read_nodes(item.crop_name_tok.index, {}, symbol_table)
+                return f"{' '* current_indention}{item.crop_name_tok.crop_name.value}[{index}] {item.operation.value} {value}"
+        if isinstance(item.crop_name_tok, semantic.ListCallNode):
             # print("list init")
-            index = read_nodes(item.var_name_tok.index, {}, symbol_table)
-            return f"{' '* current_indention}{item.var_name_tok.var_name.value}[{index}] {item.operation.value} {value}"
+            index = read_nodes(item.crop_name_tok.index, {}, symbol_table)
+            return f"{' '* current_indention}{item.crop_name_tok.crop_name.value}[{index}] {item.operation.value} {value}"
         # print('wat')
-        return f"{' '* current_indention}{item.var_name_tok.value} {item.operation.value} {value}"
-    elif isinstance(item, semantic.FormCallNode):
+        return f"{' '* current_indention}{item.crop_name_tok.value} {item.operation.value} {value}"
+    elif isinstance(item, semantic.CraftCallNode):
         # print("called form")
         line_tracker.set(item.pos_start.ln+1)
         line_tracker.advance()
         params = []
         for call_param in item.parameters:
             # Convert call_param.tok.value to string explicitly
-            if isinstance(call_param, semantic.VarAccessNode):
+            if isinstance(call_param, semantic.CropAccessNode):
                 # print("param var access")
-                param_value = f"{call_param.var_name_tok.value}"
+                param_value = f"{call_param.crop_name_tok.value}"
                 # print("param val: ", param_value)
             elif isinstance(call_param, semantic.NumberNode):
 
                 param_value = f"{call_param.tok.value}"
             elif isinstance(call_param, semantic.ListCallNode):
                 index = read_nodes(call_param.index, {}, symbol_table)
-                param_value = f"{call_param.var_name.var_name_tok.value}[{index}]"
+                param_value = f"{call_param.crop_name.crop_name_tok.value}[{index}]"
             else:
                 param_value = f"'{call_param.tok.value}'"
             params.append(param_value)
@@ -472,7 +474,7 @@ def read_nodes(item, symbol_table, current_indention = 0):
             return f"{' '* current_indention}{item.identifier.value}({parameters})"
 
 
-    elif isinstance(item, semantic.IfNode):
+    elif isinstance(item, semantic.StarNode):
         line_tracker.set(item.pos_start.ln+1)
         line_tracker.advance()
         cases_code = []
@@ -529,7 +531,7 @@ def read_nodes(item, symbol_table, current_indention = 0):
             
         current_indention -= 4
         return "\n".join(cases_code + else_case_code)
-    elif isinstance(item, semantic.WhirlNode):
+    elif isinstance(item, semantic.WinterNode):
         line_tracker.set(item.pos_start.ln+1)
         line_tracker.advance()
         whirl_code = []
@@ -546,15 +548,15 @@ def read_nodes(item, symbol_table, current_indention = 0):
         else:
             whirl_code.append(f"{' '* current_indention}break ")
         return "\n".join(whirl_code)
-    elif isinstance(item, VarAccessNode):
+    elif isinstance(item, semantic.CropAccessNode):
         # print("visiting var access read nodes")
-        if is_python_keyword(item.var_name_tok.value):
+        if is_python_keyword(item.crop_name_tok.value):
             
-            return f"{item.var_name_tok.value}1"
+            return f"{item.crop_name_tok.value}1"
         else:
-            return f"{item.var_name_tok.value}"
+            return f"{item.crop_name_tok.value}"
 
-    elif isinstance (item, semantic.SaturnCallNode):
+    elif isinstance (item, semantic.HarvestCallNode):
         line_tracker.set(item.pos_start.ln+1)
         # line_tracker.advance()
         # print("in saturn call transpiler")
@@ -570,8 +572,8 @@ def read_nodes(item, symbol_table, current_indention = 0):
         for i in item.items:
             # print("item in list: ", i)
             # print("i type: ", type(i))
-            if isinstance(i, VarAccessNode):
-                list_node_items.append(i.var_name_tok.value)
+            if isinstance(i, semantic.CropAccessNode):
+                list_node_items.append(i.crop_name_tok.value)
             elif isinstance(i, semantic.BooleanNode):
                 list_node_items.append('True')
             elif isinstance(i, semantic.NumberNode):
@@ -594,27 +596,27 @@ def read_nodes(item, symbol_table, current_indention = 0):
         line_tracker.advance()
         # print('post unary node transpiler')
         if item.operation.token == semantic.DECRE:
-            return f"{' ' * current_indention}{item.tok.var_name_tok.value}-=1"
+            return f"{' ' * current_indention}{item.tok.crop_name_tok.value}-=1"
         elif item.operation.token == semantic.INCRE:
-            return f"{' ' * current_indention}{item.tok.var_name_tok.value}+=1"
+            return f"{' ' * current_indention}{item.tok.crop_name_tok.value}+=1"
     elif isinstance(item, semantic.PreUnaryNode):
         line_tracker.set(item.pos_start.ln+1)
         line_tracker.advance()
         # print('post unary node transpiler')
         if item.operation.token == semantic.DECRE:
-            return f"{' ' * current_indention}{item.tok.var_name_tok.value}-=1"
+            return f"{' ' * current_indention}{item.tok.crop_name_tok.value}-=1"
         elif item.operation.token == semantic.INCRE:
-            return f"{' ' * current_indention}{item.tok.var_name_tok.value}+=1"
-    elif isinstance(item, semantic.SkipNode):
+            return f"{' ' * current_indention}{item.tok.crop_name_tok.value}+=1"
+    elif isinstance(item, semantic.NextNode):
         line_tracker.set(item.pos_start.ln + 1)
         line_tracker.advance()
         return f"{' ' * current_indention}continue"
-    elif isinstance(item, semantic.BlastNode):
+    elif isinstance(item, semantic.BreakNode):
         line_tracker.set(item.pos_start.ln + 1)
         line_tracker.advance()
         return f"{' ' * current_indention}break"
     
-    elif isinstance(item, semantic.ForceNode):
+    elif isinstance(item, semantic.FallNode):
         # print("in force node transpiler")
         line_tracker.set(item.pos_start.ln + 1)
         line_tracker.advance()
@@ -640,42 +642,42 @@ def read_nodes(item, symbol_table, current_indention = 0):
         
         current_indention -= 4
         return "\n".join(force_code)
-    elif isinstance(item, semantic.DoWhirlNode):
-        # print("do tok pos: ", item.do_tok.pos_start.ln+1)
-        do_whirl_code = []
-        if item.body:
-            for i in item.body:
-                val = read_nodes(i, {}, current_indention)
-                do_whirl_code.append(val)
-                # line_tracker.advance()
-            # print("current pos after : ", line_tracker.current_line)
-            # print("do whirl condition: ", type(item.condition))
-            condition = read_nodes(item.condition, {}, current_indention)
-            # print("dowhirl do tok pos start: ", item.do_tok.pos_start.ln+1)
-            # print("condition pos : ", item.condition.pos_start.ln+1)
-            do_whirl_code.append(f"{' '* current_indention}while {condition}: ")
-            current_indention += 4
-            line_tracker.set(item.condition.pos_start.ln + 1)
-            line_tracker.advance()
-            for i in item.body:
-                val = read_nodes(i, {}, current_indention)
-                do_whirl_code.append(val)
-            line_tracker.set(item.pos_start.ln + 1)
-            current_indention -= 4
-        # else:
-        #     force_code.append(f"{' '* current_indention}break")
-        # return f"{' ' * current_indention}"
-        return "\n".join(do_whirl_code)
+    # elif isinstance(item, semantic.DoWinterNode):
+    #     # print("do tok pos: ", item.do_tok.pos_start.ln+1)
+    #     do_whirl_code = []
+    #     if item.body:
+    #         for i in item.body:
+    #             val = read_nodes(i, {}, current_indention)
+    #             do_whirl_code.append(val)
+    #             # line_tracker.advance()
+    #         # print("current pos after : ", line_tracker.current_line)
+    #         # print("do whirl condition: ", type(item.condition))
+    #         condition = read_nodes(item.condition, {}, current_indention)
+    #         # print("dowhirl do tok pos start: ", item.do_tok.pos_start.ln+1)
+    #         # print("condition pos : ", item.condition.pos_start.ln+1)
+    #         do_whirl_code.append(f"{' '* current_indention}while {condition}: ")
+    #         current_indention += 4
+    #         line_tracker.set(item.condition.pos_start.ln + 1)
+    #         line_tracker.advance()
+    #         for i in item.body:
+    #             val = read_nodes(i, {}, current_indention)
+    #             do_whirl_code.append(val)
+    #         line_tracker.set(item.pos_start.ln + 1)
+    #         current_indention -= 4
+    #     # else:
+    #     #     force_code.append(f"{' '* current_indention}break")
+    #     # return f"{' ' * current_indention}"
+    #     return "\n".join(do_whirl_code)
     elif isinstance(item, semantic.ListCallNode):
         if isinstance(item.index, semantic.NumberNode):
-            return f"{item.var_name.var_name_tok.value}[{item.index.tok.value}]"
-        elif isinstance(item.index, semantic.VarAccessNode):
-            return f"{item.var_name.var_name_tok.value}[{item.index.var_name_tok.value}]"
+            return f"{item.crop_name.crop_name_tok.value}[{item.index.tok.value}]"
+        elif isinstance(item.index, semantic.CropAccessNode):
+            return f"{item.crop_name.crop_name_tok.value}[{item.index.crop_name_tok.value}]"
         elif isinstance(item.index, semantic.BinOpNode):
             val = read_nodes(item.index,{}, symbol_table)
-            return f"{item.var_name.var_name_tok.value}[{val}]"
+            return f"{item.crop_name.crop_name_tok.value}[{val}]"
         else:
-            return f"{item.var_name.var_name_tok.value}[{item.index.value}]"
+            return f"{item.crop_name.crop_name_tok.value}[{item.index.value}]"
 
 def convert_text_file_to_python_and_execute(ast, python_file):
     line_tracker.current_line = 1
@@ -696,24 +698,24 @@ def convert_text_file_to_python_and_execute(ast, python_file):
     # line_tracker.advance()
     current_indentation += 4
     for item in ast.body:
-        if isinstance(item, semantic.VarAssignNode):
+        if isinstance(item, semantic.CropAssignNode):
             # print("var assign line tracker: ", line_tracker.current_line)
             line_tracker.advance()
-            line_tracker.set(item.var_name_tok.pos_start.ln+1)
+            line_tracker.set(item.crop_name_tok.pos_start.ln+1)
             # print("in var assign node transpiler")
             if isinstance(item.value_node, semantic.VoidNode):
                 # print("found void node")
-                python_code.append(f"{' '* current_indentation}{item.var_name_tok.value} = void()")
+                python_code.append(f"{' '* current_indentation}{item.crop_name_tok.value} = void()")
             elif isinstance(item.value_node, semantic.ListCallNode):
-                python_code.append(f"{' '* current_indentation}{item.var_name_tok.value} = {item.value_node.var_name.var_name_tok.value}[{item.value_node.index.value}]")
+                python_code.append(f"{' '* current_indentation}{item.crop_name_tok.value} = {item.value_node.crop_name.crop_name_tok.value}[{item.value_node.index.value}]")
             value = read_nodes(item.value_node, {}, current_indentation)
             #key error wala sha sa dict
-            python_code.append(f"{' '* current_indentation}{item.var_name_tok.value} = {value}")
+            python_code.append(f"{' '* current_indentation}{item.crop_name_tok.value} = {value}")
 
-        elif isinstance(item, semantic.FormNode):
+        elif isinstance(item, semantic.CraftNode):
             params = []
             for p in item.parameters:
-                params.append(p.var_name_tok.value)
+                params.append(p.crop_name_tok.value)
             parameters = ",".join(params)
 
             line_tracker.set(item.identifier.pos_start.ln+1)
@@ -740,7 +742,7 @@ def convert_text_file_to_python_and_execute(ast, python_file):
             current_indentation -= 4
 
 
-        elif isinstance(item, semantic.GalaxyNode):
+        elif isinstance(item, semantic.PelicanNode):
             # print("theres a galaxy node")
             if item.body:
                 line_tracker.advance()

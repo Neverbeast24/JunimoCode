@@ -1896,7 +1896,7 @@ class HarvestCallNode:
         
 class ShipNode:
     def __init__(self, body, ship_tok= None):
-        
+        self.ship_tok = ship_tok
         self.parent = None
         self.body = body
         # self.list_of_nodes = list_of_nodes
@@ -2565,7 +2565,7 @@ class Parser:
                     print("found curly bracket")
                     self.advance()
                     result, body_error = self.body()
-                    print("RESULT: ", result)
+                    # print("RESULT: ", result.node)
                     if body_error:
                         pelican_node.errors = body_error
                     
@@ -2886,21 +2886,26 @@ class Parser:
                     self.advance()
                     #this is for <<
                     # self.advance()
-                    self.advance()
+                    expr = result.register(self.expr())
+                    list_of_nodes.append(expr)
+                    # self.advance()
+                    # self.advance()
                     print("current token in ship: ", self.current_tok)
                     while self.current_tok.token == ",":
                         self.advance()
+                        print("after comma loop: ", self.current_tok)
                         if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOIDEGG and self.current_tok.token != FLOAT:
                             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, left parenthesis, true, false, string or void!"))
+                            print("DI OKAY YUNG")
                             break
                         else:
                             expr = result.register(self.expr())
                             list_of_nodes.append(expr)
-                            self.advance()
+                            # self.advance()
                             # i should append this to a list
                             # print(list_of_nodes)
                         # print("last token in loop: ", self.current_tok)
-
+                    
                     res.append(ShipNode(list_of_nodes, ship_tok))
                     self.advance()
                     self.advance()
@@ -2961,12 +2966,13 @@ class Parser:
 
                         # i want to store this in thepelican node
                         res.append(HarvestCallNode(expr))
+                        print("EXPR HARVEST: ", type(expr))
                         # if sub_func == True:
                         #     self.advance()
                         # else:
                         #     self.advance()
-                        # self.advance()
-                        # self.advance()
+                        self.advance()
+                        self.advance()
                         print("[DEBUG] current val after harvest: ", self.current_tok)
                         return res, error
                         # return res, error
@@ -3067,7 +3073,8 @@ class Parser:
                 self.advance()
                 print("crop name: ", crop_name, self.current_tok)
                 #CropDecNode value: Collect(node)
-                return CropAssignNode(crop_name, CropAccessNode(crop_name)), None
+                
+                return CropAssignNode(crop_name, CollectNode(CropAccessNode(crop_name), prompt)), None
 
         else:
             print("found a comma in crop dec!: ", self.current_tok)
@@ -3493,7 +3500,7 @@ class Parser:
                         
                         expr = self.expr()
                         expr = expr.node
-                        craft_call.add_param(expr.node)
+                        craft_call.add_param(expr)
 
                             # form_call.add_param(CropAccessNode(var_name))
                 #this should be a ) token
@@ -4033,6 +4040,9 @@ class Interpreter:
             #     ))
             
             # print("found e_eq: ", type(left))
+            print("LEFT TYPE: ", type(left))
+            if isinstance(left, Token):
+                print("TOKEN LEFT: ", left)
             result, error = left.get_comparison_eq(right)
         elif node.op_tok.token == NOT_EQUAL:
             if isinstance(left or right, list):
@@ -4193,7 +4203,7 @@ class Interpreter:
                         return res.success(HarvestCallNode(expr_value))
                     if isinstance(item, ShipNode):
                         # print("outer in if")
-                        list_of_ship.append(ShipNode(expr_value))
+                        list_of_ship.append(ShipNode(expr_value, item.ship_tok))
                     # print("expr in if node: ", expr)
                     '''
                     res.append(result.success(SaturnCallNode(expr)))
@@ -4219,7 +4229,7 @@ class Interpreter:
                     return res.success(HarvestCallNode(dew_value))
                 if isinstance(item,ShipNode):
                     # print("outer in else")
-                    return res.success(ShipNode(dew_value))
+                    return res.success(ShipNode(dew_value, item.ship_tok))
             if res.error: return res
             return res.success(dew_value)
 
@@ -4765,7 +4775,7 @@ import parser_syntax
 import lexer
 import sys
 import semantic
-from nodes import convert_text_file_to_python_and_execute
+from nodes1 import convert_text_file_to_python_and_execute
 from pathlib import Path
 from ctypes import windll
 
@@ -4928,8 +4938,8 @@ class StardewLexerGUI:
         self.image_syntax_button.place(x=600, y=850) #x and y for syntax button
 
         #image for Output Button
-        self.output_button = Image.open("Images/Output.png") #placeholder for output button
-        self.resize_output_button = self.output_button.resize((200,50))
+        self.output_code_button = Image.open("Images/Output.png") #placeholder for output button
+        self.resize_output_button = self.output_code_button.resize((200,50))
         self.output_button_picture = ImageTk.PhotoImage(self.resize_output_button)
         self.image_output_button = tk.Button(image=self.output_button_picture, borderwidth=0, command=self.output_with_sound)
         self.image_output_button.place(x=600, y=780) #x and y for output button
@@ -5038,7 +5048,7 @@ class StardewLexerGUI:
 
     def output_with_sound(self):
         mixer.Sound.play(output_sound)
-        self.undo_input()
+        self.output_button()
 
 
     def analyze_code(self): #lexer button
@@ -5083,12 +5093,100 @@ class StardewLexerGUI:
         """Clear the code input box"""
         self.code_input.delete("1.0", tk.END)
         
-    def undo_input(self): #added for the undo button feature
-        """Undo the last action in the code input box"""
-        current_text = self.code_input.get("1.0", tk.END)
-        if len(current_text) > 1:  # Check if there's any text to undo
-            self.code_input.delete("1.0", tk.END)
-            self.code_input.insert("1.0", current_text[:-2])  # Remove the last character (including newline)
+    def output_button(self): #added for the undo button feature
+        input_text = self.code_input.get("1.0", "end-1c")  # Fetch input text
+        list_text = input_text.split("\n")  # Split input into lines
+
+        # Run the Lexer
+        lexer = Lexer("<stdin>", input_text)
+        lexer_result, lexer_errors = lexer.make_tokens()
+
+        # Ensure that token lists do not contain nested lists
+        lexer_result = [item for item in lexer_result if not (isinstance(item, list) or item.token == SPACE)]
+
+        # Clear previous UI output
+        self.terminal_output.delete("1.0", tk.END)
+        self.token_tree.delete(*self.token_tree.get_children())
+
+        # Display lexer output in the token tree view
+        count = 0
+        for token in lexer_result:
+            if isinstance(token, Token):  # Ensure it's a valid token object
+                count += 1
+                lexeme = token.value if token.value is not None else token.token
+                self.token_tree.insert("", tk.END, values=(count, lexeme, token.token))
+
+        # Display Lexer Errors
+        if lexer_errors:
+            for err in lexer_errors:
+                self.terminal_output.insert(tk.END, err + "\n")
+            return  # Stop execution if lexer errors exist
+
+        
+        # Run the Parser and obtain the AST
+        syntax_result, syntax_error = parser_syntax.run("<junimo code>", self.code)
+        if syntax_error:
+            # self.terminal_output.insert(tk.END, syntax_error.details)
+            # for err in syntax_error:
+            #     self.terminal_output.insert(tk.END, err.as_string())
+            for err in syntax_error:
+                if isinstance(err, list):
+                    for e in err:
+                        errorResult, fileDetail, arrowDetail, arrows = e.as_string()
+                        self.terminal_output.insert(tk.END, errorResult)
+                        self.terminal_output.insert(tk.END, fileDetail)
+                        self.terminal_output.insert(tk.END, arrowDetail)
+                        self.terminal_output.insert(tk.END, arrows)
+                        # errors_text.insert(tk.END, arrows)
+                else:
+                    errorResult, fileDetail, arrowDetail, arrows = err.as_string()
+                    self.terminal_output.insert(tk.END, errorResult)
+                    self.terminal_output.insert(tk.END, fileDetail)
+                    self.terminal_output.insert(tk.END, arrowDetail)
+                    self.terminal_output.insert(tk.END, arrows)
+                    # errors_text.insert(tk.END, arrows)
+            return
+
+        # new_parser = Parser(lexer_result)
+        # ast = new_parser.parse()
+        
+        # # print ("AST: ", ast)
+        # # Display AST in Debug Mode
+        # ast.display()
+
+        # # Prepare for Interpretation
+        # interpreter = Interpreter()
+        # symbol_table = SymbolTable("<Junimo Code>")  # Match program name
+        # symbol_table.symbols = {}
+        # ast.symbol_table = symbol_table
+
+
+        # # If successful, display success message
+        # self.terminal_output.insert(tk.END, "Success from Semantic\n")
+
+
+        semantic_result, error = semantic.run("<stdin>", input_text)
+        # print("semantic res: ", semantic_result)
+        if error:
+            for err in error:
+                errorResult, fileDetail, arrowDetail = err.as_string()
+                for e in errorResult:
+                    self.terminal_output.insert(tk.END, e)
+                    # print(e)
+
+                self.terminal_output.insert(tk.END, fileDetail)
+                # print(errorResult)
+                # print(arrowDetail.strip())
+                # print(fileDetail)
+                # no_wp = arrowDetail.replace("\t", "").replace("\n", "").replace("\r", "")
+                # print(no_wp)
+                # print(fileDetail)
+                self.terminal_output.insert(tk.END, arrowDetail)
+                return
+        # self.terminal_output.insert(tk.END, "Success from Semantic")
+        python_file = "generated_script.py"
+        transpiler_result = convert_text_file_to_python_and_execute(semantic_result, python_file)
+        # return 
 
 
     def syntax_analyzer(self): # syntax button

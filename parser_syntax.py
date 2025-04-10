@@ -2220,7 +2220,8 @@ class Parser:
                         return res, error
                     else:
                         self.advance()
-                        print('SUCCESS FROM VARIABLE DEC')
+                        print("SUCCESS FROM VARIABLE DEC: ", self.current_tok)
+                        
                         res.append(["SUCCESS from variable declaration!"])
                 
                 
@@ -3489,7 +3490,7 @@ class Parser:
                     expecting_arg = False
                 else:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,
-                                                    f"Unexpected token in ship() arguments: {self.current_tok.token}"))
+                    f"Unexpected token in ship() arguments: {self.current_tok.token}"))
                     return res, error
 
             elif self.current_tok.token == COMMA:
@@ -3500,7 +3501,7 @@ class Parser:
 
             else:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,
-                                                f"Expected ',' or ')' after argument, got: {self.current_tok.token}"))
+                f"Expected ',' or ')' after argument, got: {self.current_tok.token}"))
                 return res, error
 
         # # ✅ Terminator $
