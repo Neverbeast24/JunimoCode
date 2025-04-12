@@ -728,16 +728,15 @@ def convert_text_file_to_python_and_execute(ast, python_file):
             current_indentation += 4
             line_tracker.advance()
             if item.body:
-                if item.called == True:
-
-                    for i in item.body:
-                        res = read_nodes(i, item.symbol_table, current_indentation)
-                        python_code.append(f"{res}")
-                        # line_tracker.advance()
-                        # line_tracker.set(i.pos_start.ln+1)
-                else:
-                    python_code.append(f"{' ' * current_indentation}pass")
+                
+                for i in item.body:
+                    res = read_nodes(i, item.symbol_table, current_indentation)
+                    python_code.append(f"{res}")
+                    # line_tracker.advance()
+                    # line_tracker.set(i.pos_start.ln+1)
+                
             else:
+                print("function no body")
                 python_code.append(f"{' ' * current_indentation}pass")
             current_indentation -= 4
 
@@ -782,7 +781,7 @@ def convert_text_file_to_python_and_execute(ast, python_file):
     python_code.append(f"{' ' * current_indentation}_, line_number, func_name, text = frame")
     python_code.append(f"{' ' * current_indentation}if func_name == '<module>':")
     current_indentation += 4
-    python_code.append(f"{' ' * current_indentation}func_name = 'galaxy()'")
+    python_code.append(f"{' ' * current_indentation}func_name = 'pelican()'")
     current_indentation -= 4
     python_code.append(f"{' ' * current_indentation}try:")
     current_indentation += 4

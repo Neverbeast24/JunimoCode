@@ -4,31 +4,54 @@ import traceback
 line_map = load_dict_from_file('line_map.txt')
 lines = read_list_from_file('get_line.txt')
 try:
-    def Multiply (Val1,Val2):
-        Product = (Val1*Val2)
-        return Product
-    def Divide (Val1,Val2):
-        Quotient = (Val1*Val2)
-        return Quotient
-    def Add (A,B):
-        Sum = (A+B)
-        return Sum
-    def Subtract (A,B):
-        Difference = (A-B)
-        return Difference
-    A =  custom_input("Enter first number: ")
-    B =  custom_input("Enter second number: ")
-    Product = Multiply(A,B)
-    Quotient = Divide(A,B)
-    Sum = Add(A,B)
-    Difference = Subtract(A,B)
-    custom_print("Product: ",Product)
-    custom_print("\n")
-    custom_print("Quotient: ",Quotient)
-    custom_print("\n")
-    custom_print("Sum:  ",Sum)
-    custom_print("\n")
-    custom_print("Difference:  ",Difference)
+    def RightTriangle ():
+        custom_print("   *\n")
+        custom_print("  ***\n")
+        custom_print(" *****\n")
+        custom_print("*******\n")
+        return None
+    def Square ():
+        custom_print("****\n")
+        custom_print("****\n")
+        custom_print("****\n")
+        custom_print("****\n")
+        return None
+    def Rectangle ():
+        custom_print("*******\n")
+        custom_print("*******\n")
+        custom_print("*******\n")
+        return None
+    def InvertedRightTriangle ():
+        custom_print("****\n")
+        custom_print("***\n")
+        custom_print("**\n")
+        custom_print("*\n")
+        return None
+    def IsoscelesTriangle ():
+        custom_print("   *\n")
+        custom_print("  ***\n")
+        custom_print(" *****\n")
+        custom_print("*******\n")
+        return None
+    custom_print("Choose a shape:\n")
+    custom_print("1 - Right Triangle\n")
+    custom_print("2 - Square\n")
+    custom_print("3 - Rectangle\n")
+    custom_print("4 - Inverted Right Triangle\n")
+    custom_print("5 - Isosceles Triangle\n")
+    Choice =  custom_input("Enter choice (1-5): ")
+    if (Choice==1):
+        RightTriangle()
+    elif (Choice==2):
+        Square()
+    elif (Choice==3):
+        Rectangle()
+    elif (Choice==4):
+        InvertedRightTriangle()
+    elif (Choice==5):
+        IsoscelesTriangle()
+    else:
+        custom_print("Invalid Choice!")
 except Exception as e:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb = traceback.extract_tb(e.__traceback__)
@@ -37,7 +60,7 @@ except Exception as e:
     for frame in tb:
         _, line_number, func_name, text = frame
         if func_name == '<module>':
-            func_name = 'galaxy()'
+            func_name = 'pelican()'
         try:
             print(f'File <{func_name}>, line {line_map[str(line_number)]}')
             index = int(line_map[str(line_number)])

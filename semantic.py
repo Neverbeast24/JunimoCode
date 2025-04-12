@@ -3665,8 +3665,12 @@ class Interpreter:
             # print("found craft call")
             pass
         for item in node.functions:
+            
             if item.identifier.value == craft_ident:
                 # print("function is declared")
+                item.called = True
+                print("FUNCTION NAME: ", item.identifier.value)
+                print("FUNCTION called?: ", item.called)
                 if len(item.parameters) == len(craft_call_node.parameters):
                     # print("valid number of params")
                     #here we need to assign the value of params to the value of the form call param to to the value of the function
@@ -3680,7 +3684,7 @@ class Interpreter:
                         # Visit the parameter in the function call to resolve its value
                         param_value = self.visit(param_call_node, symbol_table)
                         if param_value.error:
-                            # print("error in calling param")
+                            print("error in calling param")
                             return res.failure(param_value.error)
                         # print("param value: ", param_value.value)
 
@@ -4943,7 +4947,7 @@ class StardewLexerGUI:
         self.resize_output_button = self.output_code_button.resize((200,50))
         self.output_button_picture = ImageTk.PhotoImage(self.resize_output_button)
         self.image_output_button = tk.Button(image=self.output_button_picture, borderwidth=0, command=self.output_with_sound)
-        self.image_output_button.place(x=600, y=900) #x and y for output button ito lang pala dear
+        self.image_output_button.place(x=600, y=780) #x and y for output button ito lang pala dear
 
         #image for Clear Button
         self.clear_button = Image.open("Images/Clear.png")
