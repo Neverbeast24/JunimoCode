@@ -4147,9 +4147,9 @@ class Interpreter:
         return res.success(value)
     
     def visit_WinterNode(self, node, symbol_table):
-        # print("found a whirl node")
+        # print("found a winter node")
         res = RTResult()
-        # print("whirl condition: ", node.condition)
+        # print("winter condition: ", node.condition)
         node.condition.parent = node
         condition_value = res.register(self.visit(node.condition, symbol_table))
         # print("condition value: ", condition_value)
@@ -4165,7 +4165,7 @@ class Interpreter:
                     print("error 1")
                     return res.failure(expr_value.error)
                 if isinstance(item, HarvestCallNode):
-                    # print("saturn call in whirl")
+                    # print("saturn call in winter")
                     return res.success(HarvestCallNode(expr_value))
                 
                 if res.error: 
@@ -4173,13 +4173,13 @@ class Interpreter:
                     return res
             return res.success(node)
     # def visit_DoWhirlNode(self, node, symbol_table):
-    #     # print("found a do whirl node")
+    #     # print("found a do winter node")
     #     res = RTResult()
     #     for item in node.body:
     #         value = self.visit(item, symbol_table)
     #         if value.error:
     #             return res.failure(value.error)
-    #     # print("do whirl condition: ", node.condition)
+    #     # print("do winter condition: ", node.condition)
     #     node.condition.parent = node
     #     condition_value = self.visit(node.condition, symbol_table)
     #     if condition_value.error:

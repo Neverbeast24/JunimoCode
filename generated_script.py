@@ -4,54 +4,18 @@ import traceback
 line_map = load_dict_from_file('line_map.txt')
 lines = read_list_from_file('get_line.txt')
 try:
-    def RightTriangle ():
-        custom_print("   *\n")
-        custom_print("  ***\n")
-        custom_print(" *****\n")
-        custom_print("*******\n")
-        return None
-    def Square ():
-        custom_print("****\n")
-        custom_print("****\n")
-        custom_print("****\n")
-        custom_print("****\n")
-        return None
-    def Rectangle ():
-        custom_print("*******\n")
-        custom_print("*******\n")
-        custom_print("*******\n")
-        return None
-    def InvertedRightTriangle ():
-        custom_print("****\n")
-        custom_print("***\n")
-        custom_print("**\n")
-        custom_print("*\n")
-        return None
-    def IsoscelesTriangle ():
-        custom_print("   *\n")
-        custom_print("  ***\n")
-        custom_print(" *****\n")
-        custom_print("*******\n")
-        return None
-    custom_print("Choose a shape:\n")
-    custom_print("1 - Right Triangle\n")
-    custom_print("2 - Square\n")
-    custom_print("3 - Rectangle\n")
-    custom_print("4 - Inverted Right Triangle\n")
-    custom_print("5 - Isosceles Triangle\n")
-    Choice =  custom_input("Enter choice (1-5): ")
-    if (Choice==1):
-        RightTriangle()
-    elif (Choice==2):
-        Square()
-    elif (Choice==3):
-        Rectangle()
-    elif (Choice==4):
-        InvertedRightTriangle()
-    elif (Choice==5):
-        IsoscelesTriangle()
-    else:
-        custom_print("Invalid Choice!")
+    Num = 1
+    custom_print("The perfect numbers are: ")
+    while (Num<=100): 
+        Sum = 0
+        I = 1
+        while (I<Num): 
+            if ((Num%I)==0):
+                Sum = (Sum+I)
+            I = (I+1)
+        if Sum==Num:
+            custom_print("\n",Num)
+        Num = (Num+1)
 except Exception as e:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb = traceback.extract_tb(e.__traceback__)

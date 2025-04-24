@@ -3696,7 +3696,7 @@ class Parser:
         
         # print("IN IF WHIRL NOW")
         if self.current_tok.token == NOT_OP:
-            # print("found not op in if whirl condition")
+            # print("found not op in if winter condition")
             self.advance()
             if self.current_tok.token != LPAREN:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected parenthesis for relational after not operator!"))
@@ -3867,7 +3867,7 @@ class Parser:
                        
                 else:
                     print("star wingter condition: ", self.current_tok)
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier! whirl condition"))
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier! winter condition"))
             elif self.current_tok.token in LOG_OP:
                 print("LOG OP FOUND")
                 self.advance()

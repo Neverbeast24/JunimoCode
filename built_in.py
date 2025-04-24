@@ -45,6 +45,8 @@ def custom_print(*args):
             result.append("void")
         elif value is True:
             result.append("true")
+        elif isinstance(value, float) and value.is_integer():
+            result.append(str(int(value)))
         else:
             result.append(str(value))
     print("".join(result), end = '')
