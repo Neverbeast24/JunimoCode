@@ -1,21 +1,27 @@
-from built_in import custom_input, custom_print, load_dict_from_file, read_list_from_file, void, append, remove, length
+from built_in import custom_input, custom_print, load_dict_from_file, read_list_from_file, void, Add, Pluck, Length
 import sys
 import traceback
 line_map = load_dict_from_file('line_map.txt')
 lines = read_list_from_file('get_line.txt')
 try:
-    Num = 1
-    custom_print("The perfect numbers are: ")
-    while (Num<=100): 
-        Sum = 0
-        I = 1
-        while (I<Num): 
-            if ((Num%I)==0):
-                Sum = (Sum+I)
-            I = (I+1)
-        if Sum==Num:
-            custom_print("\n",Num)
-        Num = (Num+1)
+    A =  custom_input("Enter number: ")
+    Fib = []
+    if (A==0):
+        Add(Fib,0)
+    elif (A==1):
+        Add(Fib,0)
+    else:
+        Add(Fib,0)
+        Add(Fib,1)
+        Int = 2
+        while (Int<A): 
+            Next = (Fib[(Int-1)]+Fib[(Int-2)])
+            Add(Fib)
+            Int+=1
+    Index = (A-1)
+    while (Index>=0): 
+        custom_print(Fib[Index]," ")
+        Index = (Index-1)
 except Exception as e:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb = traceback.extract_tb(e.__traceback__)

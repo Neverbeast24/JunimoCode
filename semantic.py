@@ -3719,7 +3719,7 @@ class Interpreter:
                 craft_call_node.pos_start, craft_call_node.pos_end,
                 f"\ncraft '{craft_ident}' takes {len(item.parameters)} parameters, received {len(craft_call_node.parameters)} arguments ",
             ))
-        if craft_ident == "add" or craft_ident == "pluck" or craft_ident == "length":
+        if craft_ident == "Add" or craft_ident == "Pluck" or craft_ident == "Length":
             return res.success(craft_call_node)
         return res.failure(SemanticError(
                 craft_call_node.pos_start, craft_call_node.pos_end,

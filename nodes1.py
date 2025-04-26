@@ -150,7 +150,7 @@ def read_nodes(item, symbol_table, current_indention = 0):
     elif isinstance(item, semantic.StringNode):
         # print("Numbernode: ", item.tok.value)
         value = item.tok.value
-        return f"'{value}'"
+        return f'{value}'
     elif isinstance(item, semantic.BinOpNode):
         # print("found bin op!")
         
@@ -687,7 +687,7 @@ def convert_text_file_to_python_and_execute(ast, python_file):
     print("----------------")
     # ast.display()
     
-    python_code = ["from built_in import custom_input, custom_print, load_dict_from_file, read_list_from_file, void, append, remove, length", "import sys", "import traceback", "line_map = load_dict_from_file('line_map.txt')", "lines = read_list_from_file('get_line.txt')","try:"]
+    python_code = ["from built_in import custom_input, custom_print, load_dict_from_file, read_list_from_file, void, Add, Pluck, Length", "import sys", "import traceback", "line_map = load_dict_from_file('line_map.txt')", "lines = read_list_from_file('get_line.txt')","try:"]
     #advance line tracker 4 times coz we appended 4 items
     line_tracker.advance()
     line_tracker.advance()

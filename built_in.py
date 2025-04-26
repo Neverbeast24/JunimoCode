@@ -51,7 +51,7 @@ def custom_print(*args):
             result.append(str(value))
     print("".join(result), end = '')
 
-def append(List, value):
+def Add(List, value):
     if value == 'true':
         List.append(True)
     else:
@@ -62,7 +62,7 @@ def append(List, value):
     # print("new list: ", List)
     return List
 
-def remove(List,value):
+def Pluck(List,value):
     try:
         
         List.remove(value)
@@ -77,7 +77,7 @@ def remove_at_index(List,index):
         raise IndexError(f"Index {index} is out of range.")
     return List
 
-def length(item):
+def Length(item):
     length_val = len(item)
     return length_val
 
