@@ -96,7 +96,7 @@ def read_nodes(item, symbol_table, current_indention = 0):
                         param_value = f"{call_param.crop_name.crop_name_tok.value}[{index}]"
                         params.append(param_value)
                     elif isinstance(call_param, semantic.CropAccessNode):
-                        
+                        print("param var access")
                         param_value = f"{call_param.crop_name_tok.value}"
                         params.append(param_value)
                     else:
@@ -446,16 +446,17 @@ def read_nodes(item, symbol_table, current_indention = 0):
         # print('wat')
         return f"{' '* current_indention}{item.crop_name_tok.value} {item.operation.value} {value}"
     elif isinstance(item, semantic.CraftCallNode):
-        # print("called form")
+        print("called CRAFT")
         line_tracker.set(item.pos_start.ln+1)
         line_tracker.advance()
         params = []
         for call_param in item.parameters:
             # Convert call_param.tok.value to string explicitly
+            print("ITEM: ", item.parameters)
             if isinstance(call_param, semantic.CropAccessNode):
-                # print("param var access")
+                print("param var access")
                 param_value = f"{call_param.crop_name_tok.value}"
-                # print("param val: ", param_value)
+                print("param val: ", param_value)
             elif isinstance(call_param, semantic.NumberNode):
 
                 param_value = f"{call_param.tok.value}"

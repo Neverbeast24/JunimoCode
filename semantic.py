@@ -2734,6 +2734,7 @@ class Parser:
                                 self.advance()
                             elif self.current_tok.token == IDENTIFIER:
                                 print("ident craft")
+                                craft_call.add_param(CropAccessNode(self.current_tok))
                             
                         self.advance()
                         res.append(craft_call)
@@ -3477,11 +3478,13 @@ class Parser:
                    
                     expr = self.expr()
                     expr = expr.node
+                    
                 craft_call.add_param(expr)
                 print("craft call add param: ", self.current_tok)
                     # self.advance()
                 
                 while self.current_tok.token == COMMA:
+                    print("found comma in craft call")
                     self.advance()
                     if self.current_tok.token in (INTEGER, FLOAT):
                         craft_call.add_param(NumberNode(self.current_tok))
@@ -3501,7 +3504,7 @@ class Parser:
                         
                         expr = self.expr()
                         expr = expr.node
-                        craft_call.add_param(expr)
+                    craft_call.add_param(expr)
 
                             # form_call.add_param(CropAccessNode(var_name))
                 #this should be a ) token
