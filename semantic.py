@@ -2519,6 +2519,7 @@ class Parser:
                                     
                                     result, body_error = self.body()
                                     if body_error:
+                                        print("CRAFT NODE BODY ERROR")
                                         craft_node.errors = body_error
                                     
                                     for item in result:
@@ -2546,6 +2547,8 @@ class Parser:
                         
                         program.add_child(craft_node)
                         self.advance()
+                        
+                        
 
             # -- this is the main body of our function! 
             # * also i call body() here
@@ -2695,6 +2698,7 @@ class Parser:
                 if self.current_tok.token in INTEGER:
                     res = self.expr()
                 if self.current_tok.token == IDENTIFIER:
+                    print("FOUND AN IDENTIFIER!: ", self.current_tok)
                     crop_name = self.current_tok
                     self.advance()
                     #-- if it's a function call
@@ -2705,7 +2709,7 @@ class Parser:
                             print("NUMBER ARGUMENT: ", self.current_tok)
                             craft_call.add_param(NumberNode(self.current_tok))
                             self.advance()
-                        if self.current_tok.token == STRING:
+                        elif self.current_tok.token == STRING:
                             craft_call.add_param(StringNode(self.current_tok))
                             self.advance()
                         elif self.current_tok.token in (TRUE, FALSE):
@@ -2733,8 +2737,10 @@ class Parser:
                                 craft_call.add_param(VoidNode(self.current_tok))
                                 self.advance()
                             elif self.current_tok.token == IDENTIFIER:
+                                
                                 print("ident craft")
                                 craft_call.add_param(CropAccessNode(self.current_tok))
+                                self.advance()
                             
                         self.advance()
                         res.append(craft_call)
@@ -2785,6 +2791,7 @@ class Parser:
                             self.advance()
                     # -- else no other operation for it
                     else:
+                        
                         print("[DEBUG] error token: ", self.current_tok)
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator, increment, decrement, or call craft!"))
                         return [], error
