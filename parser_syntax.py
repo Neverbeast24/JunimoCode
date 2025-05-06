@@ -1685,7 +1685,7 @@ class Parser:
                 
             
 
-        # * basically yung parse lang pero walang form
+        # * basically yung parse lang pero walang craft
 
         while True:
             # if self.current_tok.token == SEMICOLON:
@@ -1717,10 +1717,10 @@ class Parser:
         
             
                      
-            #VAR DECLARATION  DAT MAY GLOBAL
+            #CROP DECLARATION  DAT MAY GLOBAL
             if self.current_tok.token in FARMHOUSE:
                 if self.is_pelican == True:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please declare global variables before pelican!"))
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Please declare global crops before pelican!"))
                     break
                 else:
                     self.advance() 
@@ -1742,7 +1742,7 @@ class Parser:
                             res.append(["SUCCESS from global declaration!"])
                     else:
                         print("check", self.current_tok)
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid global variable declaration!"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid global crop declaration!"))
                         break
 
             # ? pwede i-bring back pag need specific
@@ -1878,7 +1878,7 @@ class Parser:
                     self.advance()
             else:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis for pelican!"))   
-        #form add(a, b)
+        #craft add(a, b)
         else:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected parentheses for parameters!"))
             return res, error
@@ -1891,7 +1891,7 @@ class Parser:
         error = []
 
         
-        # * basically yung parse lang pero walang form
+        # * basically yung parse lang pero walang craft
 
         while True:
             if self.is_statement():
@@ -2204,7 +2204,7 @@ class Parser:
                             self.advance()
 
                         
-                # VAR DECLARATION            
+                # CROP DECLARATION            
                 if self.current_tok.token in CROP: 
                     var, crop_error = self.crop_dec()
                     if crop_error:
@@ -2222,7 +2222,7 @@ class Parser:
                         self.advance()
                         print("SUCCESS FROM VARIABLE DEC: ", self.current_tok)
                         
-                        res.append(["SUCCESS from variable declaration!"])
+                        res.append(["SUCCESS from crop declaration!"])
                 
                 
                 if self.current_tok.token in CRAFT:
@@ -2291,7 +2291,7 @@ class Parser:
         else:
             return False
 
-    #* initialize a variable
+    #* initialize a crop(crop)
     def init_crop(self):
         
         res = []
@@ -2331,14 +2331,14 @@ class Parser:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator!"))
         return res, error
     
-    #*declare a variable
+    #*declare a crop
     def crop_dec(self):
         res = []
         error = []
-        # -- token when entering this function is 'var'
+        # -- token when entering this function is crop
         self.advance()
 
-        # -- if the user doesnt type an identiifier after 'var'
+        # -- if the user doesnt type an identiifier after crop
         if self.current_tok.token != IDENTIFIER:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier"))
         else:
@@ -2378,13 +2378,13 @@ class Parser:
                     else:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid  condition!"))
             elif self.current_tok.token == TERMINATOR:
-                res.append("SUCCESS from variable declaration")
+                res.append("SUCCESS from crop declaration")
             else:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected equal, comma or dollar sign!"))
 
         return res, error
     
-    #* assign a value of a variable
+    #* assign a value of a crop
     # -- may string, and boolean here, id, num, void, also paren support, used in =
     def assign_val(self):
         res = []
@@ -2428,7 +2428,7 @@ class Parser:
                 for err in n_error:
                     error.append(err)
             else:
-                res.append("Success form ident assign!")
+                res.append("Success craft ident assign!")
 
             return res, error
         
@@ -2443,7 +2443,7 @@ class Parser:
                     error.append(err)
             else:
                 
-                res.append("Success form ident assign!")
+                res.append("Success craft ident assign!")
         
         elif self.current_tok.token == TRUE:
             self.advance()
@@ -2570,11 +2570,11 @@ class Parser:
                     if self.in_farmhouse == True:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot call craft in farmhouse declaration/initialization!"))
                         return res, error
-                    # print("we assigned a function call to a variable")
+                    # print("we assigned a function call to a crop")
                     c_craft, call_craft_error = self.call_craft()
-                    # print("token after call form in assign val: ", self.current_tok.token)
+                    # print("token after call craft in assign val: ", self.current_tok.token)
                     #self.advance()
-                    # print('call form result in assign val:', c_form)
+                    # print('call craft result in assign val:', c_form)
                     if call_craft_error:
                         print("ERROR IN VALL CRAFT") 
                         for err in call_craft_error:
@@ -2587,7 +2587,7 @@ class Parser:
                             # -- USED SELF.ASSIGN_VAL()
                             self.advance()
                             check, err = self.assign_val2([MUL, DIV, PLUS, MINUS, MODULUS])
-                            print("token after form arith: ", self.current_tok)
+                            print("token after craft arith: ", self.current_tok)
                             if  err:
                                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!!"))
 
@@ -2618,7 +2618,7 @@ class Parser:
                             if err:
                                 error.append(err)
                             else:
-                                res.append("Success form ident assign!")
+                                res.append("Success craft ident assign!")
                 elif self.current_tok.token in (INCRE, DECRE):
                     if self.in_farmhouse == True:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
@@ -2635,7 +2635,7 @@ class Parser:
                     if err:
                         error.append(err)
                     else:
-                        res.append("Success form ident assign!")
+                        res.append("Success craft ident assign!")
 
         elif self.current_tok.token == LPAREN:
             print("PARENTHESIS IN ASSIGN")
@@ -2664,7 +2664,7 @@ class Parser:
                                     error.append(e)
 
                             else:
-                                res.append("Success form ident assign!")
+                                res.append("Success craft ident assign!")
 
                         return res, error
                         
@@ -2893,7 +2893,7 @@ class Parser:
                     print("[DEBUG] Empty parameter list using '()' detected")
                     self.advance()  # Move past the closing parenthesis
                 else:
-                    # Expecting parameters in the form of 'crop Identifier'
+                    # Expecting parameters in the craft of 'crop Identifier'
                     while self.current_tok.token == CROP:
                         print("[DEBUG] Found 'crop' keyword in parameters")
                         self.advance()
@@ -3214,14 +3214,14 @@ class Parser:
                                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid  scope!"))
         return res, error
 
-    # -- need a function for the var dec of 
+    # -- need a function for the crop dec of 
     def fall_crop_dec(self):
         res = []
         error = []
-        # -- token when entering this function is 'var'
+        # -- token when entering this function is crop
         self.advance()
 
-        # -- if the user doesnt type an identiifier after 'var'
+        # -- if the user doesnt type an identiifier after crop
         if self.current_tok.token != IDENTIFIER:
             print("bro put an identifier!")
             print("current tok: ", self.current_tok.token)
@@ -3241,14 +3241,14 @@ class Parser:
                     
                 else:
                     #self.advance()
-                    # print("CURRENT TOKEN FROM VAR DEC INIT: ", self.current_tok)
+                    # print("CURRENT TOKEN FROM CROP DEC INIT: ", self.current_tok)
                     res.append("success init first statement ")
                 
             
             else:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected = !"))
 
-            #res.append("SUCCESS! from variable declaration")
+            #res.append("SUCCESS! from crop declaration")
 
 
         return res, error
@@ -3284,14 +3284,14 @@ class Parser:
         res = []
         error = []
         if self.current_tok.token == CROP:
-            # print("this is a var token")
+            # print("this is a crop token")
             crop, crop_error = self.fall_crop_dec()
             if crop_error:
                 error.extend(crop_error)
                 return res, error
             #res.append(var)
             #self.advance()
-            # print("current token from var dec parse: ", self.current_tok)
+            # print("current token from crop dec parse: ", self.current_tok)
             
             if self.current_tok.token != TERMINATOR:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
@@ -3371,7 +3371,7 @@ class Parser:
             self.advance()
             #-- if we assign a value to it but not declaring it           
             if self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
-                print("initialize the variable")
+                print("initialize the crop")
                 assign, a_error = self.init_crop()
 
                 if a_error:

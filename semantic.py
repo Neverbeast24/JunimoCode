@@ -2245,7 +2245,7 @@ class ParseResult:
 
 class Program:
     def __init__(self, symbol_table = None):
-        #has universe declarations
+        #has farmhouse declarations
         #has functions
         #has main
         self.parent = None
@@ -2851,7 +2851,7 @@ class Parser:
                 # star (if)
                 if self.current_tok.token in STAR:
                     print("FOUND STARR")
-                   #need this for checking skip and continue
+                   
                     self.in_condition = True
 
                     self.advance()
@@ -3027,7 +3027,7 @@ class Parser:
         self.advance()
         print("this is current variable: ", crop_name)
         if self.current_tok.token == EQUAL:
-            print("FOUND AN EQUAL IN VAR DEC")
+            print("FOUND AN EQUAL IN CROP DEC")
             #res.register_advancement()
             self.advance()
             # this only gets the node from expr, not the ParserResult
@@ -3177,7 +3177,7 @@ class Parser:
     def fall_stmt(self):
         #return a list of []
         print("FALL STATEMENT: ", self.current_tok)
-        #TODO create force
+        #TODO create fall
         if self.current_tok.token == LPAREN:
             self.advance()
             if self.current_tok.token == CROP:
@@ -3479,7 +3479,7 @@ class Parser:
                     #     index = index.node
                     #     print("after index: ", self.current_tok )
                     #     self.advance()
-                    #     form_call.add_param(ListCallNode(CropAccessNode(var_name), index))
+                    #     craft_call.add_param(ListCallNode(CropAccessNode(crop_name), index))
                     # index = self.expr()
                     # index = index.node
                    
@@ -3513,7 +3513,7 @@ class Parser:
                         expr = expr.node
                     craft_call.add_param(expr)
 
-                            # form_call.add_param(CropAccessNode(var_name))
+                            # craft_call.add_param(CropAccessNode(crop_name))
                 #this should be a ) token
                 self.advance()
                 # self.advance()
@@ -3683,8 +3683,8 @@ class Interpreter:
                 print("FUNCTION called?: ", item.called)
                 if len(item.parameters) == len(craft_call_node.parameters):
                     # print("valid number of params")
-                    #here we need to assign the value of params to the value of the form call param to to the value of the function
-                    # ah so we can set the value of test(var a, var b) var a to "hello"
+                    #here we need to assign the value of params to the value of the craft call param to to the value of the function
+                    # ah so we can set the value of test(crop a, var b) crop a to "hello"
                     #current item should be assigned to the symbol table of the parameter's function
             
                     for i in range(len(item.parameters)):
@@ -3700,22 +3700,22 @@ class Interpreter:
 
                         # Assign the value to the corresponding parameter in the symbol table
                         item.symbol_table.set(param_item.crop_name_tok.value, param_value.value)
-                        # print(f"symbol table of the called param {i}: ", form_call_node.parent.symbol_table.symbols)
+                        # print(f"symbol table of the called param {i}: ", craft_call_node.parent.symbol_table.symbols)
                         
                     item.called = True
                     for i in item.body:
-                        # print("item in the called form: ", i)
-                        # if isinstance(i, SaturnCallNode):
-                        #     # print("found saturn call in called form")
+                        # print("item in the called craft: ", i)
+                        # if isinstance(i, HarvestCallNode):
+                        #     # print("found harvesst call in called craft")
                         #     value = self.visit(i, item.symbol_table)
-                        #     # print("saturn symbol table: ", item.symbol_table.symbols)
-                        #     # print("value of saturn call: ", value.value)
+                        #     # print("harvest symbol table: ", item.symbol_table.symbols)
+                        #     # print("value of harvest call: ", value.value)
                         #     if value.error:
                         #         return res.failure(value.error)
-                        #     # print("node.value form call: ", node.val)
+                        #     # print("node.value craft call: ", node.val)
                         #     # i.value = value.value
                             
-                        #     form_call_node.value = value.value
+                        #     craft_call_node.value = value.value
                         #     break
                         value = self.visit(i, item.symbol_table)
                         
@@ -3769,11 +3769,11 @@ class Interpreter:
 
     def visit_HarvestCallNode(self, node, symbol_table):
         res = RTResult()
-        # print("saturn call value node: ", node.value_node)
-        # print("visit saturn: ", symbol_table.symbols)
+        # print("harvest call value node: ", node.value_node)
+        # print("visit harvest: ", symbol_table.symbols)
         node.value_node.parent = node
         value = self.visit(node.value_node, symbol_table)
-        # print('value in saturn call: ', (value.error))
+        # print('value in harvest call: ', (value.error))
         if value.error:
             return res.failure(value.error)
         node.value = value
@@ -3784,8 +3784,8 @@ class Interpreter:
         res = RTResult()
         values = []
         for item in node.body:
-            # print("item in outer: ", item)
-            # if isinstance(item, FormCallNode):
+            # print("item in ship: ", item)
+            # if isinstance(item, CraftCallNode):
             #     item.parent = node.parent
             item.parent = node
             # print("item: ", item)
@@ -3804,24 +3804,24 @@ class Interpreter:
         return res.success(values)
     
     def visit_CollectNode(self, node, context):
-        # print("inner parent: ", node.parent)
+        # print("collect parent: ", node.parent)
         # print("variable node: ", node.variable_node)
         res = RTResult()
         value = self.visit(node.variable_node, context)
         if value.error:
             print("ERROR IN COLLECTNODE")
             return res.failure(value.error)
-        # print("value inner: ", value.value)
-        # print("paren symbol table inner before setting: ", node.parent.symbol_table.symbols)
+        # print("value collect: ", value.value)
+        # print("paren symbol table collect before setting: ", node.parent.symbol_table.symbols)
         print("CROP NAME TOk: ", node.variable_node.crop_name_tok)
         context.set(node.variable_node.crop_name_tok, value.value)
-        # print("paren symbol table inner: ", node.parent.symbol_table.symbols)
+        # print("paren symbol table collect: ", node.parent.symbol_table.symbols)
         return res.success(node)
     # identifier: a
 
     
     def visit_CropAssignNode(self, node, symbol_table):
-        print("in var assign node: ", node.crop_name_tok)
+        print("in crop assign node: ", node.crop_name_tok)
         print("Node value: ", node.value_node)
         res = RTResult()
         crop_name = node.crop_name_tok.value
@@ -3876,9 +3876,9 @@ class Interpreter:
                     node.pos_start, node.pos_end,
                     f"\n'{crop_name}' is not defined",
                 ))      
-        # print("in var assign node: ", node.var_name_tok)
+        # print("in crop assign node: ", node.crop_name_tok)
         res = RTResult()
-        # var_name = node.var_name_tok.value
+        # crop_name = node.crop_name_tok.value
         if isinstance(node.value_node, CraftCallNode):
             # print("assigning a function")
             node.value_node.parent = node.parent
@@ -3898,7 +3898,7 @@ class Interpreter:
     def visit_CropDecNode(self, token, context):
         res = RTResult()
         crop_name = token.crop_name_tok
-        # print("var name: ", var_name)
+        # print("crop name: ", crop_name)
         #value = res.register(self.visit(node.value_node, context))
         if res.error: return res
 
@@ -3975,7 +3975,7 @@ class Interpreter:
     def visit_BinOpNode(self, node, context):
         # print("bin op parent", node.parent)
         res = RTResult()
-        # if isinstance(item, FormCallNode):
+        # if isinstance(item, CraftCallNode):
         #     item.parent = node.parent
         if isinstance(node.left_node, CraftCallNode) or isinstance(node.left_node, BinOpNode):
             node.left_node.parent = node.parent
@@ -4175,26 +4175,14 @@ class Interpreter:
                     print("error 1")
                     return res.failure(expr_value.error)
                 if isinstance(item, HarvestCallNode):
-                    # print("saturn call in winter")
+                    # print("harvest call in winter")
                     return res.success(HarvestCallNode(expr_value))
                 
                 if res.error: 
                     print("error 2")
                     return res
             return res.success(node)
-    # def visit_DoWhirlNode(self, node, symbol_table):
-    #     # print("found a do winter node")
-    #     res = RTResult()
-    #     for item in node.body:
-    #         value = self.visit(item, symbol_table)
-    #         if value.error:
-    #             return res.failure(value.error)
-    #     # print("do winter condition: ", node.condition)
-    #     node.condition.parent = node
-    #     condition_value = self.visit(node.condition, symbol_table)
-    #     if condition_value.error:
-    #         return res.failure(condition_value.error)
-    #     return res.success(node)
+
     def visit_StarNode(self, node, context):
         list_of_ship = []
         res = RTResult()
@@ -4214,14 +4202,14 @@ class Interpreter:
                 for item in expr:
                     expr_value = res.register(self.visit(item, context))
                     if isinstance(item, HarvestCallNode):
-                        # print("saturn call in if")
+                        # print("return call in if")
                         return res.success(HarvestCallNode(expr_value))
                     if isinstance(item, ShipNode):
-                        # print("outer in if")
+                        # print("ship in if")
                         list_of_ship.append(ShipNode(expr_value, item.ship_tok))
                     # print("expr in if node: ", expr)
                     '''
-                    res.append(result.success(SaturnCallNode(expr)))
+                    res.append(result.success(HarvestCallNode(expr)))
                     '''
                     if res.error: 
                         return res
@@ -4239,11 +4227,11 @@ class Interpreter:
             for item in node.dew_case:
                 dew_value = res.register(self.visit(item, context))
                 if isinstance(item, HarvestCallNode):
-                    # print("saturn call in if")
+                    # print("return call in if")
                     # print("else value type: ", type(dew_value))
                     return res.success(HarvestCallNode(dew_value))
                 if isinstance(item,ShipNode):
-                    # print("outer in else")
+                    # print("ship in else")
                     return res.success(ShipNode(dew_value, item.ship_tok))
             if res.error: return res
             return res.success(dew_value)
@@ -4569,7 +4557,7 @@ class String:
         return self
 
     def concat(self, other):
-        # if isinstance(other, String) or isinstance(other, FormCallNode):
+        # if isinstance(other, String) or isinstance(other, CraftCallNode):
         #     string = ''
         #     # string += self.value
         #     # string += other.value
