@@ -4726,17 +4726,25 @@ def run(fn, text):
     # print("ast: ", ast)
     #ast is a Program instance
     # print("ast body: ", ast.body)
-    ast.display()
+    ast.display() # ast yung nirereturn ng parser, ast is a Program instance, yung Program may display method-- yun yung nag pprint sa terminal
     #ast is a Program instance
     # -- return ast
     #here i need to visit the ast nodes hahaha
     
     interpreter = Interpreter()
-    symbol_table = SymbolTable("<Junimo Code>")
+    symbol_table = SymbolTable("<Junimo Code>") # gawa ng symbol table
     # context.symbol_table = global_symbol_table
-    symbol_table.symbols = {}
-    ast.symbol_table = symbol_table
+    symbol_table.symbols = {} #initialize empty symbol table
+    ast.symbol_table = symbol_table # yung Program instance may symbol_table na property
     res = interpreter.visit(ast, symbol_table)
+    #ast is a Program instance
+    # for every node sa ast, ivivisit natin siya
+    # tapos each node has a child, ivivisit den natin yun
+    # Program
+        # FarmhouseNode
+        # CraftNode
+        # PelicanNode
+            # ShipNode
     
     if res.errors:
         print("found error in program")

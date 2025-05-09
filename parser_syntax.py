@@ -3602,16 +3602,16 @@ class Parser:
                                         # print("current token from else parse: ", self.current_tok)
                             #self.advance()
                             #added now 
-                            if self.current_tok.token == CRBRACKET:
-                                self.advance()
-                                res.append([f"SUCCESS from star"])
-                            else:
-                                error.append(InvalidSyntaxError(
-                                    self.current_tok.pos_start,
-                                    self.current_tok.pos_end,
-                                    "Expected closing curly brace '}' after star condition!"
-                                ))
-                                return [], error
+                            # if self.current_tok.token == CRBRACKET:
+                            #     self.advance()
+                            #     res.append([f"SUCCESS from star"])
+                            # else:
+                            #     error.append(InvalidSyntaxError(
+                            #         self.current_tok.pos_start,
+                            #         self.current_tok.pos_end,
+                            #         "Expected closing curly brace '}' after star condition!"
+                            #     ))
+                            #     return [], error
                             # until here         
                             return res, error
                     else:
