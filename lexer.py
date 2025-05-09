@@ -47,11 +47,11 @@ number = '123456789'
 all_numbers = zero + number
 
 #alphanumeric and special symbols
-punctuation_symbols = "~!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
+punctuation_symbols = "-!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
 alpha_num = all_letters + all_numbers 
 ascii = all_letters + punctuation_symbols + all_numbers
-ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+~" + all_letters + all_numbers
-ascii_comment = all_letters + all_numbers + "~!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
+ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+-" + all_letters + all_numbers
+ascii_comment = all_letters + all_numbers + "-!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
 #operators
 arithmetic_ops = "+-*/%"
 relational_ops = '><==!<=>=!='
@@ -59,7 +59,7 @@ logical_ops = '||&&!'
 unary_ops = '++--'
 assignment_ops = '=+=-=*=/='
 op_delim = logical_ops + arithmetic_ops + relational_ops
-negative = '~'
+negative = '-'
 
 #others
 whitespace = " "
@@ -347,14 +347,14 @@ class Lexer:
                         continue
                     tokens.append(Token(EQUAL, "=")) #for == symbol
 
-            elif self.current_char == '~':
+            elif self.current_char == '-':
                 self.advance()
                 if self.current_char is not None and self.current_char in negative_delim:
                     result, error = self.make_number()
-                    result = Token(result.token, "~" + str(result.value))
+                    result = Token(result.token, "-" + str(result.value))
                     tokens.append(result)
                 else:
-                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ~ '. Cause: ' {self.current_char} '. Expected:  {number}"])
+                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' - '. Cause: ' {self.current_char} '. Expected:  {number}"])
 
             elif self.current_char == '<': #relational operator
                 self.advance()

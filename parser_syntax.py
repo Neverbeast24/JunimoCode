@@ -48,11 +48,11 @@ number = '123456789'
 all_numbers = zero + number
 
 #alphanumeric and special symbols
-punctuation_symbols = "~!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
+punctuation_symbols = "-!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
 alpha_num = all_letters + all_numbers 
 ascii = all_letters + punctuation_symbols + all_numbers
-ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+~" + all_letters + all_numbers
-ascii_comment = all_letters + all_numbers + "~!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
+ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+-" + all_letters + all_numbers
+ascii_comment = all_letters + all_numbers + "-!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
 #operators
 arithmetic_ops = "+-*/%"
 relational_ops = '><==!<=>=!='
@@ -60,7 +60,7 @@ logical_ops = '||&&!'
 unary_ops = '++--'
 assignment_ops = '=+=-=*=/='
 op_delim = logical_ops + arithmetic_ops + relational_ops
-negative = '~'
+negative = '-'
 
 #others
 whitespace = " "
@@ -92,10 +92,10 @@ id_delim = COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + 
 spacepr_delim = whitespace + '('
 pr_delim = '('
 break_delim = TERMINATOR + whitespace
-openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim + '!' + '+' + '-' ','
-closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops + ','
+openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim + '!' + '+' + '-' + ','
+closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops + ',' + ']'
 end_delim = whitespace + newline_delim
-opensquare_delim = whitespace + all_numbers + '"' + ']' + alpha_capital
+opensquare_delim = whitespace + all_numbers + '"' + ']' + alpha_capital + negative
 closesquare_delim = whitespace + TERMINATOR + ')' + ','
 negative_delim = alpha_capital + all_numbers + '('
 
@@ -377,14 +377,14 @@ class Lexer:
                         continue
                     tokens.append(Token(EQUAL, "=", pos_start = self.pos)) #for == symbol
 
-            elif self.current_char == '~':
-                self.advance()
-                if self.current_char in all_numbers:
-                    result, error = self.make_number()
-                    result = Token(result.token, "~" + str(result.value), pos_start = self.pos)
-                    tokens.append(result)  
-                else:
-                    errors.extend([f"Invalid delimiter for ' ~ '. Cause: ' {self.current_char} '. Expected:  123456789"])
+            # elif self.current_char == '-':
+            #     self.advance()
+            #     if self.current_char in all_numbers:
+            #         result, error = self.make_number()
+            #         result = Token(result.token, "-" + str(result.value), pos_start = self.pos)
+            #         tokens.append(result)  
+            #     else:
+            #         errors.extend([f"Invalid delimiter for ' - '. Cause: ' {self.current_char} '. Expected:  123456789"])
                     
             elif self.current_char == '<': #relational operator
                 self.advance()
@@ -485,13 +485,24 @@ class Lexer:
                     tokens.append(Token(DECRE, "--", pos_start = self.pos))
 
                 else:
-                    if self.current_char == None:
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' - '. Cause: ' {self.current_char} ' . Expected: whitespace, alphanumeric, negative operator, (, [ "])
+                    # CASE: negative number
+                    print("current char negative: ", self.current_char)
+                    if self.current_char in all_numbers:
+                        result, error = self.make_number()
+                        result = Token(result.token, result.value * -1, pos_start=self.pos)
+                        tokens.append(result)
+                    
+                    # CASE: binary minus (e.g., A - B)
+                    elif self.current_char in delim0:
+                        tokens.append(Token(MINUS, "-", pos_start=self.pos))
+
+                    # CASE: invalid delimiter
+                    else:
+                        errors.append(
+                            f"Error at line: {self.pos.ln + 1}. Invalid delimiter for '-' operator. "
+                            f"Cause: '{self.current_char}' — Expected: number (for negative), or {delim0}"
+                        )
                         continue
-                    if self.current_char not in delim0:
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' - '. Cause: ' {self.current_char} ' . Expected: whitespace, alphanumeric, negative operator, (, [ "])
-                        continue
-                    tokens.append(Token(MINUS, "-", pos_start = self.pos))
 
             elif self.current_char == '*':
                 self.advance()
@@ -1912,7 +1923,9 @@ class Parser:
                     self.advance()
 
                 #not working yung INTEGER
+                print("star number: ", self.current_tok)
                 if self.current_tok.token in INTEGER:
+                    
                     res = self.expr()
 
                 #--INITIALIZATION OF IDENTIFIERS
@@ -2141,7 +2154,7 @@ class Parser:
                 if self.current_tok.token in STAR:
                     print("FOUND STAR")
                     self.in_condition = True
-                    self.in_star = True  # ⭐️ Allow 'dew' immediately after this
+                    self.in_star = True  # Allow 'dew' immediately after this
 
                     star_res, star_error = self.star_stmt()
                     if star_error:
@@ -2278,7 +2291,7 @@ class Parser:
             
             else:
                 print("[DEBUG]",self.current_tok)
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, collect, ship, identifier, star, ++, --, winter, dew, stardew, fall"))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected crop, collect, ship, identifier, star, ++, --, winter, dew, stardew, fall, } "))
                 break
 
 
@@ -3072,7 +3085,7 @@ class Parser:
                 
                 else:
                     if self.current_tok.token != RPAREN:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
+                        #error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
                         self.advance()
                     else: 
 
@@ -3588,7 +3601,18 @@ class Parser:
                                         res.append(dew_res)
                                         # print("current token from else parse: ", self.current_tok)
                             #self.advance()
-                        
+                            #added now 
+                            if self.current_tok.token == CRBRACKET:
+                                self.advance()
+                                res.append([f"SUCCESS from star"])
+                            else:
+                                error.append(InvalidSyntaxError(
+                                    self.current_tok.pos_start,
+                                    self.current_tok.pos_end,
+                                    "Expected closing curly brace '}' after star condition!"
+                                ))
+                                return [], error
+                            # until here         
                             return res, error
                     else:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected { !"))

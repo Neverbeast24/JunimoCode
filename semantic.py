@@ -16,11 +16,11 @@ number = '123456789'
 all_numbers = zero + number
 
 #alphanumeric and special symbols
-punctuation_symbols = "~!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
+punctuation_symbols = "-!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
 alpha_num = all_letters + all_numbers 
 ascii = all_letters + punctuation_symbols + all_numbers
-ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+~" + all_letters + all_numbers
-ascii_comment = all_letters + all_numbers + "~!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
+ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+-" + all_letters + all_numbers
+ascii_comment = all_letters + all_numbers + "-!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
 #operators
 arithmetic_ops = "+-*/%"
 relational_ops = '><==!<=>=!='
@@ -28,7 +28,7 @@ logical_ops = '||&&!'
 unary_ops = '++--'
 assignment_ops = '=+=-=*=/='
 op_delim = logical_ops + arithmetic_ops + relational_ops
-negative = '~'
+negative = '-'
 
 #others
 whitespace = " "
@@ -60,10 +60,10 @@ id_delim = COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + 
 spacepr_delim = whitespace + '('
 pr_delim = '('
 break_delim = TERMINATOR + whitespace
-openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim + '!' + '+' + '-' ','
-closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops + ','
+openparenthesis_delim = whitespace + alpha_num + negative + '('  + '"' + ')' + newline_delim + '!' + '+' + '-' + ','
+closingparenthesis_delim = whitespace  + ')' + '{' + '&' + '|' + TERMINATOR + arithmetic_ops + relational_ops + ',' + ']'
 end_delim = whitespace + newline_delim
-opensquare_delim = whitespace + all_numbers + '"' + ']' + alpha_capital
+opensquare_delim = whitespace + all_numbers + '"' + ']' + alpha_capital + negative
 closesquare_delim = whitespace + TERMINATOR + ')' + ','
 negative_delim = alpha_capital + all_numbers + '('
 
@@ -120,7 +120,7 @@ DIV_EQUAL = '/='
 #unary operators | done
 INCRE = '++'
 DECRE = '--'
-NEGATIVE = '~'
+NEGATIVE = '-'
 #relational operators | done
 E_EQUAL = '=='
 NOT_EQUAL = '!='
@@ -393,16 +393,16 @@ class Lexer:
                         continue
                     tokens.append(Token(EQUAL, "=", pos_start = self.pos)) #for == symbol
 
-            elif self.current_char == '~':
-                self.advance()
-                if self.current_char in all_numbers:
-                    result, error = self.make_number()
-                    #result = Token(result.token, result.value * -1, pos_start, self.pos)
-                    result = Token(result.token, result.value * -1, pos_start = self.pos)
-                    tokens.append(result)  
+            # elif self.current_char == '-':
+            #     self.advance()
+            #     if self.current_char in all_numbers:
+            #         result, error = self.make_number()
+            #         #result = Token(result.token, result.value * -1, pos_start, self.pos)
+            #         result = Token(result.token, result.value * -1, pos_start = self.pos)
+            #         tokens.append(result)  
 
-                else:
-                    errors.extend([f"Invalid delimiter for ' ~ '. Cause: ' {self.current_char} '. Expected:  123456789"])
+            #     else:
+            #         errors.extend([f"Invalid delimiter for ' - '. Cause: ' {self.current_char} '. Expected:  123456789"])
 
             elif self.current_char == '<': #relational operator
                 self.advance()
@@ -503,13 +503,25 @@ class Lexer:
                     tokens.append(Token(DECRE, "--", pos_start = self.pos))
 
                 else:
-                    if self.current_char == None:
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' - '. Cause: ' {self.current_char} ' . Expected: whitespace, alphanumeric, negative operator, (, [ "])
+                    # CASE: negative number
+                    if self.current_char in all_numbers:
+                        print("current char negative: ", self.current_char)
+                        result, error = self.make_number()
+                        result = Token(result.token, result.value * -1, pos_start=self.pos)
+                        tokens.append(result)
+                    
+                    # CASE: binary minus (e.g., A - B)
+                    elif self.current_char in delim0:
+                        tokens.append(Token(MINUS, "-", pos_start=self.pos))
+
+                    # CASE: invalid delimiter
+                    else:
+                        errors.append(
+                            f"Error at line: {self.pos.ln + 1}. Invalid delimiter for '-' operator. "
+                            f"Cause: '{self.current_char}' — Expected: number (for negative), or {delim0}"
+                        )
                         continue
-                    if self.current_char not in delim0:
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' - '. Cause: ' {self.current_char} ' . Expected: whitespace, alphanumeric, negative operator, (, [ "])
-                        continue
-                    tokens.append(Token(MINUS, "-", pos_start = self.pos))
+                    
 
             elif self.current_char == '*':
                 self.advance()
@@ -2243,6 +2255,7 @@ class ParseResult:
         self.error = error
         return self
 
+# ast start
 class Program:
     def __init__(self, symbol_table = None):
         #has farmhouse declarations
@@ -3590,7 +3603,8 @@ class Parser:
             
         '''
    
-    #func is rule (expr or term)
+    #func is rule (expr or term) builds binary expression tree
+    # A - B / 4
     def bin_op(self, func, ops):
         # print("func: ", func)
         # print("bin op current tok: ", self.current_tok)
