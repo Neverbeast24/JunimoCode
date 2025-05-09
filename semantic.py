@@ -4983,25 +4983,25 @@ class StardewLexerGUI:
         self.image_redo_button.place(x=873, y=72) #may differ in 1920x1200 resolution, x and y for redo buttons
 
         #image for Export Button
-        self.redo_button = Image.open("Images/Export.png")
-        self.resize_redo_button = self.redo_button.resize((40,40))
-        self.redo_button_picture = ImageTk.PhotoImage(self.resize_redo_button)
-        self.image_redo_button = tk.Button(image=self.redo_button_picture, borderwidth=0, command=self.undo_input_with_sound)
-        self.image_redo_button.place(x=779, y=72) #may differ in 1920x1200 resolution, x and y for redo buttons
+        self.export_button = Image.open("Images/Export.png")
+        self.resize_export_button = self.export_button.resize((40,40))
+        self.export_button_picture = ImageTk.PhotoImage(self.resize_export_button)
+        self.image_export_button = tk.Button(image=self.export_button_picture, borderwidth=0, command=self.undo_input_with_sound)
+        self.image_export_button.place(x=826, y=72) #may differ in 1920x1200 resolution, x and y for export buttons
 
         #image for Save Button
-        self.redo_button = Image.open("Images/Save.png")
-        self.resize_redo_button = self.redo_button.resize((40,40))
-        self.redo_button_picture = ImageTk.PhotoImage(self.resize_redo_button)
-        self.image_redo_button = tk.Button(image=self.redo_button_picture, borderwidth=0, command=self.undo_input_with_sound)
-        self.image_redo_button.place(x=685, y=72) #may differ in 1920x1200 resolution, x and y for redo buttons
+        self.save_button = Image.open("Images/Save.png")
+        self.resize_save_button = self.save_button.resize((40,40))
+        self.save_button_picture = ImageTk.PhotoImage(self.resize_save_button)
+        self.image_save_button = tk.Button(image=self.save_button_picture, borderwidth=0, command=self.undo_input_with_sound)
+        self.image_save_button.place(x=779, y=72) #may differ in 1920x1200 resolution, x and y for save buttons
 
         #image for Import Button
-        self.redo_button = Image.open("Images/Import.png")
-        self.resize_redo_button = self.redo_button.resize((40,40))
-        self.redo_button_picture = ImageTk.PhotoImage(self.resize_redo_button)
-        self.image_redo_button = tk.Button(image=self.redo_button_picture, borderwidth=0, command=self.undo_input_with_sound)
-        self.image_redo_button.place(x=591, y=72) #may differ in 1920x1200 resolution, x and y for redo buttons
+        self.new_button = Image.open("Images/Import.png")
+        self.resize_new_button = self.new_button.resize((40,40))
+        self.new_button_picture = ImageTk.PhotoImage(self.resize_new_button)
+        self.image_new_button = tk.Button(image=self.new_button_picture, borderwidth=0, command=self.undo_input_with_sound)
+        self.image_new_button.place(x=732, y=72) #may differ in 1920x1200 resolution, x and y for new buttons
 
 
 
