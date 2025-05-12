@@ -4990,12 +4990,12 @@ class StardewLexerGUI:
         self.image_redo_button = tk.Button(image=self.redo_button_picture, borderwidth=0, command=self.undo_input_with_sound)
         self.image_redo_button.place(x=873, y=72) #may differ in 1920x1200 resolution, x and y for redo buttons
 
-        #image for Export Button
-        self.export_button = Image.open("Images/Export.png")
-        self.resize_export_button = self.export_button.resize((40,40))
-        self.export_button_picture = ImageTk.PhotoImage(self.resize_export_button)
-        self.image_export_button = tk.Button(image=self.export_button_picture, borderwidth=0, command=self.undo_input_with_sound)
-        self.image_export_button.place(x=826, y=72) #may differ in 1920x1200 resolution, x and y for export buttons
+        #image for Import Button
+        self.import_button = Image.open("Images/Import.png")
+        self.resize_import_button = self.import_button.resize((40,40))
+        self.import_button_picture = ImageTk.PhotoImage(self.resize_import_button)
+        self.image_import_button = tk.Button(image=self.import_button_picture, borderwidth=0, command=self.import_input_with_sound)
+        self.image_import_button.place(x=826, y=72) #may differ in 1920x1200 resolution, x and y for export buttons
 
         #image for Save Button
         self.save_button = Image.open("Images/Save.png")
@@ -5004,11 +5004,11 @@ class StardewLexerGUI:
         self.image_save_button = tk.Button(image=self.save_button_picture, borderwidth=0, command=self.undo_input_with_sound)
         self.image_save_button.place(x=779, y=72) #may differ in 1920x1200 resolution, x and y for save buttons
 
-        #image for Import Button
-        self.new_button = Image.open("Images/Import.png")
+        #image for New Button
+        self.new_button = Image.open("Images/New.png")
         self.resize_new_button = self.new_button.resize((40,40))
         self.new_button_picture = ImageTk.PhotoImage(self.resize_new_button)
-        self.image_new_button = tk.Button(image=self.new_button_picture, borderwidth=0, command=self.undo_input_with_sound)
+        self.image_new_button = tk.Button(image=self.new_button_picture, borderwidth=0, command=self.new_input_with_sound)
         self.image_new_button.place(x=732, y=72) #may differ in 1920x1200 resolution, x and y for new buttons
 
 
@@ -5095,6 +5095,61 @@ class StardewLexerGUI:
     def output_with_sound(self):
         mixer.Sound.play(output_sound)
         self.output_button()
+        
+    def import_input_with_sound(self):
+        try:
+            mixer.Sound.play(click_sound)
+        except Exception as e:
+            print(f"Sound error: {e}")
+        self.import_file()
+
+    def save_input_with_sound(self):
+        try:
+            mixer.Sound.play(click_sound)
+        except Exception as e:
+            print(f"Sound error: {e}")
+        self.save_file()
+
+    def new_input_with_sound(self):
+        try:
+            mixer.Sound.play(click_sound)
+            self.new_file() # Optional delay to let sound play
+        except Exception as e:
+            print(f"Error: {e}")
+
+    def new_file(self):
+        subprocess.Popen([sys.executable, sys.argv[0]], shell=True)
+        self.destroy()
+
+    def import_file(self):
+        file_path = filedialog.askopenfilename(
+        filetypes=[("Text Files", "*.txt")]
+    )
+
+        if file_path:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    content = file.read()
+                    self.code_input.delete("1.0", tk.END)  # Clear existing content
+                    self.code_input.insert(tk.END, content)  # Insert file content
+                    self.update_line_numbers()  # Optional: update line numbers
+            except Exception as e:
+                messagebox.showerror("Import Error", f"Failed to load file:\n{e}")
+
+    def save_file(self):
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text Files", "*.txt")],
+            title="Save Code As"
+        )
+
+        if file_path:
+            try:
+                content = self.code_input.get("1.0", tk.END)
+                with open(file_path, "w", encoding="utf-8") as file:
+                    file.write(content)
+            except Exception as e:
+                messagebox.showerror("Save Error", f"Failed to save file:\n{e}")
 
 
     def analyze_code(self): #lexer button
