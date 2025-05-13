@@ -4798,7 +4798,9 @@ from pathlib import Path
 from tkinter import filedialog
 import parser_syntax
 import lexer
+import os
 import sys
+import subprocess
 import semantic
 from nodes1 import convert_text_file_to_python_and_execute
 from pathlib import Path
