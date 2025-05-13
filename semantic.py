@@ -5003,7 +5003,7 @@ class StardewLexerGUI:
         self.save_button = Image.open("Images/Save.png")
         self.resize_save_button = self.save_button.resize((40,40))
         self.save_button_picture = ImageTk.PhotoImage(self.resize_save_button)
-        self.image_save_button = tk.Button(image=self.save_button_picture, borderwidth=0, command=self.undo_input_with_sound)
+        self.image_save_button = tk.Button(image=self.save_button_picture, borderwidth=0, command=self.save_input_with_sound)
         self.image_save_button.place(x=779, y=72) #may differ in 1920x1200 resolution, x and y for save buttons
 
         #image for New Button
