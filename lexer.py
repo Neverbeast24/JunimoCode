@@ -31,7 +31,7 @@ TITLE_FONT = ("Stardew Valley Regular", 48)  # Large title font
 PIXEL_FONT = ("Verdana", 12, "bold" )  # Font for other UI elements
 
 # Paths for assets
-background_image_path = "background.jpg"
+background_image_path = r"Images\background.png"
 
 #Cursor
 junimo_cursor = "Stardew_Cursor.xpm" #Not Yet Working ; Maganda sana na-additional kaechosan.
@@ -801,6 +801,7 @@ class Lexer:
         ident = ""
         ident_count = 0
         errors = []
+        state = 0
 
         while self.current_char != None:
 
@@ -814,7 +815,8 @@ class Lexer:
             # if error:
             #     errors.append(error)
             #     return None, errors
-            if self.current_char == "a": #ADD
+            if state == 0:
+                if self.current_char == "a": #ADD
                     ident += self.current_char
                     self.advance()
                     ident_count += 1
@@ -1612,21 +1614,21 @@ class StardewLexerGUI:
         # self.code_input.configure(yscrollcommand=self.sync_scrollbars)
         # self.line_numbers.configure(yscrollcommand=self.sync_scrollbars)
         #image for Lexical Analyzer Button/Button
-        self.analyze_button = Image.open("Lexical.png")
+        self.analyze_button = Image.open("Images\Lexical.png")
         self.resize_analyze_button = self.analyze_button.resize((200,50))
         self.analyze_button_picture = ImageTk.PhotoImage(self.resize_analyze_button)
         self.image_analyze_button = tk.Button(image=self.analyze_button_picture, borderwidth=0, command=self.analyze_code_with_sound)
         self.image_analyze_button.place(x=190, y=920)
 
         #image for Clear Analyzer Button/Button
-        self.semantic_button = Image.open("Clear.png")
+        self.semantic_button = Image.open("Images\Clear.png")
         self.resize_semantic_button = self.semantic_button.resize((200,50))
         self.semantic_button_picture = ImageTk.PhotoImage(self.resize_semantic_button)
         self.image_semantic_button = tk.Button(image=self.semantic_button_picture, borderwidth=0, command=self.clear_input_with_sound)
         self.image_semantic_button.place(x=450, y=920)
 
         #image for Undo Button/Button
-        self.syntax_button = Image.open("Undo.png")
+        self.syntax_button = Image.open(r"Images\Undo.png")
         self.resize_syntax_button = self.syntax_button.resize((200,50))
         self.syntax_button_picture = ImageTk.PhotoImage(self.resize_syntax_button)
         self.image_syntax_button = tk.Button(image=self.syntax_button_picture, borderwidth=0, command=self.undo_input_with_sound)

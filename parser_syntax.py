@@ -2555,7 +2555,7 @@ class Parser:
                 check, err = self.num_loop(num, ops)
                 print("after num loop: ", self.current_tok)
                 if err:
-                    # print("FOUND AN ERROR IN NUM LOOP")    
+                    print("FOUND AN ERROR IN NUM LOOP")    
                     for e in err:
                         error.append(e)
                         # print('error in num loop: ', e.as_string())
@@ -2583,9 +2583,9 @@ class Parser:
                     if self.in_farmhouse == True:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot call craft in farmhouse declaration/initialization!"))
                         return res, error
-                    # print("we assigned a function call to a crop")
+                    print("we assigned a function call to a crop", self.current_tok)
                     c_craft, call_craft_error = self.call_craft()
-                    # print("token after call craft in assign val: ", self.current_tok.token)
+                    print("token after call craft in assign val: ", self.current_tok.token)
                     #self.advance()
                     # print('call craft result in assign val:', c_form)
                     if call_craft_error:
@@ -2798,12 +2798,25 @@ class Parser:
         print("current tok in num loop: ", self.current_tok)
         while self.current_tok.token in (PLUS, MINUS, DIV, MUL, MODULUS):
             ops_string += self.current_tok.token
+            print("AFTER OPERATOR: ", self.current_tok)
             self.advance()
+            print("AFTER IDENT ADVANCE: ", self.current_tok) 
             if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
                 self.advance()
+                print("AFTER IDENT ADVANCE: ", self.current_tok)
                 if self.current_tok.token in (INTEGER, FLOAT):
                     # print("found NUMBER")
                     check.append(self.current_tok.token)
+                elif self.current_tok.token == LPAREN:
+                    # print("found LPAREN")
+                    self.advance()
+                    print("found LPAREN AFTER IDENT ADVANCE: ", self.current_tok)
+                    if self.current_tok.token == RPAREN:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, or open parenthesis!"))
+                        
+                    num, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
+                    print("CURRENT TOKEN AFTER PARENTHESIS ASSIGN VAL CALL IN NUM LOOP: ", self.current_tok)
+                    self.advance()
                 elif self.current_tok.token == SLBRACKET:
                     self.advance()
                     print("num loop slbracket")
