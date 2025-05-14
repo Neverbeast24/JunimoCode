@@ -2283,7 +2283,7 @@ class Program:
         self.parent = None
         self.body = [] #store nodes in pelican() or main 
         self.errors = [] # undeclared variables, mismatch parameter and argument, undeclared function call etc.. all collected errors for the program
-        self.symbol_table = symbol_table # global declaration 
+        self.symbol_table = symbol_table # global declaration
         self.functions = [] #functions list of all declared craft() functions
         
     # def add_variables(self,name, node):
@@ -4278,7 +4278,7 @@ class Interpreter:
     def visit_BreakNode(self, node, symbol_table):
         res = RTResult()
         return res.success(node)
-class Void:
+class Void: # checking if the value is void, chinecheck na yung meaning ng void
     def __init__(self, value=None):
         self.value = 'void'
         self.set_pos()
@@ -4701,7 +4701,7 @@ class String:
 # SYMBOL TABLE
 #######################################
 
-class SymbolTable:
+class SymbolTable: # keep track of the variables
     def __init__(self, name = None):
         self.symbols = {}
         self.parent = None

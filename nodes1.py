@@ -36,7 +36,7 @@ def read_value_nodes(node):
     #if ValueNodes
 
 
-def read_nodes(item, symbol_table, current_indention = 0):
+def read_nodes(item, symbol_table, current_indention = 0): # translate the nodes to python code
     condition_to_list = []
     if isinstance(item, semantic.ShipNode):
         string = "" 
