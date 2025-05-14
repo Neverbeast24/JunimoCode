@@ -160,38 +160,51 @@ INTEGER = 'IntLit'
 FLOAT = 'FloatLit'
 SPACE = 'Space'
 
+#Base error class for all error types
 class Error: # do not change
+    #Stores error start and end position, name, and descriptive message
     def __init__ (self,pos_start, pos_end, error_name, details):
         self.pos_start = pos_start
         self.pos_end = pos_end
         self.error_name = error_name
         self. details = details
 
+    #Stores metadata: where error occurred, what type, and explanation
     def as_string(self):
-        result  = f'{self.error_name}: {self.details}\n'
-        fileDetail = f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
-        errorDetail, arrowDetail = string_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
-        return result, fileDetail, errorDetail, arrowDetail
+        result  = f'{self.error_name}: {self.details}\n' #Method to format the error as a string for display
+        fileDetail = f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}' # Header: error type and its reason
+        errorDetail, arrowDetail = string_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end) # Shows source file and line number of error
+        return result, fileDetail, errorDetail, arrowDetail # Returns the error message as a string uses helper to get code snippet and pointer to error (^ underline)
 
+#Specialized error when the lexer finds an unsupported character
+#Inherits from Error class
 class IllegalCharError(Error):
     #the lexer comes across a character it doesn't support
     def __init__(self,pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Illegal Character ', details)
 
+#Specialized error when the lexer finds an invalid delimiter
+#Raised when a wrong character follows a token (e.g., add@ instead of add()
+#Custom message includes the token and cause
 class DelimiterError(Error):
     def __init__(self,pos_start, pos_end, details, char):
         super().__init__(pos_start, pos_end, f"Invalid Delimiter for '{char}'", "Cause -> " + str(details))
-        
+
+#Raised by the parser when grammar is broken
+#Inherits from Error
 class InvalidSyntaxError(Error):
     def __init__(self,pos_start, pos_end, details=''):
         super().__init__(pos_start, pos_end, "Invalid Syntax", details)
 
+#Raised during interpreter execution
+#Includes positional metadata and explanation
+#not used, semantic error yung nagamit
 class RTError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Runtime Error', details)
         
 
-    def as_string(self):
+    def as_string(self): 
         result  = self.generate_traceback()
         result_name = f"{self.error_name}: {self.details}"
         #result += '\n\n' + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
@@ -203,15 +216,13 @@ class RTError(Error):
         result = []
         pos = self.pos_start
         # print("pos and ctx: ", self.pos_start, " ", self.context)
-        
-        
-        result.insert(0, f'File <Junimo Code>, line {str(self.pos_start.ln + 1)}') 
-        
-
+        result.insert(0, f'File <Junimo Code>, line {str(self.pos_start.ln + 1)}') # Returns full visual error (traceback, message, and visual arrows)
         return result
     def print_error(self):
         print( f"details: {self.details}, pos start and end: {self.pos_start}, {self.pos_end}")\
-        
+
+#Almost identical to RTError, but used for semantic rules (e.g., type mismatch, undefined vars)
+#Format and methods are reused for consistency
 class SemanticError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Semantic Error', details)
@@ -237,46 +248,51 @@ class SemanticError(Error):
         return result
     def print_error(self):
         print( f"details: {self.details}, pos start and end: {self.pos_start}, {self.pos_end}")
-
+# Tracks the location of characters 
 class Position:
     def __init__(self, idx, ln, col, fn, ftxt):
-        self.idx = idx
-        self.ln = ln
-        self.col = col
-        self.fn = fn
-        self.ftxt = ftxt
+        self.idx = idx # overall character index in the file
+        self.ln = ln # line number 
+        self.col = col # column number \
+        self.fn = fn # file name
+        self.ftxt = ftxt # file text
 
-    def advance (self, current_char=None):
-        self.idx += 1
+    def advance (self, current_char=None): # Moves the position forward by one character (called as lexer reads input)
+        self.idx += 1 #  Increment index
         self.col += 1
 
-        if current_char == "\n":
+        if current_char == "\n": #If newline, go to next line and reset column to 0
             self.ln += 1
             self.col = 0
 
-        return self
-    def copy(self):
-        return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
+        return self # Allows chaining (e.g., pos.advance().advance())
+    def copy(self): # Returns a copy of the current position
+        return Position(self.idx, self.ln, self.col, self.fn, self.ftxt) # Used to save current location before advancing further (important for tokens and errors)
 
-class Token:
-    def __init__(self, token, value=None, pos_start=None, pos_end=None):
-        self.token = token
-        self.value = value
+class Token: # Token class to represent a single token in the source code
+    def __init__(self, token, value=None, pos_start=None, pos_end=None): # Constructor to initialize token type, value, and position
+        self.token = token # Token type 
+        self.value = value # Token value 
+        
+        # token: type (e.g., PLUS, CROP, IDENTIFIER)
+        # value: value (e.g., 5, "hello", "crop")
+        # pos_start: start position of the token
+        # pos_end: end position of the token
     
-        if pos_start:
-            self.pos_start = pos_start.copy()
-            self.pos_end = pos_start.copy()
+        if pos_start: # If start position is provided, set start and end positions
+            self.pos_start = pos_start.copy() # Use a copy to avoid mutating the original
+            self.pos_end = pos_start.copy() # Advance it by one character to get the pos_end
             self.pos_end.advance()
 
         if pos_end:
-            self.pos_end = pos_end
+            self.pos_end = pos_end # Allows overriding pos_end manually
             
-    def matches(self, type_, value):
+    def matches(self, type_, value): # checks if a token matches both type and value 
         return self.token == type_ and self.value == value
     
     def __repr__(self):
-        if self.value: return f'{self.value} : {self.token}'
-        return f'{self.token}'
+        if self.value: return f'{self.value} : {self.token}' # If value exists: value : token_type
+        return f'{self.token}' # Else: just show token type
 
 
 #LEXER
@@ -288,24 +304,24 @@ class Lexer:
         self.text = text
         self.pos = Position(-1, 0, -1, fn, text)
         self.current_char = None
-        self.advance()
+        self.advance() 
 
-    def peek(self):
+    def peek(self): # Returns the next character without moving the position (ithink not)
         next_idx = self.pos.idx + 1
         return self.text[next_idx] if next_idx < len(self.text) else None
 
-    def advance(self):
+    def advance(self): # Moves one character forward.
         self.pos.advance(self.current_char)
         # current char is the current pos if the pos is less than the length of the text
         self.current_char = self.text[self.pos.idx] if self.pos.idx <= len(self.text)-1 else None
 
-    def make_tokens(self):
+    def make_tokens(self): # Core loop to scan current_char and build a list of tokens (tokens) and errors (errors).
 
         tokens = []
         errors = []
         string = ""
 
-        while self.current_char is not None:
+        while self.current_char is not None: #loop scanning the current_char
             """ if self.current_char in special_chars:
                 errors.extend([f"Invalid symbol: {self.current_char}"])
                 self.advance() """
@@ -377,7 +393,7 @@ class Lexer:
                 self.advance()
                 if self.current_char == '=':
                     self.advance()
-                    if self.current_char == None:
+                    if self.current_char == None: # positional error tracking 
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' == '. Cause: ' {self.current_char} '. Expected: whitespace, alphanumeric, negative operator, \", (, ["])
                         continue
                     if self.current_char not in (delim1):
@@ -808,7 +824,7 @@ class Lexer:
         tokens.append(Token(EOF, "EOF", pos_start = self.pos))
         return tokens, errors
 
-    def make_number(self):
+    def make_number(self): # Returns the corresponding Token with type int or float
         dec_count = 0
         num_count = 0
         num_str = ''
@@ -872,7 +888,7 @@ class Lexer:
             if self.current_char == "a": #ADD
                     ident += self.current_char
                     self.advance()
-                    ident_count += 1
+                    ident_count += 1 #not used
                     if self.current_char == "d":
                         ident += self.current_char
                         self.advance()
@@ -885,7 +901,7 @@ class Lexer:
                                 errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for add! Cause: {self.current_char}. Expected: open parenthesis'])
                                 return [], errors
                             if self.current_char in '(':
-                                return Token(ADD, "add", pos_start = self.pos), errors
+                                return Token(ADD, "add", pos_start = self.pos), errors #ask mel
                             elif self.current_char in alpha_num: #double check this
                                 continue
                             else:
@@ -1583,38 +1599,38 @@ class Lexer:
             errors.append(f"Error at line: {self.pos.ln + 1}. Expected closing quotation mark!")
             return string, errors
 
-#NODES
-class IdentifierNode:
+#NODES AST node classes
+class IdentifierNode: # Represents variable names (identifiers)
     def __init__(self, tok):
         self.tok = tok
 
         self.pos_start = self.tok.pos_start
-        self.pos_end = self.tok.pos_end
+        self.pos_end = self.tok.pos_end # Stores the token and its start/end positions for error reporting
     
     def __repr__(self):
-        return f'{self.tok}'
+        return f'{self.tok}' # Custom display of node
     
-class NumberNode:
-    def __init__(self, tok):
-        self.notted= False
+class NumberNode: # Represents numeric literals (int/float)
+    def __init__(self, tok): 
+        self.notted= False # notted allows tracking if a ! (not) is applied
         self.tok = tok
 
         self.pos_start = self.tok.pos_start
         self.pos_end = self.tok.pos_end
 
     def __repr__(self):
-        return f'NumberNode: value: {self.tok.value}'
+        return f'NumberNode: value: {self.tok.value}' # Easy printing for debugging
     
-class PreUnaryNode:
+class PreUnaryNode: # Both represent unary operations ++A or A++
     def __init__(self, tok, operation = None, adjust_by = 1):
-        self.tok = tok
-        self.operation = operation
-        self.adjust_by = adjust_by
+        self.tok = tok # tok: the target variable
+        self.operation = operation # operation: the operation to be performed
+        self.adjust_by = adjust_by # adjust_by: the amount to adjust the variable by (default is 1)
 
         self.pos_start = self.tok.pos_start
         self.pos_end = self.tok.pos_end
 
-    def get_level(self):
+    def get_level(self): # get_level: calculates the level of the node in the tree
         level = 0
         p = self.parent
         while p:
@@ -1623,7 +1639,7 @@ class PreUnaryNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # print_tree: prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'PreUnaryNode')
@@ -1661,22 +1677,22 @@ class PostUnaryNode:
     def __repr__(self):   
         return f"PostUnaryNode: identifier: '{self.tok.crop_name_tok.value}', operation: '{self.operation}',"
     
-class StringNode:
-    def __init__(self, tok):
-        self.notted = False
-        self.tok = tok
+class StringNode: # Represents string literals
+    def __init__(self, tok): 
+        self.notted = False # notted allows tracking if a ! (not) is applied
+        self.tok = tok # tok: the token representing the string
 
-        self.pos_start = self.tok.pos_start
-        self.pos_end = self.tok.pos_end
+        self.pos_start = self.tok.pos_start # Stores the token and its start/end positions for error reporting
+        self.pos_end = self.tok.pos_end # Stores the token and its start/end positions for error reporting
 
     def __repr__(self):
-        return f'{self.tok}'
+        return f'{self.tok}' # Custom display of node 
 
-class BooleanNode:
-    def __init__(self, tok, value = 0):
-        self.notted = False
-        self.tok = tok
-        if self.tok.token == FALSE:
+class BooleanNode: # Represents boolean literals (true/false)
+    def __init__(self, tok, value = 0): 
+        self.notted = False # notted allows tracking if a ! (not) is applied
+        self.tok = tok # tok: the token representing the boolean value
+        if self.tok.token == FALSE: 
             self.value = 0
         else:
             self.value = 1
@@ -1686,78 +1702,78 @@ class BooleanNode:
 
     def __repr__(self):
         return f'{self.tok}'
-class ListNode:
-    def __init__(self, crop_name, items = [] ):
+class ListNode: # ListNode: Represents a list definition (e.g., Fib = [0, 1])
+    def __init__(self, crop_name, items = [] ): 
         self.crop_name = crop_name
         self.items = items
         self.pos_start = self.crop_name.pos_start
         self.pos_end = self.crop_name.pos_end
         self.clear_items()
-    def clear_items(self):
+    def clear_items(self): # clear_items: Initializes the list of items
         self.items = []
-    def add_item(self, token):
+    def add_item(self, token): # add_item: Adds an item to the list
         self.items.append(token)
 
-    def __repr__(self) -> str:
-        return f"ListNode: {self.items}"
+    def __repr__(self) -> str: 
+        return f"ListNode: {self.items}" 
 
-class ListCallNode:
-    def __init__(self, crop_name, index=0 ):
+class ListCallNode: # ListCallNode: Represents a list call (e.g., Fib[0])
+    def __init__(self, crop_name, index=0 ): 
         self.crop_name = crop_name
         self.index = index
         self.pos_start = self.crop_name.pos_start
         self.pos_end = self.crop_name.pos_end
-    def added_to(self, other):
-        return Number(1), None
+    def added_to(self, other): # added_to: Handles addition operation
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
         
 
-    def subbed_by(self, other):
+    def subbed_by(self, other): # subbed_by: Handles subtraction operation
         
-        return Number(1), None
-        
-
-    def multed_by(self, other):
-        
-        return Number(1), None
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
         
 
-    def dived_by(self, other):
-        return Number(1), None
-    def modulo(self, other):
+    def multed_by(self, other): # multed_by: Handles multiplication operation
         
-        return Number(1), None
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
         
-    def get_comparison_eq(self, other):
+
+    def dived_by(self, other): # dived_by: Handles division operation
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
+    def modulo(self, other): # modulo: Handles modulo operation
         
-        return Number(1), None
-
-    def get_comparison_ne(self, other):
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
         
+    def get_comparison_eq(self, other): # get_comparison_eq: Handles equality comparison ==
+        
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
+
+    def get_comparison_ne(self, other): #  get_comparison_ne: Handles inequality comparison !=
+        
+        return Number(1), None 
+
+    def get_comparison_lt(self, other): # get_comparison_lt: Handles less than comparison <
         return Number(1), None
 
-    def get_comparison_lt(self, other):
+    def get_comparison_gt(self, other): # get_comparison_gt: Handles greater than comparison >
         return Number(1), None
 
-    def get_comparison_gt(self, other):
+    def get_comparison_lte(self, other): # get_comparison_lte: Handles less than or equal to comparison <=
         return Number(1), None
 
-    def get_comparison_lte(self, other):
+    def get_comparison_gte(self, other): # get_comparison_gte: Handles greater than or equal to comparison >= 
         return Number(1), None
 
-    def get_comparison_gte(self, other):
+    def anded_by(self, other): # anded_by: Handles logical AND operation
         return Number(1), None
 
-    def anded_by(self, other):
+    def ored_by(self, other): # ored_by: Handles logical OR operation
         return Number(1), None
 
-    def ored_by(self, other):
+    def notted(self): # notted: Handles logical NOT operation
         return Number(1), None
-
-    def notted(self):
-        return Number(1), None
-    def is_true(self):
+    def is_true(self): # is_true: Checks if the node is true
         return False
-    def set_pos(self, pos_start=None, pos_end=None):
+    def set_pos(self, pos_start=None, pos_end=None): 
         self.pos_start = pos_start
         self.pos_end = pos_end
         return self
@@ -1767,38 +1783,38 @@ class ListCallNode:
     def __repr__(self) -> str:
         return f"ListCallNode: {self.crop_name}, index: {self.index}"
 class VoidNode:
-    def __init__(self, tok):
-        self.tok = tok
+    def __init__(self, tok): 
+        self.tok = tok # Represents a void value 
         
         self.pos_start = self.tok.pos_start
         self.pos_end = self.tok.pos_end
     def __repr__(self) -> str:
         return "void"
     
-class CropAccessNode:
-    def __init__(self, crop_name_tok):
+class CropAccessNode: 
+    def __init__(self, crop_name_tok): # Represents accessing a variable 
         self.parent = None
-        self.crop_name_tok = crop_name_tok
+        self.crop_name_tok = crop_name_tok  # Token that stores the name of the variable being accessed
 
         self.pos_start = self.crop_name_tok.pos_start
         self.pos_end = self.crop_name_tok.pos_end
 
-    def get_ln(self):
+    def get_ln(self):    # Returns the line number of this node 
         return self.pos_start.ln+1
 
-class CropAssignNode:
-    def __init__(self, crop_name_tok, value_node):
-        self.parent = None
-        self.prompt = None
-        self.crop_name_tok = crop_name_tok
-        self.value_node = value_node
-        self.pos_start = self.crop_name_tok.pos_start
+class CropAssignNode: 
+    def __init__(self, crop_name_tok, value_node): # Used for assignments like `A = 5`
+        self.parent = None # Parent node reference in AST
+        self.prompt = None  # for `collect()` input 
+        self.crop_name_tok = crop_name_tok # Token that stores the name of the variable being assigned
+        self.value_node = value_node # Value being assigned to the variable 
+        self.pos_start = self.crop_name_tok.pos_start 
         self.pos_end = self.value_node.pos_end
 
     def get_ln(self):
         return self.pos_start.ln+1
 
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -1807,7 +1823,7 @@ class CropAssignNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'CropAssignNode')
@@ -1817,15 +1833,15 @@ class CropAssignNode:
         
         
 
-class CropInitNode:
-    def __init__(self, crop_name_tok, value_node, operation = Token(EQUAL, "=")):
+class CropInitNode: # Used for initializing a variable with an operation (e.g., `A += 5`)
+    def __init__(self, crop_name_tok, value_node, operation = Token(EQUAL, "=")): # Represents the operation to be performed
         self.crop_name_tok = crop_name_tok
         self.value_node = value_node
         self.operation = operation
         self.pos_start = crop_name_tok.pos_start
         self.pos_end = crop_name_tok.pos_end
-
-    def get_level(self):
+ 
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -1834,7 +1850,7 @@ class CropInitNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'CropInitNode')
@@ -1842,16 +1858,16 @@ class CropInitNode:
         print(spaces + '    - ', f"operation: {self.operation}")
         print(spaces + '    - ', f"value: {self.value_node}")
 
-class CropDecNode:
-    def __init__(self, crop_name_tok=None, collect_node=None):
+class CropDecNode: # Used for declaring a variable without initialization (e.g., `A`)
+    def __init__(self, crop_name_tok=None, collect_node=None): # Represents a variable declaration
         self.parent = None
         self.crop_name_tok = crop_name_tok.value
-        self.value_node = VoidNode(crop_name_tok)
+        self.value_node = VoidNode(crop_name_tok) # void node to indicate no value assigned
 
         self.pos_start = crop_name_tok.pos_start
         self.pos_end = crop_name_tok.pos_end
 
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -1860,37 +1876,37 @@ class CropDecNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'CropDecNode')
         print(spaces + '    - ', f"name: {self.crop_name_tok}")
         print(spaces + '    - ', f"value: {self.value_node}")
 
-class HarvestCallNode:
-    def __init__(self, value_node):
+class HarvestCallNode: # Used for harvesting a crop (e.g., `harvest A`)
+    def __init__(self, value_node): #  value_node is the expression or variable being returned
         self.parent = None
-        self.value_node = value_node
-        self.value = None
+        self.value_node = value_node # Holds the AST node representing the return value
+        self.value = None  # Will hold the computed value later (during interpretation)
         print('harvest call value node: ', value_node)
-        if isinstance(value_node, RTResult):
-            self.pos_start = self.value_node.value.pos_start
+        if isinstance(value_node, RTResult): # if the value_node is a result object
+            self.pos_start = self.value_node.value.pos_start # 
             self.pos_end = self.value_node.value.pos_end
-        elif isinstance(value_node, BinOpNode):
+        elif isinstance(value_node, BinOpNode): # For arithmetic expressions
             self.pos_start = self.value_node.pos_start
             self.pos_end = self.value_node.pos_end
-        elif isinstance(value_node, CropAccessNode):
+        elif isinstance(value_node, CropAccessNode): # For simple variable references
             self.pos_start = self.value_node.crop_name_tok.pos_start
             self.pos_end = self.value_node.crop_name_tok.pos_end
-        elif isinstance(value_node, CraftCallNode):
+        elif isinstance(value_node, CraftCallNode):  # For function call results
             value_node.parent = self.parent
             self.pos_start = self.value_node.identifier.pos_start
             self.pos_end = self.value_node.identifier.pos_end
-        else:
+        else: # assume it's a literal token (number/string)
             self.pos_start = self.value_node.tok.pos_start
             self.pos_end = self.value_node.tok.pos_end
 
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -1899,27 +1915,27 @@ class HarvestCallNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'HarvestCall')
         print(spaces + '    - ', f"parent: {self.parent}")
         print(spaces + '    - ', f"value/s: {self.value_node}")
         
-class ShipNode:
-    def __init__(self, body, ship_tok= None):
-        self.ship_tok = ship_tok
+class ShipNode: 
+    def __init__(self, body, ship_tok= None): # Represents an output
+        self.ship_tok = ship_tok  # Token for the keyword 'ship'
         self.parent = None
-        self.body = body
+        self.body = body # List of AST nodes to output
         # self.list_of_nodes = list_of_nodes
         self.pos_start = ship_tok.pos_start
         self.pos_end = ship_tok.pos_end
     
-    def add_child(self, node):
+    def add_child(self, node): # For visual tree printing
         node.parent = self
         # self.body.append(node)
 
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -1928,7 +1944,7 @@ class ShipNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         for item in self.body:
             self.add_child(item)
         spaces = ' ' * self.get_level() * 3
@@ -1937,15 +1953,15 @@ class ShipNode:
         print(spaces + '    - ', f"parent: {self.parent}")
         print(spaces + '    - ', f"value/s: {self.body}")
 
-class CollectNode:
-    def __init__(self, variable_node, prompt) -> None:
-        self.pos_end = variable_node.pos_end
+class CollectNode:  # Represents input
+    def __init__(self, variable_node, prompt) -> None: 
+        self.pos_end = variable_node.pos_end # Position tracking
         self.parent = None
-        self.prompt = prompt
+        self.prompt = prompt # String prompt shown to the user
         # this should be a CropAccessNode
-        self.variable_node = variable_node
+        self.variable_node = variable_node 
 
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -1954,18 +1970,18 @@ class CollectNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging 
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'CollectNode')
         print(spaces + '    - ', f"value/s: {self.variable_node}, {self.variable_node}")
     
-class BinOpNode:
+class BinOpNode: # Binary operation node A + B
     def __init__(self, left_node, op_tok, right_node):
         self.parent = None
-        self.notted = False
+        self.notted = False # If used under a NOT operation
         self.left_node = left_node
-        self.op_tok = op_tok
+        self.op_tok = op_tok # Token like '+', '-',
         self.right_node = right_node
 
         self.pos_start = self.left_node.pos_start
@@ -1974,7 +1990,7 @@ class BinOpNode:
     def __repr__(self):
         return f'BinOpNode({type(self.left_node)}, {self.op_tok}, {self.right_node})'
 
-class UnaryOpNode:
+class UnaryOpNode: # Represents a unary operation ! -
     def __init__(self, op_tok, node):
         self.op_tok = op_tok
         self.node = node
@@ -1984,67 +2000,67 @@ class UnaryOpNode:
     def __repr__(self):
         return f'({self.op_tok}, {self.node})'
     
-class CraftCallNode:
+class CraftCallNode:  # Represents function call  Add(1, 2)
     def __init__(self, identifier = None) -> None:
         self.parent = None
-        self.identifier = identifier
-        self.parameters = []
-        self.pos_end = self.identifier.pos_end
+        self.identifier = identifier # Function name token
+        self.parameters = [] # Arguments passed to the function
+        self.pos_end = self.identifier.pos_end 
         self.pos_start = self.identifier.pos_start
-        self.value = None
-    def added_to(self, other):
-        return Number(1), None
+        self.value = None # Value returned by the function
+    def added_to(self, other): # Handles addition operation
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
         
 
-    def subbed_by(self, other):
+    def subbed_by(self, other): # Handles subtraction operation 
         
-        return Number(1), None
-        
-
-    def multed_by(self, other):
-        
-        return Number(1), None
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation) 
         
 
-    def dived_by(self, other):
-        return Number(1), None
-    def modulo(self, other):
+    def multed_by(self, other): # Handles multiplication operation
+        
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
+        
+
+    def dived_by(self, other): # Handles division operation
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
+    def modulo(self, other): # Handles modulo operation
+        
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
+        
+    def get_comparison_eq(self, other): # Handles equality comparison ==
+        
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
+
+    def get_comparison_ne(self, other): # Handles inequality comparison !=
         
         return Number(1), None
-        
-    def get_comparison_eq(self, other):
-        
+
+    def get_comparison_lt(self, other): # Handles less than comparison <
         return Number(1), None
 
-    def get_comparison_ne(self, other):
-        
+    def get_comparison_gt(self, other): # Handles greater than comparison >
         return Number(1), None
 
-    def get_comparison_lt(self, other):
+    def get_comparison_lte(self, other): # Handles less than or equal to comparison <=
         return Number(1), None
 
-    def get_comparison_gt(self, other):
+    def get_comparison_gte(self, other): # Handles greater than or equal to comparison >=
         return Number(1), None
 
-    def get_comparison_lte(self, other):
-        return Number(1), None
+    def anded_by(self, other): # Handles logical AND operation
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
 
-    def get_comparison_gte(self, other):
-        return Number(1), None
+    def ored_by(self, other): # Handles logical OR operation
+        return Number(1), None # Returns a Number object and None (placeholder for actual implementation)
 
-    def anded_by(self, other):
-        return Number(1), None
+    def notted(self): # Handles logical NOT operation
+        return Number(1), None 
 
-    def ored_by(self, other):
-        return Number(1), None
+    def add_param(self, node):# Adds a parameter to the function call
+        self.parameters.append(node) # Adds parameter AST node to the call
 
-    def notted(self):
-        return Number(1), None
-
-    def add_param(self, node):
-        self.parameters.append(node)
-
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -2053,7 +2069,7 @@ class CraftCallNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         self.pos_end = self.identifier.pos_end
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
@@ -2062,23 +2078,23 @@ class CraftCallNode:
         print(spaces + '    - ', f"identifier : {self.identifier}")
         print(spaces + '    - ', f"parameters : {self.parameters}")
     
-    def __repr__(self) -> str:
+    def __repr__(self) -> str: # Custom display of node
         return f"craftCallNode, name: {self.identifier}, parameters: {self.parameters}, parent: {self.parent}"
     
-class StarNode:
-    def __init__(self, cases, dew_case, ):
-        self.parent = None
+class StarNode: 
+    def __init__(self, cases, dew_case, ): # Initializes a star node with multiple conditions and a dew cases
+        self.parent = None # Points to the parent AST node
         #cases should be a a list of tuples with conditions, statements
         self.cases = cases
-        self.dew_case = dew_case
-        self.body = []
-        self.pos_start = self.cases[0][0].pos_start
+        self.dew_case = dew_case 
+        self.body = []  # Holds child nodes
+        self.pos_start = self.cases[0][0].pos_start # Start position comes from the first condition node
         
-    def add_child(self, node):
+    def add_child(self, node): # Helper to track parent for each child node
         node.parent = self
         self.body.append(node)
 
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -2087,35 +2103,35 @@ class StarNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, f"StarNode")
         print( "  "+ prefix, f"parent: {self.parent}")
-        for item in self.cases:
+        for item in self.cases:  # Loop through each (condition, statements) pair
             for j in item:
                 if not isinstance(j, list):
                     print( "  "+ prefix, f"condition : {j} ")
-                else:
+                else: # Second element = list of statements for this case
                     print( "  "+ prefix, f"condition statements: ")
                     for stmt in j:
                         self.add_child(stmt)
                         stmt.print_tree()
-        print( "  "+ prefix, f"dew cases: {self.dew_case} ")
+        print( "  "+ prefix, f"dew cases: {self.dew_case} ") # Print dew cases
         
-class WinterNode:
-    def __init__(self, condition):
+class WinterNode: # while loop
+    def __init__(self, condition): # Takes the loop condition expression
         self.parent = None
         #cases should be a a list of tuples with conditions, statements
         self.condition = condition
         self.body = []
-        self.pos_start = self.condition.pos_start
+        self.pos_start = self.condition.pos_start # Used for error reporting
 
-    def add_child(self, node):
+    def add_child(self, node):  # Set parent and store in body
         node.parent = self
         self.body.append(node)
-
-    def get_level(self):
+ 
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -2124,7 +2140,7 @@ class WinterNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, f"WinterNode")
@@ -2135,20 +2151,20 @@ class WinterNode:
             item.print_tree()
 
 class FallNode:
-    def __init__(self, condition) -> None:
+    def __init__(self, condition) -> None:  # Takes the middle condition part only at init
         self.parent = None
-        self.variable = None # crop a = 10, a = 10
-        self.condition = None # a <100
-        self.unary = None # --a
-        self.body = []
+        self.variable = None # crop a = 10, a = 10 First part = initialization 
+        self.condition = None # a <100 Second part = condition
+        self.unary = None # --a Third part= update
+        self.body = [] 
         self.condition = condition
         self.pos_start = self.condition.pos_start
     
-    def add_child(self, node):
+    def add_child(self, node): # helper to track parent for each child node
         node.parent = self
         self.body.append(node)
 
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -2157,7 +2173,7 @@ class FallNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         # self.pos_start = self.condition.pos_start
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
@@ -2171,12 +2187,12 @@ class FallNode:
             # self.add_child(item)
             item.print_tree()
             
-class NextNode:
-    def __init__(self, tok) -> None:
-        self.tok = tok
-        self.pos_start = self.tok.pos_start
+class NextNode:   # Represents a continue statement in loops
+    def __init__(self, tok) -> None: # Takes the token for the continue statement
+        self.tok = tok # Token for 'next'
+        self.pos_start = self.tok.pos_start 
         self.pos_end = self.tok.pos_end
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -2185,19 +2201,19 @@ class NextNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'NextNode')
         print(spaces + '    - ', f"value: {self.tok.value}")
         
-class BreakNode:
-    def __init__(self, tok) -> None:
-        self.tok = tok
+class BreakNode: # Represents a break statement in loops
+    def __init__(self, tok) -> None: #Takes the token for the break statement
+        self.tok = tok # Token for 'break'
         self.pos_start = self.tok.pos_start
         self.pos_end = self.tok.pos_end
 
-    def get_level(self):
+    def get_level(self): #returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -2206,54 +2222,55 @@ class BreakNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, 'BreakNode')
         print(spaces + '    - ', f"value: {self.tok.value}")
     
 
-#INTERPRETER CLASS FOR SEMANTIC
+#INTERPRETER CLASS FOR SEMANTIC [Runtime wrapper for semantic analysis or interpreter]
 class RTResult:
     def __init__(self):
-        self.value = None
-        self.error = None
+        self.value = None #Will store result value 
+        self.error = None # If any runtime error occurs
 
-    def register(self, res):
+    def register(self, res):  #Inherits value or error from another RTResult
         if res.error: self.error = res.error
         return res.value
 
-    def success(self, value):
+    def success(self, value):  #Used when an evaluation is successful
         self.value = value
         return self
 
-    def failure(self, error):
+    def failure(self, error): #uused when evaluation fails
         self.error = error
         return self
 
 
-#PARSE RESULT
-
+#PARSE RESULT (2nd part of the parser)
+#It can either be a successful parse with a node or an error
 class ParseResult:
     def __init__(self):
-        self.error = None
-        self.node = None
+        self.error = None # Stores parsing error (if any)
+        self.node = None # Stores the AST node produced (if parsing is successful)
 
-    def register(self, res):
-        if isinstance(res, ParseResult):
-            if res.error:
-                self.error = res.error
-            return res.node
+    # helps track errors while retrieving values from parsing or interpretation
+    def register(self, res): # Inherits value or error from another ParseResult 
+        if isinstance(res, ParseResult): # If input is another ParseResult
+            if res.error: # pag may error 
+                self.error = res.error # raise the error
+            return res.node # return the node
         
-        return res
+        return res #return raw value
     
     def success(self, node):
-        self.node = node
-        return self
+        self.node = node # Set the resulting node on success
+        return self # Return self for chaining
 
     def failure(self, error):
-        self.error = error
-        return self
+        self.error = error # Set the parsing error
+        return self # Return self for chaining
 
 # ast start
 class Program:
@@ -2262,26 +2279,26 @@ class Program:
         #has functions
         #has main
         self.parent = None
-        self.body = [] #main
-        self.errors = [] # undeclared variables, mismatch parameter and argument, undeclared function call etc..
-        self.symbol_table = symbol_table # global declaration
-        self.functions = [] #functions
+        self.body = [] #store nodes in pelican() or main 
+        self.errors = [] # undeclared variables, mismatch parameter and argument, undeclared function call etc.. all collected errors for the program
+        self.symbol_table = symbol_table # global declaration 
+        self.functions = [] #functions list of all declared craft() functions
         
     # def add_variables(self,name, node):
     #     self.context.symbol_table.set(name, node.value)
 
     def add_child(self, node):
-        node.parent = self
-        self.body.append(node)
+        node.parent = self  # Set parent for proper tree structure
+        self.body.append(node) # Add the node to program body
     
     def error(self, error):
-        self.errors.append(error)
+        self.errors.append(error) # Add an error to the list
     
 
-    def display(self):
+    def display(self): # For printing the program tree
         print("Program: ")
         if self.body:
-            for item in self.body:
+            for item in self.body: # Print each node in the main body
                 item.print_tree()
         else:
             print("WALANG PELICAN")
@@ -2291,15 +2308,15 @@ class Program:
 class CraftNode:
     def __init__(self, identifier) -> None:
         #parent should be program lang
-        self.parent = None
-        self.identifier =identifier
-        self.body = []
-        self.parameters = []
-        self.symbol_table = None
-        self.errors = []
-        self.called = False
+        self.parent = None # Parent node reference in AST
+        self.identifier =identifier # Function name token
+        self.body = [] # Body statements
+        self.parameters = [] # Function parameters
+        self.symbol_table = None # Symbol table for local variables
+        self.errors = [] # Any semantic/syntax errors
+        self.called = False # Flag to check if the function has been called
         
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -2308,7 +2325,7 @@ class CraftNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, f"Craft")
@@ -2328,16 +2345,16 @@ class CraftNode:
         self.body.append(node)
 
 class PelicanNode:
-    def __init__(self, symbol_table = None) -> None:
-        self.parent = None
-        self.body = []
-        self.errors = []
-        self.context = None
-        self.symbol_table = symbol_table
+    def __init__(self, symbol_table = None) -> None: # Takes the symbol table for local variables
+        self.parent = None # Parent node reference in AST
+        self.body = [] # List of child nodes
+        self.errors = [] # errors list
+        self.context = None # Context for local variables
+        self.symbol_table = symbol_table # Symbol table for local variables
         # self.pos_start = self.body[0].pos_start
         
 
-    def get_level(self):
+    def get_level(self): # Returns the level of the node in the AST
         level = 0
         p = self.parent
         while p:
@@ -2346,7 +2363,7 @@ class PelicanNode:
 
         return level
 
-    def print_tree(self):
+    def print_tree(self): # Prints the tree structure for debugging
         spaces = ' ' * self.get_level() * 3
         prefix = spaces + "|__" if self.parent else ""
         print(prefix, f"Pelican")
@@ -2366,12 +2383,14 @@ class PelicanNode:
         self.body.append(node)
         
 #PARSER
-    
+# 2nd version of the parser instead na sa tokens, AST/nodes na ang pinapasa 
+# Defines the parser that converts tokens into an Abstract Syntax Tree (AST)
 class Parser:
     def __init__(self, tokens) -> None:
-        self.tokens = tokens
-        self.tok_idx = -1
-        self.advance()
+        self.tokens = tokens # Initializes with a list of tokens.
+        self.tok_idx = -1 # Sets current index to -1 (will advance immediately to 0)
+        self.advance() 
+        # Flags to track parsing state (e.g., to detect multiple pelican() declarations or correct block nesting)
         self.perfection = False
         self.is_pelican = False
         self.in_loop = False
@@ -2379,7 +2398,7 @@ class Parser:
         self.in_fall = False
         self.in_farmhouse = False
 
-    def advance(self):
+    def advance(self): # Moves to the next token and updates self.current_tok
         self.tok_idx += 1
         if self.tok_idx < len(self.tokens):
             self.current_tok = self.tokens[self.tok_idx]
@@ -2387,10 +2406,10 @@ class Parser:
     
     #* parse takes the list of tokens then  decides which functions to execute based on the token
     def parse(self):
-        res =  []
-        error = []
+        res =  [] # List to store the resulting nodes
+        error = []  # List to store any errors encountered during parsing
     
-        program = Program()
+        program = Program() # The main function that builds the AST from token list.
         
         while self.current_tok.token == NEWLINE:
             self.advance()
@@ -2404,7 +2423,9 @@ class Parser:
         if self.current_tok.token == MULTILINE_OPEN:
             while self.current_tok.token != MULTILINE_CLOSE:
                 self.advance()
-                
+        
+        # Check for the 'planting' keyword to start the program
+        # If not found, raise an error
         while self.current_tok.token != PLANTING:
             self.advance()
             if self.current_tok.token == EOF:
@@ -2426,10 +2447,8 @@ class Parser:
 
         # * basically yung parse lang pero walang craft
 
-        while True:
-            # if self.current_tok.token == SEMICOLON:
-            #     print("semicolon")
-            #     self.advance()
+        while True: # Loop continues until EOF or perfection$ is found
+
             if self.current_tok.token == MULTILINE_OPEN:
                 while self.current_tok.token != MULTILINE_CLOSE:
                     self.advance()
@@ -2493,7 +2512,7 @@ class Parser:
 
             #functions
             # craft for subfunctions
-            # craft syntax
+            # craft syntax creates a CraftNode AST
             if self.current_tok.token == CRAFT:
                 print("FOUND CRAFT1")
                 if self.is_pelican == True:
@@ -2566,7 +2585,7 @@ class Parser:
             # -- this is the main body of our function! 
             # * also i call body() here
             # main function
-            # pelican syntax
+            # pelican syntax creates a PelicanNode AST
             if self.current_tok.token == PELICAN:
                 print("found pelican node")
                 self.advance()
@@ -2701,15 +2720,12 @@ class Parser:
                     self.advance()
                     while self.current_tok.token != NEWLINE:
                         self.advance()
-                # if self.current_tok.token == SEMICOLON:
-                #     print("semicolon")
-                #     self.advance()
                 if self.current_tok.token == NEWLINE:
                     self.advance()
                 
                 #--INITIALIZATION OF IDENTIFIERS
                 if self.current_tok.token in INTEGER:
-                    res = self.expr()
+                    res = self.expr() 
                 if self.current_tok.token == IDENTIFIER:
                     print("FOUND AN IDENTIFIER!: ", self.current_tok)
                     crop_name = self.current_tok
@@ -2981,7 +2997,7 @@ class Parser:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, left parenthesis, true, false, string or voidegg!"))
                         break
                     else:
-                        expr = result.register(self.expr())
+                        expr = result.register(self.expr()) # Parse as expression if starting with a number
                         if result.error: 
                             return res
                         self.advance()
