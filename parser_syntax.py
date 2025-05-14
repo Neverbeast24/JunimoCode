@@ -2979,7 +2979,7 @@ class Parser:
                 error.append(InvalidSyntaxError(
                     self.current_tok.pos_start,
                     self.current_tok.pos_end,
-                    "Expected '(' or '[' after craft identifier!"
+                    "Expected '(' or '[' !"
                 ))
                 return res, error
 
