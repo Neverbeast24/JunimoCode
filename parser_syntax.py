@@ -225,7 +225,7 @@ class InvalidSyntaxError(Error):
         super().__init__(pos_start, pos_end, "Invalid Syntax", details)
 
 
-class Position:
+class Position: 
     def __init__(self, idx, ln, col, fn, ftxt):
         self.idx = idx
         self.ln = ln
@@ -483,7 +483,9 @@ class Lexer:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, TERMINATOR, ) "])
                         continue
                     tokens.append(Token(DECRE, "--", pos_start = self.pos))
-
+                elif self.current_char == None:
+                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' - '. Cause: ' {self.current_char} '. "])
+                    continue
                 else:
                     # CASE: negative number
                     print("current char negative: ", self.current_char)

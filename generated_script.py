@@ -4,7 +4,12 @@ import traceback
 line_map = load_dict_from_file('line_map.txt')
 lines = read_list_from_file('get_line.txt')
 try:
-    custom_print(1+2)
+    def Subtract (A,B):
+        C = (A-B)
+        return C
+    A = "Hello"
+    B = Subtract(4,3)
+    custom_print(B)
 except Exception as e:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb = traceback.extract_tb(e.__traceback__)

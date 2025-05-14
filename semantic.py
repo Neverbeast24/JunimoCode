@@ -517,7 +517,9 @@ class Lexer:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, TERMINATOR, ) "])
                         continue
                     tokens.append(Token(DECRE, "--", pos_start = self.pos))
-
+                elif self.current_char == None:
+                    errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' - '. Cause: ' {self.current_char} '. "])
+                    continue
                 else:
                     # CASE: negative number
                     if self.current_char in all_numbers:
@@ -901,7 +903,7 @@ class Lexer:
                                 errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for add! Cause: {self.current_char}. Expected: open parenthesis'])
                                 return [], errors
                             if self.current_char in '(':
-                                return Token(ADD, "add", pos_start = self.pos), errors #ask mel
+                                return Token(ADD, "add", pos_start = self.pos), errors 
                             elif self.current_char in alpha_num: #double check this
                                 continue
                             else:
@@ -2723,7 +2725,7 @@ class Parser:
                 if self.current_tok.token == NEWLINE:
                     self.advance()
                 
-                #--INITIALIZATION OF IDENTIFIERS
+                #--INITIALIZATION OF IDENTIFIERS Add first parameter to the function call if it's a number, string, bool, void, or identifier
                 if self.current_tok.token in INTEGER:
                     res = self.expr() 
                 if self.current_tok.token == IDENTIFIER:
@@ -2732,7 +2734,7 @@ class Parser:
                     self.advance()
                     #-- if it's a function call
                     if self.current_tok.token == LPAREN:
-                        craft_call = CraftCallNode(crop_name)
+                        craft_call = CraftCallNode(crop_name) #Start creating a function call AST node
                         self.advance()
                         if self.current_tok.token in (INTEGER, FLOAT):
                             print("NUMBER ARGUMENT: ", self.current_tok)
@@ -2772,10 +2774,10 @@ class Parser:
                                 self.advance()
                             
                         self.advance()
-                        res.append(craft_call)
+                        res.append(craft_call) # Add the function call node to the result list
                         self.advance()
                 
-                    elif self.current_tok.token == SLBRACKET:
+                    elif self.current_tok.token == SLBRACKET: # if it's a list call
                         self.advance()
                         if self.current_tok.token in (IDENTIFIER, INTEGER):
                             print("DEBUG: pumasok sa SLBRACKET")
@@ -2843,7 +2845,7 @@ class Parser:
 
                 #LOOPS
                 # for loop (fall)
-                if self.current_tok.token in FALL:
+                if self.current_tok.token in FALL: # Parse Junimo Code's fall loop syntax and append its AST node
                     print("IN FALL")
                     self.advance()
                     print("before fall stmt: ", self.current_tok)
@@ -2855,13 +2857,13 @@ class Parser:
                     res.append(fall_res)
                     
                 #   winter_stmt (while loop)  
-                if self.current_tok.token in WINTER:
+                if self.current_tok.token in WINTER: # Parse Junimo Code's winter loop syntax and append its AST node
                     result = self.winter_stmt()
                     res.append(result)
                     self.advance()
                 
                 # break statement
-                if self.current_tok.token == BREAK:
+                if self.current_tok.token == BREAK: # Parse Junimo Code's break statement syntax and append its AST node
                     break_node = BreakNode(self.current_tok)
                     self.advance()
                     #;
@@ -2869,7 +2871,7 @@ class Parser:
                     self.advance()
                         
                 # continue statement (double check this with other files if implemented already)
-                if self.current_tok.token == NEXT: 
+                if self.current_tok.token == NEXT: # Parse Junimo Code's continue statement syntax and append its AST node
                     next_node = NextNode(self.current_tok)
                     self.advance()
                     #;
@@ -2878,7 +2880,7 @@ class Parser:
 
                 #CONDITIONAL
                 # star (if)
-                if self.current_tok.token in STAR:
+                if self.current_tok.token in STAR: # Parse Junimo Code's star statement syntax and append its AST node
                     print("FOUND STARR")
                    
                     self.in_condition = True
@@ -2903,7 +2905,7 @@ class Parser:
 
                 #INPUT OUTPUT 
                 # COLLECT
-                if self.current_tok.token in COLLECT: 
+                if self.current_tok.token in COLLECT:  # Parse Junimo Code's collect statement syntax and append its AST node
                     
                     self.advance()
                     # (
@@ -2914,18 +2916,18 @@ class Parser:
                     # $
                     self.advance()
                 # SHIP OUTPUT    
-                if self.current_tok.token in SHIP:
+                if self.current_tok.token in SHIP: # Parse Junimo Code's ship statement syntax and append its AST node
                     print()
-                    ship_tok = self.current_tok
+                    ship_tok = self.current_tok # Store the token for AST use
                     #need a list to store all the outputs
-                    list_of_nodes = []
-                    result = ParseResult()
+                    list_of_nodes = [] # List to store the nodes
+                    result = ParseResult()  # Handle parsing results 
                     self.advance()
                     self.advance()
                     #this is for <<
                     # self.advance()
-                    expr = result.register(self.expr())
-                    list_of_nodes.append(expr)
+                    expr = result.register(self.expr())  # Parse a general expression (number, identifier, function call, parentheses, etc.) and propagate errors into 'result'
+                    list_of_nodes.append(expr) # Append the expression node to the list
                     # self.advance()
                     # self.advance()
                     print("current token in ship: ", self.current_tok)
@@ -2937,14 +2939,14 @@ class Parser:
                             print("DI OKAY YUNG")
                             break
                         else:
-                            expr = result.register(self.expr())
-                            list_of_nodes.append(expr)
+                            expr = result.register(self.expr())  # Parse a general expression (number, identifier, function call, parentheses, etc.) and propagate errors into 'result'
+                            list_of_nodes.append(expr) # Append the expression node to the list
                             # self.advance()
                             # i should append this to a list
                             # print(list_of_nodes)
                         # print("last token in loop: ", self.current_tok)
                     
-                    res.append(ShipNode(list_of_nodes, ship_tok))
+                    res.append(ShipNode(list_of_nodes, ship_tok)) # Append the ship node to the result list
                     self.advance()
                     self.advance()
                     self.advance()
@@ -2954,9 +2956,9 @@ class Parser:
 
                         
                 # CROP DECLARATION            
-                if self.current_tok.token in CROP: 
+                if self.current_tok.token in CROP:  # Parse Junimo Code's crop statement syntax and append its AST node
                     if self.current_tok.matches(CROP, 'crop'):
-                        craft_result, craft_error = self.crop_dec() 
+                        craft_result, craft_error = self.crop_dec()   # Call crop_dec() to parse a declaration like crop A
                         print("TOKEN AFTER CROP DEC: ", self.current_tok)
                         if craft_error:
                             print("ERROR AFTER CROP DEC")
@@ -2964,14 +2966,14 @@ class Parser:
                             return res, error
                         else:
                             # self.advance()
-                            res.append(craft_result)
+                            res.append(craft_result) # Append the crop declaration node to the result list
                             print("CROP DEC RESULT: ", self.current_tok)
                             self.advance()
                            
-                            while self.current_tok.token == COMMA:
+                            while self.current_tok.token == COMMA:  # Handle multiple crop declarations
                                 #self.advance()
                                 #we advanced kasi nasa crop tau rn
-                                craft_result, craft_error = self.crop_dec()
+                                craft_result, craft_error = self.crop_dec() 
                                 
                                 if craft_error:
                                     error.append(craft_error)
@@ -2985,12 +2987,12 @@ class Parser:
                                 self.advance()
                 
                 # function for subfunctions
-                if self.current_tok.token in CRAFT:
+                if self.current_tok.token in CRAFT: 
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "You can't declare a function within a function!"))
-                    break
+                    break # Craft function declarations inside pelican or another craft are disallowed
                 
                 # harvest statement (return)
-                if self.current_tok.token == HARVEST:
+                if self.current_tok.token == HARVEST: # Parse Junimo Code's harvest statement syntax and append its AST node
                     result = ParseResult()
                     self.advance()
                     if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOIDEGG and self.current_tok.token != FLOAT:
@@ -3003,8 +3005,8 @@ class Parser:
                         self.advance()
 
                         # i want to store this in thepelican node
-                        res.append(HarvestCallNode(expr))
-                        print("EXPR HARVEST: ", type(expr))
+                        res.append(HarvestCallNode(expr)) # Append the harvest node to the result list
+                        print("EXPR HARVEST: ", type(expr)) 
                         # if sub_func == True:
                         #     self.advance()
                         # else:
@@ -3025,10 +3027,10 @@ class Parser:
                     else:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Dollar sign expected for 'perfection'!"))
 
-                if self.current_tok.token == CRBRACKET:
+                if self.current_tok.token == CRBRACKET: # Stops parsing when the closing curly } or end-of-file is encountered
                     break
 
-                if self.current_tok.token == EOF:
+                if self.current_tok.token == EOF: 
                     # error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "INVALID MAIN SCOPE"))
                     break
             
@@ -3049,8 +3051,8 @@ class Parser:
             )
         
         # Token(IDENTIFIER: a)
-        crop_name = self.current_tok
-        list_node = ListNode(crop_name)
+        crop_name = self.current_tok # Store identifier token
+        list_node = ListNode(crop_name) # Create an empty list node for possible list assignment
         # print("crop name: ", crop_name)
         #res.register_advancement()
         self.advance()
@@ -3270,19 +3272,19 @@ class Parser:
 
     #*conditional statements  
     def star_expr(self):
-        res = ParseResult()
-        cases = []
-        dew_case = []
-        errors = []
+        res = ParseResult() # Create a ParseResult object to store result or errors
+        cases = [] # List to store cases
+        dew_case = [] # List to store dew cases
+        errors = [] # List to store errors
 
-        condition = res.register(self.own_if_expr())
-        if res.error: 
+        condition = res.register(self.own_if_expr()) # Parse the condition expression 
+        if res.error:  # If error occurred during parsing the condition
             print("[DEBUG] error in condition")
             return [], errors
-        condition = condition.node
-        self.advance()
-        print("[DEBUG] token after condition: ", self.current_tok)
-        if self.current_tok.token != CLBRACKET:
+        condition = condition.node # Unpack AST node from ParseResult
+        self.advance() # {
+        print("[DEBUG] token after condition: ", self.current_tok) 
+        if self.current_tok.token != CLBRACKET: # Check if the next token is {
             print ("err { 1")
             errors.append(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -3316,7 +3318,7 @@ class Parser:
         while self.current_tok.token == STARDEW:
             self.advance()
             self.advance()
-            stardew_condition = res.register(self.own_if_expr())
+            stardew_condition = res.register(self.own_if_expr()) # Parse condition
             stardew_condition = stardew_condition.node
             if res.error: 
                 return [], errors
@@ -3331,9 +3333,9 @@ class Parser:
                     "Expected { "
                 ))
                 return [], errors
-            self.advance()
+            self.advance() 
             #todo need to append this its body
-            result, body_error = self.body()
+            result, body_error = self.body() # Parse body of stardew
             #need to append it to cases as a tuple of (condition, [body result])
             cases.append((stardew_condition, result))
             self.advance()
@@ -3345,9 +3347,9 @@ class Parser:
             self.advance()
             # {
             self.advance()
-            result, body_error = self.body()
-            for item in result:
-                dew_case.append(item)
+            result, body_error = self.body() 
+            for item in result: 
+                dew_case.append(item)  # Add statements to else branch
             
             #return result.success(if_res_body)
             
@@ -3356,69 +3358,70 @@ class Parser:
 
         self.advance()
         
-        return StarNode(cases, dew_case), errors
+        return StarNode(cases, dew_case), errors # Return AST node for the full if-elseif-else structure
     
     def winter_stmt(self):
         # cases = []
         self.advance()
         self.advance()
-        condition = self.own_if_expr().node
+        condition = self.own_if_expr().node # Parse the condition expression
 
-        condition = condition.node
-        winter_node = WinterNode(condition)
-        winter_node.condition = condition
+        condition = condition.node # Unpack AST node from ParseResult
+        winter_node = WinterNode(condition) # Create AST node for the while-loop
+        winter_node.condition = condition # Set the condition for the while-loop
         self.advance()
         #{
         self.advance()
 
 
-        if self.in_condition == True:
+        if self.in_condition == True: # Reset condition tracking state
             self.in_condition = False
-        self.in_loop = True
-        result, body_error = self.body()
+        self.in_loop = True # Set state flag that we're parsing inside a loop
+        result, body_error = self.body() # Parse the body of the while-loop
 
         
-        for item in result:
-            winter_node.add_child(item)
+        for item in result: # Iterate through the parsed body statements
+            winter_node.add_child(item) # Add each statement to the while-loop node
         
 
         if body_error:
             for i in body_error:
                 print("[DEBUG] error in body if: ", i.as_string())
         # print("cases so far: ", cases)
-        return winter_node
+        return winter_node # Return the while-loop node with its body statements
         
-    def own_if_expr(self):
-        res = ParseResult()
-        node =  self.bin_op(self.comp_expr, (AND_OP, OR_OP))
-        return res.success(node)
-        #same as expr but we need to call comp expr in bin op
+    def own_if_expr(self): # Result container
+        res = ParseResult() # Create a ParseResult object to store result or errors 
+        node =  self.bin_op(self.comp_expr, (AND_OP, OR_OP))# Parse expression with logical AND/OR operators
+        return res.success(node) # Return the result of the expression parsing
+         
     
-    def arith_expr(self):
-        node = self.bin_op(self.term, (PLUS, MINUS))
-        return node
+    def arith_expr(self): # Parse + and - arithmetic operations
+        node = self.bin_op(self.term, (PLUS, MINUS)) # Parse expression with + and - operators
+        return node # Return the result of the expression parsing
     
-    def comp_expr(self):
+    def comp_expr(self): # Parse comparison operations
         # print("comp expr first item: ", self.current_tok)
-        res = ParseResult()
+        res = ParseResult() # Create a ParseResult object to store result or errors
 
-        if self.current_tok.matches(NOT_OP, '!'):
+        if self.current_tok.matches(NOT_OP, '!'): # Check for NOT operator
             # print("comp expr not op")
-            op_tok = self.current_tok
+            op_tok = self.current_tok # Store the NOT operator token
             # res.register_advancement()
             self.advance()
 
-            node = res.register(self.comp_expr())
+            node = res.register(self.comp_expr())  # Parse the expression to negate
             if res.error: 
                 # print("error after not")
                 return res
-            if node.notted == True:
+            if node.notted == True: # Flip its "not" state
                 node.notted = False
             else:
                 node.notted = True
                 
             return res.success(node)
         # print("value after ! comp expr: ", self.current_tok)
+        # Parse arithmetic comparison: <, >, <=, >=, ==, !=
         node = res.register(self.bin_op(self.arith_expr, (LESS_THAN, GREATER_THAN, LESS_THAN_EQUAL, 
         GREATER_THAN_EQUAL, E_EQUAL, NOT_EQUAL )))
         # print("token after arith expr: ", self.current_tok)
@@ -3437,67 +3440,68 @@ class Parser:
     #?PARSE RESULT ARE HERE
     def factor(self):
         # print("factor current tok: ", self.current_tok)
-        res = ParseResult()
-        tok = self.current_tok
+        res = ParseResult() # Create a ParseResult object to store result or errors
+        tok = self.current_tok # Store the current token
         
-        if tok.token in STRING:
+        if tok.token in STRING: # If the current token is a string, advance and return a StringNode
             res.register(self.advance())
             return res.success(StringNode(tok))
         
-        if tok.token in TRUE:
+        if tok.token in TRUE: # If the current token is TRUE, advance and return a BooleanNode
             res.register(self.advance())
             return res.success(BooleanNode(tok))
 
-        if tok.token in FALSE:
+        if tok.token in FALSE: # If the current token is FALSE, advance and return a BooleanNode
             res.register(self.advance())
             return res.success(BooleanNode(tok))
         
-        if tok.token in VOIDEGG:
+        if tok.token in VOIDEGG: # If the current token is VOIDEGG, advance and return a VoidNode
             res.register(self.advance())
             return res.success(VoidNode(tok))
 
        
         
         # if tok.token in IDENTIFIER:
-        #     return res.success(IdentifierNode(tok))
+        #     return res.success(IdentifierNode(tok)) 
         
-        if tok.token in (INCRE, negative, DECRE):
-            operation = self.current_tok
-            res.register(self.advance())
+        if tok.token in (INCRE, negative, DECRE): # If the current token is an increment or decrement operator
+            operation = self.current_tok # Store the operator token
+            res.register(self.advance()) # 
             identifier = self.current_tok
-            factor = res.register(self.factor())
+            # If current token is a prefix operator, advance and recursively parse the next factor
+            factor = res.register(self.factor()) # Wrap the factor in a PreUnaryNode with the corresponding operator
             if res.error: return res
-            return res.success(PreUnaryNode(CropAccessNode(identifier), operation))
+            return res.success(PreUnaryNode(CropAccessNode(identifier), operation)) # If successful, return a node like ++A
 
-        if tok.token in (INTEGER, FLOAT):
+        if tok.token in (INTEGER, FLOAT): #Basic numeric values wrapped as NumberNode
             res.register(self.advance())    
             return res.success(NumberNode(tok))
         
         
-        if self.current_tok.token == IDENTIFIER:
+        if self.current_tok.token == IDENTIFIER: 
             print('found length: ', self.current_tok)
             #comment
             crop_name = self.current_tok
-            self.advance()
+            self.advance() # Store identifier name and advance
             # print("next length: ",)
-            if self.current_tok.token == LPAREN:
-                craft_call = CraftCallNode(tok)
+            if self.current_tok.token == LPAREN: # Function call: A(1, "hi")
+                craft_call = CraftCallNode(tok) # Create a CraftCallNode and parse each parameter with correct type node
                 self.advance()
-                #look for 1, "string", true, false, void
+                #look for 1, "string", true, false, void Repeated for each supported parameter type
                 if self.current_tok.token in (INTEGER, FLOAT):
                     print("found number in craft call: ", self.current_tok)
-                    craft_call.add_param(NumberNode(self.current_tok))
+                    craft_call.add_param(NumberNode(self.current_tok)) #Parse and add each parameter node
                     self.advance()
                 elif self.current_tok.token == STRING:
-                    craft_call.add_param(StringNode(self.current_tok))
+                    craft_call.add_param(StringNode(self.current_tok)) # Parse and add each parameter node
                     self.advance()
                 elif self.current_tok.token in (TRUE, FALSE):
-                    craft_call.add_param(BooleanNode(self.current_tok))
+                    craft_call.add_param(BooleanNode(self.current_tok)) # Parse and add each parameter node
                     self.advance()
                 elif self.current_tok.token == VOIDEGG:
-                    craft_call.add_param(VoidNode(self.current_tok))
+                    craft_call.add_param(VoidNode(self.current_tok)) # Parse and add each parameter node
                     self.advance()
-                elif self.current_tok.token == IDENTIFIER:
+                elif self.current_tok.token == IDENTIFIER: 
                     print("ident craft")
                     crop_name = self.current_tok
                     # self.advance()
@@ -3515,11 +3519,11 @@ class Parser:
                     expr = self.expr()
                     expr = expr.node
                     
-                craft_call.add_param(expr)
-                print("craft call add param: ", self.current_tok)
+                    craft_call.add_param(expr)
+                    print("craft call add param: ", self.current_tok)
                     # self.advance()
                 
-                while self.current_tok.token == COMMA:
+                while self.current_tok.token == COMMA: # Loop through all arguments in the function call
                     print("found comma in craft call")
                     self.advance()
                     if self.current_tok.token in (INTEGER, FLOAT):
@@ -3540,7 +3544,7 @@ class Parser:
                         
                         expr = self.expr()
                         expr = expr.node
-                    craft_call.add_param(expr)
+                        craft_call.add_param(expr)
 
                             # craft_call.add_param(CropAccessNode(crop_name))
                 #this should be a ) token
@@ -3550,30 +3554,30 @@ class Parser:
                 
                 
                 return res.success(craft_call)
-            elif self.current_tok.token == SLBRACKET:
+            elif self.current_tok.token == SLBRACKET: # List access: A[1]
                 # print("in list factor")
                 self.advance()
                 # index[3-1]
                 # index = self.current_tok
-                index = self.expr()
-                if index.error:
+                index = self.expr() # Parse an expression inside square brackets for list indexing
+                if index.error: # If error occurred during parsing the expression
                     print("error in list cond")
-                index = index.node
-                self.advance()
-                return res.success(ListCallNode(CropAccessNode(crop_name), index))
-            if self.current_tok.token in (INCRE, DECRE):
-                return res.success(PostUnaryNode(CropAccessNode(tok), self.current_tok))
+                index = index.node # Unpack AST node from ParseResult
+                self.advance() 
+                return res.success(ListCallNode(CropAccessNode(crop_name), index)) # Return a ListCallNode with the crop name and index
+            if self.current_tok.token in (INCRE, DECRE): # If followed by ++ or --, return a PostUnaryNode
+                return res.success(PostUnaryNode(CropAccessNode(tok), self.current_tok)) # 
             else:
-                return res.success(CropAccessNode(tok))
+                return res.success(CropAccessNode(tok)) # Basic variable access without function or indexing
         
-        elif tok.token == LPAREN:
-            res.register(self.advance())
+        elif tok.token == LPAREN: # Grouped expressions (A + B)
+            res.register(self.advance()) 
             # print("value after lparen: ", self.current_tok)
-            expr = res.register(self.comp_expr())
+            expr = res.register(self.comp_expr()) # Handle parenthesized expression recursively with comp_expr
             if res.error: return res
             print("after lparen expr: ", self.current_tok)
             if self.current_tok.token == RPAREN:
-                res.register(self.advance())
+                res.register(self.advance()) # Ensure proper closing ) and return the grouped expression node
                 return res.success(expr)
             else:
                 print("error after lparen")
@@ -3583,8 +3587,8 @@ class Parser:
                 ))
         #return res.failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, "Expected int or float"))
     
-    def term(self):
-        return self.bin_op(self.factor, (MUL, DIV, MODULUS))
+    def term(self): # Handles multiplication, division, and modulo operations (higher precedence than addition)
+        return self.bin_op(self.factor, (MUL, DIV, MODULUS)) # Build a binary expression tree using factor() as base and given operators.
     
         #really this means:
         '''
@@ -3600,9 +3604,9 @@ class Parser:
             
         '''
 
-    def expr(self):
+    def expr(self): # Handles addition and subtraction (lower precedence than term())
         
-        return self.bin_op(self.term, (PLUS, MINUS))
+        return self.bin_op(self.term, (PLUS, MINUS)) # Uses term() as base level and processes + and - operators
 
         #todo add string expr
         #really this means:
@@ -3621,12 +3625,12 @@ class Parser:
    
     #func is rule (expr or term) builds binary expression tree
     # A - B / 4
-    def bin_op(self, func, ops):
+    def bin_op(self, func, ops): # helper for building binary operator trees
         # print("func: ", func)
         # print("bin op current tok: ", self.current_tok)
         res = ParseResult()
         # print('first token in bin op: ', self.current_tok.token)
-        left = res.register(func()) #instead of self.factor() or self.term()
+        left = res.register(func()) #instead of self.factor() or self.term() 
         #NumberNode
         if res.error:
             print("error in left node: ", res.error.as_string())
@@ -3638,15 +3642,16 @@ class Parser:
             if res.error:
                 print("error in right node")
                 return res
-            left = BinOpNode(left, op_tok, right)
+            left = BinOpNode(left, op_tok, right) 
             # (left=NumberNode op_tok = + right = NumberNode)
 
         return res.success(left)
     
 ####################
-#* INTERPRETER
+#* INTERPRETER (checking if the node is valid - semantic)
 class Interpreter:
     #eto yung kinocall natin sa run
+    # 
     # automatic na malalagay yung name ng node kaya ganyan yung method_name
     def visit(self, node, context):
         method_name = f'visit_{type(node).__name__}'
@@ -3656,7 +3661,7 @@ class Interpreter:
     def no_visit_method(self, node, context):
         raise Exception(f'No visit_{type(node).__name__} method defined')
     
-    def visit_Program(self, node, symbol_table):
+    def visit_Program(self, node, symbol_table): 
 
         for item in node.body:
             if isinstance(item, CropAssignNode):
@@ -4352,7 +4357,7 @@ class Void:
     def __repr__(self):
         return "void"
 
-class SemanticTrue:
+class SemanticTrue: # check if the value is true / boolean
     def __init__(self, node, value=None):
         self.value = value
         self.pos_start = node.tok.pos_start
@@ -4423,7 +4428,7 @@ class SemanticTrue:
         copy.set_context(self.context)
         return copy
     
-class SemanticFalse:
+class SemanticFalse: # check if the value is false / boolean
     def __init__(self, node, value=None):
         self.value = value
         self.pos_start = node.tok.pos_start
