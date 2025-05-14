@@ -1699,9 +1699,6 @@ class Parser:
         # * basically yung parse lang pero walang craft
 
         while True:
-            # if self.current_tok.token == SEMICOLON:
-            #     print("semicolon")
-            #     self.advance()
             if self.current_tok.token == MULTILINE_OPEN:
                 while self.current_tok.token != MULTILINE_CLOSE:
                     self.advance()
@@ -1811,7 +1808,7 @@ class Parser:
                         return res, error
                     self.advance()
 
-                    # ✅ After perfection$, allow only newlines then EOF
+                    #  After perfection$, allow only newlines then EOF
                     while self.current_tok.token == NEWLINE:
                         self.advance()
 
@@ -1905,7 +1902,7 @@ class Parser:
         # * basically yung parse lang pero walang craft
 
         while True:
-            if self.is_statement():
+            if self.is_statement(): # Check if current token is a valid statement start
                 if self.current_tok.token == MULTILINE_OPEN:
                     while self.current_tok.token != MULTILINE_CLOSE:
                         self.advance()
@@ -1916,9 +1913,7 @@ class Parser:
                     self.advance()
                     while self.current_tok.token != NEWLINE:
                         self.advance()
-                # if self.current_tok.token == SEMICOLON:
-                #     print("semicolon")
-                #     self.advance()
+
                 if self.current_tok.token == NEWLINE:
                     self.advance()
 
@@ -1926,7 +1921,7 @@ class Parser:
                 print("star number: ", self.current_tok)
                 if self.current_tok.token in INTEGER:
                     
-                    res = self.expr()
+                    res = self.expr()  # Parse as expression if starting with a number
 
                 #--INITIALIZATION OF IDENTIFIERS
                 if self.current_tok.token == IDENTIFIER:
@@ -3185,7 +3180,7 @@ class Parser:
                 #self.advance()
                 #TODO relational operator
                 rel, rel_error = self.fall_rel()
-                # ! DITO DAPAT YUNG SEMICOLON
+                # ! DITO DAPAT YUNG TERMINATOR
                 if rel_error:
                     error.extend(rel_error)
                     return res, error
