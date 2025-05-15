@@ -2610,25 +2610,28 @@ class Parser:
                     print("you got a list")
                     self.advance()
                     print("after list: ", self.current_tok)
-                    list, err = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
-                    # print('after list index: ', self.current_tok)
-                    # print("list: ", err)
-                    if err:
-                        #error.append(err)
-                        for e in err:
-                            error.append(e)
-                        #return res, error
-                    else:
-                        if self.current_tok.token != SRBRACKET:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing bracket for list!"))
+                    if self.current_tok.token == FLOAT:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Float is not allowed for accessing list elements"))
+                    else: 
+                        list, err = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
+                        # print('after list index: ', self.current_tok)
+                        # print("list: ", err)
+                        if err:
+                            #error.append(err)
+                            for e in err:
+                                error.append(e)
+                            #return res, error
                         else:
-                            # print("Sucess from assign list")
-                            self.advance()
-                            num, err = self.num_loop()
-                            if err:
-                                error.append(err)
+                            if self.current_tok.token != SRBRACKET:
+                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing bracket for list!"))
                             else:
-                                res.append("Success craft ident assign!")
+                                # print("Sucess from assign list")
+                                self.advance()
+                                num, err = self.num_loop()
+                                if err:
+                                    error.append(err)
+                                else:
+                                    res.append("Success craft ident assign!")
                 elif self.current_tok.token in (INCRE, DECRE):
                     if self.in_farmhouse == True:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
