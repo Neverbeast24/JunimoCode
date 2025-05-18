@@ -2805,7 +2805,7 @@ class Parser:
             print("AFTER IDENT ADVANCE: ", self.current_tok) 
             if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
                 self.advance()
-                print("AFTER IDENT ADVANCE: ", self.current_tok)
+                print("AFTER IDENT ADVANCE 2: ", self.current_tok)
                 if self.current_tok.token in (INTEGER, FLOAT):
                     # print("found NUMBER")
                     check.append(self.current_tok.token)
