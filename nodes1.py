@@ -1,5 +1,4 @@
-
-import subprocess
+import subprocess # used to simulate terminal behavior, run compiled code
 import semantic
 from semantic import ShipNode, CropAssignNode, CropInitNode, CropDecNode, CropAccessNode
 # import subprocess
@@ -11,12 +10,13 @@ import sys
 sys.path.append(r"C:\Users\sayso\Desktop\JunimoCode\built_in.py")
 
 
-import keyword
+import keyword # checker of python keyword
 
 def is_python_keyword(s):
-    return s in keyword.kwlist
+    return s in keyword.kwlist # python keyword checker, checks if a string s is a Python keyword like if, while etc
 
-class LineTracker:
+class LineTracker: #nagkeep track of which line number in the source code corresponds to a specific position token or AST
+    #syntax error on line 5
     def __init__(self) -> None:
         self.tracker_dict = {}
         self.current_line = 1
@@ -24,19 +24,19 @@ class LineTracker:
     def advance(self):
         self.current_line += 1
         
-    def set(self, custom_pos):
+    def set(self, custom_pos): #allows associating a custom position with specific line number
         self.tracker_dict[self.current_line] = custom_pos
         
     #used to track the current_line number
 line_tracker = LineTracker()
-def read_value_nodes(node):
+def read_value_nodes(node): #read values from expressions and pass them through for evaluation
     pass
     #if CropAccessNode
     #if BinOpNode
     #if ValueNodes
 
 
-def read_nodes(item, symbol_table, current_indention = 0): # translate the nodes to python code
+def read_nodes(item, symbol_table, current_indention = 0): #translate the nodes to python code (resolve variable names)
     condition_to_list = []
     if isinstance(item, semantic.ShipNode):
         string = "" 

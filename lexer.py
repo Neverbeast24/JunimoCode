@@ -1436,10 +1436,10 @@ class Lexer:
                 print("END LOOP CHARACTER: ", self.current_char)
                 ident = self.current_char
                 self.advance()
-                # while self.current_char is not None and (self.current_char.isalnum() or self.current_char == "_"):
-                #     ident += self.current_char
-                #     self.advance()
-                # errors.append(f"Lexical error: Invalid word '{ident}': Not a reserved word or valid identifier. Identifiers must start with an uppercase letter.")
+                while self.current_char is not None and (self.current_char.isalnum() or self.current_char == "_"):
+                    ident += self.current_char
+                    self.advance()
+                errors.append(f"Lexical error: Invalid word '{ident}': Not a reserved word or valid identifier. Identifiers must start with an uppercase letter.")
 
             else:
                 print("ELSE NON ALPHANUMERIC: ", self.current_char)

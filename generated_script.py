@@ -4,8 +4,41 @@ import traceback
 line_map = load_dict_from_file('line_map.txt')
 lines = read_list_from_file('get_line.txt')
 try:
-    A = [1, 2, 3, 4, 5]
-    custom_print(A)
+    def FloorDiv (A,B):
+        Q = 0
+        while (A>=B): 
+            A = (A-B)
+            Q = (Q+1)
+        return Q
+    def Modulo (A,B):
+        Q = FloorDiv(A,B)
+        R = (A-(Q*B))
+        return R
+    def Power (Base,Exponent):
+        Result = 1
+        I = 0
+        while (I<Exponent): 
+            Result = (Result*Base)
+            I = (I+1)
+        return Result
+    Num =  custom_input("Enter a number: ")
+    Original = Num
+    Temp = Num
+    Count = 0
+    while (Temp>0): 
+        Temp = FloorDiv(Temp,10)
+        Count = (Count+1)
+    Temp = Num
+    Result = 0
+    while (Temp>0): 
+        Digit = Modulo(Temp,10)
+        Pow = Power(Digit,Count)
+        Result = (Result+Pow)
+        Temp = FloorDiv(Temp,10)
+    if Result==Original:
+        custom_print("The number is an ARMSTRONG number.")
+    else:
+        custom_print("The number is NOT an Armstrong number.")
 except Exception as e:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb = traceback.extract_tb(e.__traceback__)
