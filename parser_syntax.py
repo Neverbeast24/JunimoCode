@@ -1555,7 +1555,7 @@ class Lexer:
         # Ensure the first letter is uppercase
         if not ident[0].isupper():
             print(f"NASA LOOB NG MAKE IDENT YUNG ERROR: {self.current_char}")
-            return None, f"Error at line: {self.pos.ln + 1}. Invalid identifier start: '{ident[0]}'. Word '{ident}' must start with an uppercase letter. "
+            return None, f"Error at line: {self.pos.ln + 1}. Invalid identifier start: '{ident[0]}'. "
 
         # Ensure no invalid characters are present
         if not all(c.isalnum() or c == "_" for c in ident):
