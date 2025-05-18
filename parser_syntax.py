@@ -1988,7 +1988,7 @@ class Parser:
                         else:
                             #self.advance()
                             if self.current_tok.token != TERMINATOR:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign! from init crop"))
+                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign or arithmetic operator! from init crop"))
                                 return res, error
                             else:
                                 res.append(assign)
