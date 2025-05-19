@@ -5314,7 +5314,7 @@ class StardewLexerGUI:
 
     def syntax_analyzer(self): # syntax button
         
-        def flatten_errors(errors):
+        def flatten_errors(errors): # Recursive flattening of error lists, para sa mga nested lists na errors
             flat = []
             for err in errors:
                 if isinstance(err, list):
