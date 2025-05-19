@@ -1680,6 +1680,13 @@ class Parser:
                 self.advance()
                 
         while self.current_tok.token != PLANTING:
+            if self.current_tok.token not in [NEWLINE]:
+                error.append(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "No code allowed before 'planting$'. This marks the start of the program."
+                ))
+                return res, error
+
             self.advance()
             if self.current_tok.token == EOF:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Type 'planting' start the program!"))
@@ -1846,7 +1853,7 @@ class Parser:
 
         return res, error
     
-    #* controls what happens when the compiler encounters the galaxy token
+    #* controls what happens when the compiler encounters the PELICAN token
     def pelican(self):
         res = []
         error = []
@@ -1988,7 +1995,7 @@ class Parser:
                         else:
                             #self.advance()
                             if self.current_tok.token != TERMINATOR:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign or arithmetic operator! from init crop"))
+                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign or arithmetic operator or ( ! from init crop"))
                                 return res, error
                             else:
                                 res.append(assign)
@@ -2012,10 +2019,11 @@ class Parser:
                             self.advance()
                     # -- else no other operation for it
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator, increment, decrement, or call craft!!"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator, increment, decrement, or call craft (function calling)!!"))
                         return [], error
 
                 if self.current_tok.token == INCRE:
+                    print("current incre: ", self.current_tok)
                     self.advance()
                     if self.current_tok.token == IDENTIFIER:
                         self.advance()
@@ -2130,9 +2138,9 @@ class Parser:
                             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign from break!"))
 
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Break not in valid scope!"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Break not in valid scope! for loops only"))
                         self.advance()
-
+                        return res, error
                 if self.current_tok.token == NEXT: # not yet implemented on docs
                     print("current next: ", self.current_tok)
                     self.advance()
@@ -2144,8 +2152,9 @@ class Parser:
                             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign from next!"))
 
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "next not in valid scope!"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "next not in valid scope! for loops only"))
                         self.advance()
+                        return res, error
 
                 #CONDITIONAL
                 if self.current_tok.token in STAR:
@@ -2258,7 +2267,7 @@ class Parser:
                             # res.append("SUCCESS from harvest")
                             # return res, error
                             if self.current_tok.token != TERMINATOR:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign!"))
+                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign or arithmetic operator or open parenthesis or open square bracket!"))
                                 return res, error
                             else:
                                 print("is pelican?: ", self.is_pelican)
@@ -2270,14 +2279,14 @@ class Parser:
                                     res.append(["SUCCESS! from harvest"])
                                     self.advance()
                         
-                # if self.current_tok.token == PERFECTION:
-                #     self.advance()
-                #     if self.current_tok.token == TERMINATOR:
-                #         self.perfection = True
-                #         #self.advance()
-                #         return res, error
-                #     else:
-                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Dollar sign expected for 'perfection'!"))
+                if self.current_tok.token == PERFECTION:
+                    self.advance()
+                    if self.current_tok.token == TERMINATOR:
+                        self.perfection = True
+                        #self.advance()
+                        return res, error
+                    else:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Dollar sign expected for 'perfection'!"))
 
                 if self.current_tok.token == CRBRACKET:
                     break
@@ -2352,7 +2361,7 @@ class Parser:
 
         # -- if the user doesnt type an identiifier after crop
         if self.current_tok.token != IDENTIFIER:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier"))
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier!"))
         else:
             self.advance()
             if self.current_tok.token == EQUAL or self.current_tok.token == COMMA:
@@ -2521,15 +2530,15 @@ class Parser:
         elif self.current_tok.token == VOIDEGG:
             self.advance()
             return res, error
-        elif self.current_tok.token == INCRE or self.current_tok.token == DECRE:
-            if self.in_farmhouse == True:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
-                return res, error
-            self.advance()
-            if self.current_tok.token != IDENTIFIER:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier!"))
-            else:
-                self.advance()
+        # elif self.current_tok.token == INCRE or self.current_tok.token == DECRE:
+        #     if self.in_farmhouse == True:
+        #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
+        #         return res, error
+        #     self.advance()
+        #     if self.current_tok.token != IDENTIFIER:
+        #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier!"))
+        #     else:
+        #         self.advance()
 
         else:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, boolean, string, list, or void!"))
@@ -2557,7 +2566,7 @@ class Parser:
                     print("FOUND AN ERROR IN NUM LOOP")    
                     for e in err:
                         error.append(e)
-                        # print('error in num loop: ', e.as_string())
+                        print('error in num loop: ', e.as_string())
                     # print("i'll return the num loop now")
                     # print("error list: ", error)
                     #self.advance()
@@ -2575,6 +2584,7 @@ class Parser:
                 # print("assign val 2 ident")
                 print("first value in assign val is an identifier")
                 self.advance()
+                print("after ident advance: ", self.current_tok)
                 if self.in_farmhouse == True:
                     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, voidegg, string, [ "))
                     return res, error
@@ -2634,14 +2644,14 @@ class Parser:
                                     error.append(err)
                                 else:
                                     res.append("Success craft ident assign!")
-                elif self.current_tok.token in (INCRE, DECRE):
-                    if self.in_farmhouse == True:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
-                        return res, error
-                    #self.advance()
+                # elif self.current_tok.token in (INCRE, DECRE):
+                #     if self.in_farmhouse == True:
+                #         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, true, false, void, string, [ "))
+                #         return res, error
+                #     #self.advance()
                     
-                    res.append("success unary init")
-                    self.advance()
+                #     res.append("success unary init")
+                #     self.advance()
                 #     ########
                 else:
                     print('FIRST OPERAND IS AN IDENTIFIER')
@@ -2802,7 +2812,7 @@ class Parser:
             ops_string += self.current_tok.token
             print("AFTER OPERATOR: ", self.current_tok)
             self.advance()
-            print("AFTER IDENT ADVANCE: ", self.current_tok) 
+            print("AFTER IDENT ADVANCE 1: ", self.current_tok) 
             if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
                 self.advance()
                 print("AFTER IDENT ADVANCE 2: ", self.current_tok)
@@ -2870,23 +2880,27 @@ class Parser:
 
             elif self.current_tok.token == STRING:
                 #print("check:", check)
+                print("Found a STRING token:", self.current_tok.token)
+                print("ops_string:", ops_string)
+                print("check contents:", check)
                 print("there's a string here", self.current_tok.token)
-                if "-" in ops_string or "/" in ops_string or "%" in ops_string or "*" in ops_string: # current tok = string so nagerror na sya string
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot use arithmetic operator between identifier and string"))
-                    # print("ERROR IN STRING OPS")
+                if MINUS in ops_string or DIV in ops_string or MODULUS in ops_string or MUL in ops_string: # current tok = string so nagerror na sya string
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected num or ident !"))
+                    print("ERROR IN STRING OPS 1", self.current_tok.token)
+                    
                 elif IDENTIFIER in check:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot perform '+' between a ident and a string."))
-                    # print("ERROR IN STRING OPS")
-                    return res, error
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected num or ident!"))
+                    print("ERROR IN STRING OPS 2")
+                    
                 elif INTEGER in check or FLOAT in check:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Cannot perform '+' between a number and a string."))
-                    # print("ERROR IN STRING OPS")
-                    return res, error
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected num or ident!"))
+                    print("ERROR IN STRING OPS 3")
+                    
                 else:
                     # print("advanced after string found")
                     self.advance()
-
-
+                    print("current tok after string: ", self.current_tok)
+                return res, error
             else:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier!"))
                 return res, error
@@ -3089,32 +3103,39 @@ class Parser:
         if self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == STRING or self.current_tok.token == TRUE or self.current_tok.token == FALSE or self.current_tok.token == FLOAT or self.current_tok.token == VOIDEGG:
             print("tok after ident: ", self.current_tok)
             
-            val, err = self.assign_val2([PLUS,MINUS, DIV, MUL, MODULUS])
-            if err:
-                error.append(err)
-            if self.current_tok.token == COMMA:
-                #if comma yung current, find identifier, next, then if comma, next, and repeat
-                a_error = self.arguments()
-                if a_error:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, true, false, or string after commna!"))
-                
+            if self.current_tok.token == IDENTIFIER or self.current_tok.token == INTEGER or self.current_tok.token == TRUE or self.current_tok.token == FALSE or self.current_tok.token == FLOAT or self.current_tok.token == VOIDEGG:
+                val, err = self.assign_val2([PLUS,MINUS, DIV, MUL, MODULUS])
+                if err:
+                    error.append(err)
+                if self.current_tok.token == COMMA:
+                    #if comma yung current, find identifier, next, then if comma, next, and repeat
+                    a_error = self.arguments()
+                    if a_error:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier, true, false, or string after commna!"))
+                    
+                    else:
+                        if self.current_tok.token != RPAREN:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
+                            self.advance()
+                            return res, error
+                        else: 
+
+                            res.append(["SUCCESS from function call!"])
+                    
+                print(f"[DEBUG] In call_craft(), current token before RPAREN check: {self.current_tok.token}")
+                if self.current_tok.token == RPAREN:
+                    print(f"[DEBUG] Matched RPAREN correctly")
+                    res.append(["SUCCESS from function call!"])
+                elif self.current_tok.token == STRING: # ibang machine problems itest
+                    self.advance()
                 else:
-                    if self.current_tok.token != RPAREN:
-                        #error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-                        self.advance()
-                    else: 
+                    print(f"[DEBUG] DID NOT match RPAREN, got: {self.current_tok.token}")
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis or arithmetic operator!"))
 
-                        res.append(["SUCCESS from function call!"])
-                 
-            print(f"[DEBUG] In call_craft(), current token before RPAREN check: {self.current_tok.token}")
-            if self.current_tok.token == RPAREN:
-                print(f"[DEBUG] Matched RPAREN correctly")
-                res.append(["SUCCESS from function call!"])
-            else:
-                print(f"[DEBUG] DID NOT match RPAREN, got: {self.current_tok.token}")
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis!"))
-
-    
+            elif self.current_tok.token == STRING: #ask jasmia
+            # Invalid use of string in arithmetic expression
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,"Expected ) !"))
+                return res, error
         elif self.current_tok.token == RPAREN:
             print("rparen found")
             res.append(["SUCCESS from function call!"])         
@@ -3438,7 +3459,7 @@ class Parser:
                 return res, error
                     
             else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifierafter decrement!"))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after decrement!"))
 
         else:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, ++, or --"))
@@ -3778,6 +3799,7 @@ class Parser:
         elif self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, STRING) : 
             if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER, STRING):
                 if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
+                    print("NUMBER OR IDENTIFIER DETECTED: ", self.current_tok)
                     n_res, n_error = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
                     # print("assign val in arith rel op left 1: ", self.current_tok)
                     if n_error:
@@ -3793,7 +3815,7 @@ class Parser:
 
                     comparison_seen = False
 
-                    # ✅ Fully process valid string concatenations before any comparison
+                    # Fully process valid string concatenations before any comparison
                     while self.current_tok.token == PLUS:
                         self.advance()
 
@@ -3808,7 +3830,7 @@ class Parser:
                         self.advance()
                     
 
-                    # ✅ Now, process comparison operators (== or !=)
+                    # Now, process comparison operators (== or !=)
                     if self.current_tok.token in (E_EQUAL, NOT_EQUAL):
                         if comparison_seen:
                             error.append(InvalidSyntaxError(
@@ -3820,17 +3842,17 @@ class Parser:
                         comparison_seen = True
                         self.advance()
 
-                        # ❌ Invalid if comparing STRING with anything other than STRING
+                        #  Invalid if comparing STRING with anything other than STRING
                         if self.current_tok.token != STRING:
                             error.append(InvalidSyntaxError(
                                 self.current_tok.pos_start, self.current_tok.pos_end,
-                                "Invalid comparison: A string can only be compared to another string."
+                                "String can only be compared to another string!"
                             ))
                             return res, error
 
                         self.advance()
 
-                        # ✅ Optional post-comparison string concatenation
+                        # Optional post-comparison string concatenation
                         while self.current_tok.token == PLUS:
                             self.advance()
                             if self.current_tok.token != STRING:
@@ -3841,7 +3863,7 @@ class Parser:
                                 return res, error
                             self.advance()
 
-                        # ❌ Block chained comparisons like `== "A" > 5`
+                        # Block chained comparisons like `== "A" > 5`
                         if self.current_tok.token in REL_OP:
                             error.append(InvalidSyntaxError(
                                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -3877,7 +3899,7 @@ class Parser:
 
             if self.current_tok.token in REL_OP:
                 self.advance()
-                if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, TRUE, STRING, FALSE):
+                if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, TRUE, FALSE):
                     if self.current_tok.token == TRUE:
                         self.advance()
                     elif self.current_tok.token == FALSE:
@@ -3906,12 +3928,12 @@ class Parser:
                        
                 else:
                     print("star wingter condition: ", self.current_tok)
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier! winter condition"))
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier! star/winter condition"))
             elif self.current_tok.token in LOG_OP:
                 print("LOG OP FOUND")
                 self.advance()
                 
-                if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT):
+                if self.current_tok.token in (IDENTIFIER, INTEGER, FLOAT, STRING): #NAGDAGDAG AKO NG STRING applicable sa loob ng star and winter
 
                     c_ces, c_error = self.star_winter_condition()
                     if c_error:

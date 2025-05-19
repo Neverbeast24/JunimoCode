@@ -4,41 +4,35 @@ import traceback
 line_map = load_dict_from_file('line_map.txt')
 lines = read_list_from_file('get_line.txt')
 try:
-    def FloorDiv (A,B):
-        Q = 0
-        while (A>=B): 
-            A = (A-B)
-            Q = (Q+1)
-        return Q
-    def Modulo (A,B):
-        Q = FloorDiv(A,B)
-        R = (A-(Q*B))
-        return R
-    def Power (Base,Exponent):
-        Result = 1
-        I = 0
-        while (I<Exponent): 
-            Result = (Result*Base)
-            I = (I+1)
-        return Result
-    Num =  custom_input("Enter a number: ")
-    Original = Num
-    Temp = Num
-    Count = 0
-    while (Temp>0): 
-        Temp = FloorDiv(Temp,10)
-        Count = (Count+1)
-    Temp = Num
-    Result = 0
-    while (Temp>0): 
-        Digit = Modulo(Temp,10)
-        Pow = Power(Digit,Count)
-        Result = (Result+Pow)
-        Temp = FloorDiv(Temp,10)
-    if Result==Original:
-        custom_print("The number is an ARMSTRONG number.")
+    def Multiply (A,B):
+        Product = (A*B)
+        return Product
+    def Add (A,B):
+        Product = (A+B)
+        return Product
+    def Minus (A,B):
+        Product = (A-B)
+        return Product
+    def Divide (A,B):
+        Product = (A/B)
+        return Product
+    custom_print("Multiply - 1 \n")
+    custom_print("Add - 2 \n")
+    custom_print("Minus - 3 \n")
+    custom_print("Divide- 4 \n")
+    Choice =  custom_input("Enter decision: ")
+    A =  custom_input("Enter num1: ")
+    B =  custom_input("Enter num2: ")
+    if (Choice==1):
+        custom_print("Total is: ",Multiply(A,B))
+    elif (Choice==2):
+        custom_print("Total is: ",Add(A,B))
+    elif (Choice==3):
+        custom_print("Total is: ",Minus(A,B))
+    elif (Choice==4):
+        custom_print("Total is: ",Divide(A,B))
     else:
-        custom_print("The number is NOT an Armstrong number.")
+        custom_print("Invalid")
 except Exception as e:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb = traceback.extract_tb(e.__traceback__)

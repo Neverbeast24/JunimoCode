@@ -5312,9 +5312,16 @@ class StardewLexerGUI:
         transpiler_result = convert_text_file_to_python_and_execute(semantic_result, python_file)
         # return 
 
-
     def syntax_analyzer(self): # syntax button
         
+        def flatten_errors(errors):
+            flat = []
+            for err in errors:
+                if isinstance(err, list):
+                    flat.extend(flatten_errors(err))  # Recursive flatten
+                elif err is not None:
+                    flat.append(err)
+            return flat
         # Clear previous tokens and errors
         for row in self.token_tree.get_children():
             self.token_tree.delete(row)
@@ -5356,7 +5363,7 @@ class StardewLexerGUI:
                 # self.terminal_output.insert(tk.END, syntax_error.details)
                 # for err in syntax_error:
                 #     self.terminal_output.insert(tk.END, err.as_string())
-                for err in syntax_error:
+                for err in flatten_errors(syntax_error):
                     if isinstance(err, list):
                         for e in err:
                             errorResult, fileDetail, arrowDetail, arrows = e.as_string()
