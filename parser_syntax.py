@@ -2426,7 +2426,7 @@ class Parser:
                     error.append(InvalidSyntaxError(
                         self.current_tok.pos_start, 
                         self.current_tok.pos_end, 
-                        "Expected string after '+'!"
+                        "Expected string after '+' for string concatenation!"
                     ))
                     return res, error
 
@@ -2624,6 +2624,8 @@ class Parser:
                     print("after list: ", self.current_tok)
                     if self.current_tok.token == FLOAT:
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Float is not allowed for accessing list elements"))
+                    elif self.current_tok.token == STRING:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "String is not allowed for accessing list elements"))
                     else: 
                         list, err = self.assign_val2([PLUS, MINUS, MUL, DIV, MODULUS])
                         # print('after list index: ', self.current_tok)
@@ -2704,7 +2706,7 @@ class Parser:
         #     else:
         #         self.advance()
         else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number, identifier or left parenthesis!"))
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected number or identifier!"))
     
         return res, error
 
@@ -3130,7 +3132,7 @@ class Parser:
                     self.advance()
                 else:
                     print(f"[DEBUG] DID NOT match RPAREN, got: {self.current_tok.token}")
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis or arithmetic operator!"))
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected closing parenthesis or arithmetic operator or comma!"))
 
             elif self.current_tok.token == STRING: #ask jasmia
             # Invalid use of string in arithmetic expression
