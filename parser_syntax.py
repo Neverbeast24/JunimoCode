@@ -3134,8 +3134,22 @@ class Parser:
 
             elif self.current_tok.token == STRING: #ask jasmia
             # Invalid use of string in arithmetic expression
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,"Expected ) !"))
-                return res, error
+                self.advance()
+                print("BEFORE STRING CONCAT FUNC CALL ", self.current_tok)
+                while self.current_tok.token == PLUS:
+                    self.advance()
+                    print("DEBUG + AFTER STRING FUNC CALL: ", self.current_tok)
+                    if self.current_tok.token != STRING:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,"Only strings can be concatenated after a string!"))
+                        
+                    else:
+                        print("AFTER + ", self.current_tok)
+                        self.advance()
+                    return res, error
+
+                else:
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,"Expected ) !"))
+                    return res, error
         elif self.current_tok.token == RPAREN:
             print("rparen found")
             res.append(["SUCCESS from function call!"])         
