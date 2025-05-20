@@ -4,19 +4,7 @@ import traceback
 line_map = load_dict_from_file('line_map.txt')
 lines = read_list_from_file('get_line.txt')
 try:
-    X =  custom_input("Enter your test score:")
-    E = void()
-    I = void()
-    O = void()
-    U = void()
-    A = "A"
-    E = "E"
-    I = "I"
-    O = "O"
-    U = "U"
-    if ((((X==A and X==E) and X==I) and X==O) and X==U):
-        if A:
-            custom_print(A)
+    custom_print(-21)
 except Exception as e:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb = traceback.extract_tb(e.__traceback__)

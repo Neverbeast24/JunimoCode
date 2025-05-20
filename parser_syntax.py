@@ -1555,7 +1555,7 @@ class Lexer:
         # Ensure the first letter is uppercase
         if not ident[0].isupper():
             print(f"NASA LOOB NG MAKE IDENT YUNG ERROR: {self.current_char}")
-            return None, f"Error at line: {self.pos.ln + 1}. Invalid identifier start: '{ident[0]}'. "
+            return None, f"Error at line: {self.pos.ln + 1}. Invalid start: '{ident[0]}'. "
 
         # Ensure no invalid characters are present
         if not all(c.isalnum() or c == "_" for c in ident):
@@ -3898,7 +3898,7 @@ class Parser:
                         if self.current_tok.token in (MINUS, PLUS, DIV, MUL, MODULUS, GREATER_THAN, LESS_THAN, GREATER_THAN_EQUAL, LESS_THAN_EQUAL ):
                             error.append(InvalidSyntaxError(
                                 self.current_tok.pos_start, self.current_tok.pos_end,
-                                f"Invalid '{self.current_tok.token}' operator! Expected '+'"
+                                f"Invalid '{self.current_tok.token}' operator! Expected '+' or '==' or '!='"
                             ))
                             return res, error
                         if self.current_tok.token == RPAREN:
@@ -3906,7 +3906,7 @@ class Parser:
                         else:
                             error.append(InvalidSyntaxError(
                                 self.current_tok.pos_start, self.current_tok.pos_end,
-                                "Expected '==' or '!=' relational operator before logical operator!"
+                                "Expected '==' or '!=' relational operator or '+' !"
                             ))
                             print("Nandito error star_winter: ", self.current_tok)
                             return res, error  
