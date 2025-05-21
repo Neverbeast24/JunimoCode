@@ -1681,10 +1681,7 @@ class Parser:
                 
         while self.current_tok.token != PLANTING:
             if self.current_tok.token not in [NEWLINE]:
-                error.append(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "No code allowed before 'planting$'. This marks the start of the program."
-                ))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,"No code allowed before 'planting$'. This marks the start of the program."))
                 return res, error
 
             self.advance()
@@ -1987,15 +1984,20 @@ class Parser:
                     elif self.current_tok.token == EQUAL or self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
 
                         assign, a_error = self.init_crop()
-                        
+                        print("assign init crop: ", self.current_tok)
                          
                         if a_error:
                             error.extend(a_error)
                             return res, error
+                        elif self.current_tok.token == COMMA:
+                            self.advance()
+                            if self.current_tok.token != IDENTIFIER:
+                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected identifier!"))
+                                return res, error
                         else:
                             #self.advance()
                             if self.current_tok.token != TERMINATOR:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign or arithmetic operator or ( ! from init crop"))
+                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected dollar sign or arithmetic operator or ( ! from init crop"))
                                 return res, error
                             else:
                                 res.append(assign)
@@ -2467,7 +2469,9 @@ class Parser:
                 res.append("Success craft ident assign!")
         
         elif self.current_tok.token == TRUE:
+            print(f"[DEBUG] Boolean 'true' detected.")
             self.advance()
+            print(f"[DEBUG] Current token after 'true': {self.current_tok.token}")
             return res, error
         elif self.current_tok.token == FALSE:
             self.advance()
@@ -3157,7 +3161,7 @@ class Parser:
             res.append(["SUCCESS from function call!"])         
 
         else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, string, boolean, ), or void!"))
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier, number, string, boolean, ) !"))
 
         return res, error
     
@@ -3535,7 +3539,7 @@ class Parser:
         while self.current_tok:
             if self.current_tok.token == RPAREN:
                 if expecting_arg:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Trailing comma without argument in ship()!"))
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected comma!"))
                     return res, error
                 res.append(self.current_tok.token)
                 self.advance()
