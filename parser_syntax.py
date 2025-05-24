@@ -1680,10 +1680,9 @@ class Parser:
                 self.advance()
                 
         while self.current_tok.token != PLANTING:
-            if self.current_tok.token not in [NEWLINE]:
+            if self.current_tok.token not in [NEWLINE, SINGLELINE, MULTILINE_OPEN, MULTILINE_CLOSE ]:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. No code allowed before 'planting$'. This marks the start of the program."))
                 return res, error
-
             self.advance()
             if self.current_tok.token == EOF:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Type 'planting' start the program!"))
@@ -1760,7 +1759,7 @@ class Parser:
                         break
 
             # ? pwede i-bring back pag need specific
-            # if self.current_tok.token in VAR:
+            # if self.current_tok.token in CROP:
             #     error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Invalid global declaration!"))
             #     break
             
@@ -1818,7 +1817,7 @@ class Parser:
                     while self.current_tok.token == NEWLINE:
                         self.advance()
 
-                    if self.current_tok.token != EOF:
+                    if self.current_tok.token not in (EOF, SINGLELINE, MULTILINE_OPEN, MULTILINE_CLOSE):
                         error.append(InvalidSyntaxError(
                             self.current_tok.pos_start, self.current_tok.pos_end,
                             "No code should follow after 'perfection$'. This marks the end of the program."
@@ -1989,20 +1988,49 @@ class Parser:
                         if a_error:
                             error.extend(a_error)
                             return res, error
-                        elif self.current_tok.token == COMMA:
+                        
+                        while self.current_tok.token == COMMA: # double check ko to bukas if kaya mo ipasok sa init crop
                             self.advance()
-                            if self.current_tok.token != IDENTIFIER:
+                            print("current assign sa comma: ", self.current_tok)
+                            if self.current_tok.token == IDENTIFIER:
+                                self.advance()
+                                print("current assign sa comma 2: ", self.current_tok)
+                                if self.current_tok.token == EQUAL or self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
+                                    self.advance()
+                                    # error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected assignment operator!"))
+                                    #return res, error
+
+                                    if self.current_tok.token == INTEGER or self.current_tok.token == IDENTIFIER:
+                                        val, err = self.assign_val2([PLUS, MINUS, MUL,DIV,MODULUS])
+                                        if err:
+                                            error.append(err)
+                                    elif self.current_tok.token == SLBRACKET:
+                                        val, err = self.assign_val()
+                                        if err:
+                                            error.append(err)
+                                    else:
+                                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected number or identifier or [!"))
+                                        return res, error
+                                if self.current_tok.token == TERMINATOR:
+                                    print("current assign sa terminator: ", self.current_tok)
+                                
+                                else:
+                                    print("current assign sa else terminator: ", self.current_tok)
+                                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected dollar sign or arithmetic operator or comma!"))
+                                    return res, error
+                            else:
                                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected identifier!"))
-                                return res, error
+                            
                         else:
                             #self.advance()
-                            if self.current_tok.token != TERMINATOR:
-                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected dollar sign or arithmetic operator or ( ! from init crop"))
+                            print("assign init crop 2: ", self.current_tok)
+                            if self.current_tok.token != TERMINATOR: #taena ayaw maalis error nito
+                                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected dollar sign or arithmetic operator or comma! "))
                                 return res, error
                             else:
                                 res.append(assign)
                                 self.advance()
-                        
+                        print("current assign: ", self.current_tok)
                     #-- if we increment it
                     elif self.current_tok.token == INCRE:
                         self.advance()
@@ -2103,7 +2131,7 @@ class Parser:
                                     self.in_loop = False
                                     self.advance()
                         else:
-                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected { for winter!"))
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected open curly bracket for winter!"))
                 
                     # Handle list statements
                 if self.current_tok.token in ADD:
@@ -2301,7 +2329,7 @@ class Parser:
             
             else:
                 print("[DEBUG]",self.current_tok)
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected crop, collect, ship, identifier, star, ++, --, winter, fall, } "))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected crop, collect, ship, identifier, star, ++, --, winter, fall, closing curly bracket!"))
                 break
 
 
@@ -2818,18 +2846,21 @@ class Parser:
             ops_string += self.current_tok.token
             print("AFTER OPERATOR: ", self.current_tok)
             self.advance()
-            print("AFTER IDENT ADVANCE 1: ", self.current_tok) 
-            if self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
+            if self.current_tok.token == RPAREN:
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected identifier, number, or open parenthesis!"))
+                print("AFTER IDENT ADVANCE 1: ", self.current_tok) 
+            elif self.current_tok.token in (INTEGER, FLOAT, IDENTIFIER):
                 self.advance()
                 print("AFTER IDENT ADVANCE 2: ", self.current_tok)
                 if self.current_tok.token in (INTEGER, FLOAT):
                     # print("found NUMBER")
                     check.append(self.current_tok.token)
                 elif self.current_tok.token == LPAREN:
-                    # print("found LPAREN")
+                    print("found LPAREN")
                     self.advance()
                     print("found LPAREN AFTER IDENT ADVANCE: ", self.current_tok)
                     if self.current_tok.token == RPAREN:
+                        print("Hello dito error ", self.current_tok.token)
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected identifier, number, or open parenthesis!"))
                         
                     num, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
@@ -2855,7 +2886,7 @@ class Parser:
 
 
             elif self.current_tok.token == LPAREN:
-                # print("found a left paren in num loop")
+                print("found a left paren in num loop")
                 self.advance()
 
                 if self.current_tok.token == RPAREN:
@@ -2908,9 +2939,10 @@ class Parser:
                     print("current tok after string: ", self.current_tok)
                 return res, error
             else:
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected number or identifier!"))
+                print("num loop else: ", self.current_tok)
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected number or identifier or float or (!"))
                 return res, error
-
+            
         
             # else:
             #     return False
@@ -3096,7 +3128,7 @@ class Parser:
         else:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected number, identifier, string, true, or false"))
 
-
+        print("res from init list: ", self.current_tok)
         return res, error
     
     #* CALLING A CRAFT
@@ -3671,7 +3703,7 @@ class Parser:
                             # until here         
                             return res, error
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected { !"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected open curly bracket !"))
                         
                     #res.append(["SUCCESS FROM IF"]) 
                     
@@ -3731,7 +3763,7 @@ class Parser:
                             #         self.advance()
                             # return res, error
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected { !"))
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected open curly bracket !"))
                         
                     #res.append(["SUCCESS FROM IF"]) 
                     
@@ -3748,7 +3780,7 @@ class Parser:
         self.advance()
         # print("IN ELSE STMT: ", self.current_tok)
         if self.current_tok.token != CLBRACKET:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected { !"))
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected open curly bracket !"))
         else:
             self.advance()
             dew_res, dew_error = self.body()
@@ -3770,7 +3802,7 @@ class Parser:
                 #next is yung new line, curly brackerts and stamements
         return res, error
 
-    def  star_winter_condition(self):
+    def star_winter_condition(self):
         res = []
         error = []
         
