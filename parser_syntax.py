@@ -2573,7 +2573,7 @@ class Parser:
         #         self.advance()
 
         else:
-            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected identifier, number, boolean, string, list, or void!"))
+            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected identifier, number, boolean, string, list!"))
     
         return res, error
         
@@ -2618,7 +2618,7 @@ class Parser:
                 self.advance()
                 print("after ident advance: ", self.current_tok)
                 if self.in_farmhouse == True:
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected number, true, false, voidegg, string, [ "))
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected number, true, false, string, [ "))
                     return res, error
                 if self.current_tok.token == LPAREN:
                     if self.in_farmhouse == True:
@@ -2846,6 +2846,7 @@ class Parser:
             ops_string += self.current_tok.token
             print("AFTER OPERATOR: ", self.current_tok)
             self.advance()
+            # != TO THESE CREATE A EARLY CATCHING OF ERROR
             if self.current_tok.token == RPAREN:
                 error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected identifier, number, or open parenthesis!"))
                 print("AFTER IDENT ADVANCE 1: ", self.current_tok) 
@@ -2862,7 +2863,7 @@ class Parser:
                     if self.current_tok.token == RPAREN:
                         print("Hello dito error ", self.current_tok.token)
                         error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected identifier, number, or open parenthesis!"))
-                        
+
                     num, err = self.assign_val2([PLUS, MINUS, DIV, MUL, MODULUS])
                     print("CURRENT TOKEN AFTER PARENTHESIS ASSIGN VAL CALL IN NUM LOOP: ", self.current_tok)
                     self.advance()
@@ -2886,7 +2887,7 @@ class Parser:
 
 
             elif self.current_tok.token == LPAREN:
-                print("found a left paren in num loop")
+                print("found a left paren in num loop", self.current_tok)
                 self.advance()
 
                 if self.current_tok.token == RPAREN:
