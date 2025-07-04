@@ -16,3 +16,12 @@ A custom-built compiler based on Stardew Valley game
    ```bash
    git clone https://github.com/Neverbeast24/JunimoCode.git
    cd JunimoCode
+   
+2. Install required packages (if any):
+
+   ```bash
+   pip install <module>
+
+# Run JunimoCode
+  ```bash
+  python semantic.py
