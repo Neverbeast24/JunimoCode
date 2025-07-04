@@ -14,5 +14,5 @@ A custom-built compiler based on Stardew Valley game
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/Neverbeast24/junimocode.git
-   cd junimocode
+   git clone https://github.com/Neverbeast24/JunimoCode.git
+   cd JunimoCode
