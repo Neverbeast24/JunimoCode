@@ -85,7 +85,7 @@ delim1 = whitespace + alpha_num + '"' + '(' + '['+  negative
 delim2 = whitespace + alpha_num + '"' + '(' + negative
 delim3 = whitespace + all_numbers + '('
 
-unary_delim = whitespace + all_letters + TERMINATOR + ')'
+unary_delim = whitespace + newline_delim + all_letters + TERMINATOR + ')'
 bool_delim = whitespace + TERMINATOR + COMMA + ')' + ']'
 num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relational_ops + TERMINATOR
 id_delim = COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + TERMINATOR # newline
@@ -445,8 +445,11 @@ class Lexer:
                     if self.current_char == None:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ++ '. Cause: ' {self.current_char} '. "])
                         continue
-                    if self.current_char not in (unary_delim) or self.current_char.isspace():
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ++ '. Cause: ' {self.current_char} '. "])
+                    if self.current_char not in unary_delim:
+                        errors.extend([
+                            f"Error at line: {self.pos.ln + 1}. Invalid delimiter after '++'. "
+                            f"Cause: '{self.current_char}'. Expected: space/newline, letter, '$', or ')'."
+                        ])
                         continue
                     tokens.append(Token(INCRE, "++", pos_start = self.pos)) #for == symbol
                 else:
@@ -480,7 +483,10 @@ class Lexer:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. "])
                         continue
                     if self.current_char not in (unary_delim):
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. "])
+                        errors.extend([
+                            f"Error at line: {self.pos.ln + 1}. Invalid delimiter after '--'. "
+                            f"Cause: '{self.current_char}'. Expected: space/newline, letter, '$', or ')'."
+                        ])
                         continue
                     tokens.append(Token(DECRE, "--", pos_start = self.pos))
                 elif self.current_char == None:
@@ -1649,6 +1655,9 @@ class Parser:
         self.in_fall = False
         self.in_farmhouse = False
         self.in_star = False
+
+        self.in_craft = False
+        self.harvest_seen_in_craft = False
         
         self.found_planting = False
         self.found_pelican = False
@@ -1907,6 +1916,18 @@ class Parser:
         # * basically yung parse lang pero walang craft
 
         while True:
+            if self.in_craft and self.harvest_seen_in_craft:
+                # After harvest in a craft, only allow closing braces / whitespace / comments.
+                if self.current_tok.token not in (CRBRACKET, NEWLINE, SINGLELINE, MULTILINE_OPEN, MULTILINE_CLOSE, EOF):
+                    error.append(
+                        InvalidSyntaxError(
+                            self.current_tok.pos_start,
+                            self.current_tok.pos_end,
+                            f"Unexpected '{self.current_tok.token}'. 'harvest' must be the last statement in a craft."
+                        )
+                    )
+                    break
+
             if self.is_statement(): # Check if current token is a valid statement start
                 if self.current_tok.token == MULTILINE_OPEN:
                     while self.current_tok.token != MULTILINE_CLOSE:
@@ -1921,6 +1942,19 @@ class Parser:
 
                 if self.current_tok.token == NEWLINE:
                     self.advance()
+
+                # If we just consumed whitespace/comment after a harvest inside a craft,
+                # re-check the constraint before parsing any further statements.
+                if self.in_craft and self.harvest_seen_in_craft:
+                    if self.current_tok.token not in (CRBRACKET, NEWLINE, SINGLELINE, MULTILINE_OPEN, MULTILINE_CLOSE, EOF):
+                        error.append(
+                            InvalidSyntaxError(
+                                self.current_tok.pos_start,
+                                self.current_tok.pos_end,
+                                f"Unexpected '{self.current_tok.token}'. 'harvest' must be the last statement in a craft."
+                            )
+                        )
+                        break
 
                 #not working yung INTEGER
                 print("star number: ", self.current_tok)
@@ -2049,7 +2083,11 @@ class Parser:
                             self.advance()
                     # -- else no other operation for it
                     else:
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected assignment operator, increment, decrement, or call craft (function calling)!!"))
+                        error.append(InvalidSyntaxError(
+                            self.current_tok.pos_start,
+                            self.current_tok.pos_end,
+                            f"Unexpected '{self.current_tok.token}'. Expected assignment operator (=, +=, -=, *=, /=), increment/decrement (++/--), or function call '(' after identifier."
+                        ))
                         return [], error
 
                 if self.current_tok.token == INCRE:
@@ -2279,6 +2317,26 @@ class Parser:
                     break
                 
                 if self.current_tok.token == HARVEST:
+                    if self.is_pelican:
+                        error.append(
+                            InvalidSyntaxError(
+                                self.current_tok.pos_start,
+                                self.current_tok.pos_end,
+                                f"Unexpected '{self.current_tok.token}'. Can't call harvest in pelican!"
+                            )
+                        )
+                        return res, error
+
+                    if not self.in_craft:
+                        error.append(
+                            InvalidSyntaxError(
+                                self.current_tok.pos_start,
+                                self.current_tok.pos_end,
+                                f"Unexpected '{self.current_tok.token}'. 'harvest' can only be used inside a craft."
+                            )
+                        )
+                        return res, error
+
                     self.advance()
                     print("HARVEST CHAR: ", self.current_tok)
                     if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOIDEGG and self.current_tok.token != FLOAT and self.current_tok.token != None:
@@ -2301,13 +2359,9 @@ class Parser:
                                 return res, error
                             else:
                                 print("is pelican?: ", self.is_pelican)
-                                if self.is_pelican == True:
-                                    print("in harvest body")
-                                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Can't call harvest in pelican!"))
-                                    return res, error
-                                else:
-                                    res.append(["SUCCESS! from harvest"])
-                                    self.advance()
+                                res.append(["SUCCESS! from harvest"])
+                                self.harvest_seen_in_craft = True
+                                self.advance()
                         
                 if self.current_tok.token == PERFECTION:
                     self.advance()
@@ -3046,6 +3100,9 @@ class Parser:
                 print(f"[DEBUG] Found opening curly bracket: {self.current_tok.token}")
                 self.advance()
 
+                self.in_craft = True
+                self.harvest_seen_in_craft = False
+
                 # Skip any newlines
                 while self.current_tok.token == NEWLINE:
                     self.advance()
@@ -3056,6 +3113,7 @@ class Parser:
                 if craft_error:
                     print("[DEBUG] Error inside the craft body")
                     error.extend(craft_error)
+                    self.in_craft = False
                     return [], error
                 else:
                     print("[DEBUG] Successfully processed craft body")
@@ -3068,11 +3126,13 @@ class Parser:
                         self.current_tok.pos_end,
                         "Expected closing curly bracket in craft definition!"
                     ))
+                    self.in_craft = False
                     return res, error
                 else:
                     print(f"[DEBUG] Found closing curly bracket: {self.current_tok.token}")
                     self.advance()
                     res.append("SUCCESS from CRAFT!")
+                    self.in_craft = False
             else:
                 error.append(InvalidSyntaxError(
                     self.current_tok.pos_start,
@@ -3400,13 +3460,14 @@ class Parser:
             else:
                 self.advance()
                 res.append([" first condition"])
-        elif self.current_tok.token == "Identifier":
+        elif self.current_tok.token == IDENTIFIER:
             self.advance()
             init_res, init_err = self.fall_init_crop()
             if init_err:
                 error.extend(init_err)
             else:
                 res.append([" first condition init"])
+
         else:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Invalid  condition!"))
 
@@ -3472,7 +3533,7 @@ class Parser:
         if self.current_tok.token == IDENTIFIER:
             self.advance()
             #-- if we assign a value to it but not declaring it           
-            if self.current_tok.token == PLUS_EQUAL or self.current_tok.token == MINUS_EQUAL or self.current_tok.token == MUL_EQUAL or self.current_tok.token == DIV_EQUAL:
+            if self.current_tok.token in (EQUAL, PLUS_EQUAL, MINUS_EQUAL, MUL_EQUAL, DIV_EQUAL):
                 print("initialize the crop")
                 assign, a_error = self.init_crop()
 
@@ -3493,7 +3554,7 @@ class Parser:
             # -- else no other operation for it
             else:
                 print('INVALID IDENT OPERATION')
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected --, ++, +=, -=, *=, /="))
+                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected assignment operator (=, +=, -=, *=, /=) or unary (++/--)."))
                 return [], error
         elif self.current_tok.token == INCRE:
             self.advance()
@@ -3710,7 +3771,7 @@ class Parser:
                     
                 else:
                     print("error star stmt: ", self.current_tok)
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected closing parenthesis! Multiple relational operators ('==' or '!=' or >= or <= or > or <) are not allowed in a single expression."))
+                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected ')' to close the star condition."))
         else:
             error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Exepected left paren!"))
 
@@ -4043,7 +4104,18 @@ class Parser:
                 return res, error 
             else:
                 print("ETO YUNG ERROR: ", self.current_tok)
-                error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Unexpected '{self.current_tok.token}'. Expected logical operator or relational operator or arithmetic operator or right parenthesis!"))
+                if self.current_tok.token in (EQUAL, PLUS_EQUAL, MINUS_EQUAL, MUL_EQUAL, DIV_EQUAL):
+                    error.append(InvalidSyntaxError(
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        f"Unexpected '{self.current_tok.token}'. Assignment operators are not allowed in conditions. Use a relational operator (==, !=, <, <=, >, >=) to compare values."
+                    ))
+                    return res, error
+                error.append(InvalidSyntaxError(
+                    self.current_tok.pos_start,
+                    self.current_tok.pos_end,
+                    f"Unexpected '{self.current_tok.token}'. Expected an operator between operands (e.g., +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||) or ')'."
+                ))
                 return res, error
         elif self.current_tok.token in (TRUE, FALSE):
             self.advance()

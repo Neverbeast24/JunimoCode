@@ -4,7 +4,23 @@ import traceback
 line_map = load_dict_from_file('line_map.txt')
 lines = read_list_from_file('get_line.txt')
 try:
-    custom_print(-21)
+    Num =  custom_input("Enter a number: ")
+    if ((Num%1)!=0):
+        custom_print("Error: Only whole numbers are allowed.")
+    else:
+        I = 2
+        IsPrime = 1
+        while (I<Num): 
+            if ((Num%I)==0):
+                IsPrime = 0
+                break
+            I = (I+1)
+        if (Num<=1):
+            IsPrime = 0
+        if (IsPrime==1):
+            custom_print("The number is prime.")
+        else:
+            custom_print("The number is not prime.")
 except Exception as e:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb = traceback.extract_tb(e.__traceback__)

@@ -87,7 +87,7 @@ delim1 = whitespace + alpha_num + '"' + '(' + '['+  negative
 delim2 = whitespace + alpha_num + '"' + '(' + negative
 delim3 = whitespace + all_numbers + '('
 
-unary_delim = whitespace + all_letters + TERMINATOR + ')'
+unary_delim = whitespace + newline_delim + all_letters + TERMINATOR + ')'
 bool_delim = whitespace + TERMINATOR + COMMA + ')' + ']'
 num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relational_ops + TERMINATOR
 id_delim = newline_delim + COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + TERMINATOR
@@ -438,10 +438,10 @@ class Lexer:
                 elif self.current_char == '+': #for ++ incre
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ++ '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, TERMINATOR, ) "])
+                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter after '++'. Cause: '{self.current_char}'. Expected: space/newline, letter, '$', or ')'."])
                         continue
                     if self.current_char not in (unary_delim) or self.current_char.isspace():
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ++ '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, TERMINATOR, ) "])
+                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter after '++'. Cause: '{self.current_char}'. Expected: space/newline, letter, '$', or ')'."])
                         continue
                     tokens.append(Token(INCRE, "++", pos_start = self.pos)) #for == symbol
                 else:
@@ -472,10 +472,10 @@ class Lexer:
                 elif self.current_char == '-': #for -- decre
                     self.advance()
                     if self.current_char == None:
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, TERMINATOR, ) "])
+                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter after '--'. Cause: '{self.current_char}'. Expected: space/newline, letter, '$', or ')'."])
                         continue
                     if self.current_char not in (unary_delim):
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. Expected: whitespace, all letters, TERMINATOR, ) "])
+                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter after '--'. Cause: '{self.current_char}'. Expected: space/newline, letter, '$', or ')'."])
                         continue
                     tokens.append(Token(DECRE, "--", pos_start = self.pos))
 

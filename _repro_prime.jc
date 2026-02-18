@@ -1,0 +1,19 @@
+﻿planting$
+pelican(){
+    crop Num = collect("Enter a number: ")$
+    star (Num % 1 != 0) {
+        ship("Error: Only whole numbers are allowed.")$
+    } dew {
+        crop I = 2$
+        crop IsPrime = 1$
+
+        winter (I < Num) {
+            star (Num % I == 0) {
+                IsPrime = 0$
+                break$
+            }
+            I = I + 1$
+        }
+    }
+}
+perfection$

@@ -53,7 +53,7 @@ delim1 = whitespace + alpha_num + '"' + '(' + '['+  negative
 delim2 = whitespace + alpha_num + '"' + '(' + negative
 delim3 = whitespace + all_numbers + '('
 
-unary_delim = whitespace + all_letters + TERMINATOR + ')'
+unary_delim = whitespace + newline_delim + all_letters + TERMINATOR + ')'
 bool_delim = whitespace + TERMINATOR + COMMA + ')' + ']'
 num_delim = arithmetic_ops + ']' + ')' + '(' + '[' + whitespace + COMMA + relational_ops + TERMINATOR
 id_delim = COMMA + whitespace + "=" + ")" + "[" + "]" + "<" + ">" + "!" + "(" + arithmetic_ops + TERMINATOR # newline
@@ -479,8 +479,11 @@ class Lexer:
                     if self.current_char == None:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ++ '. Cause: ' {self.current_char} '. "])
                         continue
-                    if self.current_char not in (unary_delim) or self.current_char.isspace():
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' ++ '. Cause: ' {self.current_char} '. "])
+                    if self.current_char not in unary_delim:
+                        errors.extend([
+                            f"Error at line: {self.pos.ln + 1}. Invalid delimiter after '++'. "
+                            f"Cause: '{self.current_char}'. Expected: space/newline, letter, '$', or ')'."
+                        ])
                         continue
                     tokens.append(Token(INCRE, "++", pos_start = self.pos)) #for == symbol
                 else:
@@ -514,7 +517,10 @@ class Lexer:
                         errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. "])
                         continue
                     if self.current_char not in (unary_delim):
-                        errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for ' -- '. Cause: ' {self.current_char} '. "])
+                        errors.extend([
+                            f"Error at line: {self.pos.ln + 1}. Invalid delimiter after '--'. "
+                            f"Cause: '{self.current_char}'. Expected: space/newline, letter, '$', or ')'."
+                        ])
                         continue
                     tokens.append(Token(DECRE, "--", pos_start = self.pos))
                 elif self.current_char == None:
@@ -2400,6 +2406,9 @@ class Parser:
         self.in_fall = False
         self.in_farmhouse = False
 
+        self.in_craft = False
+        self.harvest_seen_in_craft = False
+
     def advance(self): # Moves to the next token and updates self.current_tok
         self.tok_idx += 1
         if self.tok_idx < len(self.tokens):
@@ -2460,11 +2469,10 @@ class Parser:
                 
             if self.current_tok.token != SINGLELINE and self.current_tok.token != EOF and self.current_tok.token != NEWLINE and self.current_tok.token != SINGLELINE and self.current_tok.token != FARMHOUSE and self.current_tok.token != CRAFT and self.current_tok.token != PELICAN and self.current_tok.token != MULTILINE_OPEN and self.current_tok.token != MULTILINE_CLOSE and self.current_tok.token != PERFECTION and self.current_tok.token !=  COMMENT:
                 if self.is_pelican == True:
-                    
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected perfection!"))
+                    program.error(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected perfection!"))
                 else:
                     print("ERROR: ", self.current_tok)
-                    error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected craft, or pelican, or farmhouse!"))
+                    program.error(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected craft, or pelican, or farmhouse!"))
 
                 break
             else:
@@ -2522,6 +2530,9 @@ class Parser:
                     break
                 else:
                     self.advance()
+
+                    self.in_craft = True
+                    self.harvest_seen_in_craft = False
                     
                     craft_node = CraftNode(self.current_tok)
                     craft_node.parent = program
@@ -2560,6 +2571,8 @@ class Parser:
                                         craft_node.add_child(item)
                                     
                                     program.add_child(craft_node)
+
+                                    self.in_craft = False
                                     
                                     while self.current_tok.token == NEWLINE:
                                         self.advance()
@@ -2580,6 +2593,8 @@ class Parser:
                             craft_node.add_child(item)
                         
                         program.add_child(craft_node)
+
+                        self.in_craft = False
                         self.advance()
                         
                         
@@ -2597,6 +2612,8 @@ class Parser:
                 if self.is_pelican == True:
                     program.error(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Pelican function already declared!, Only one pelican function is allowed!"))
                     return program
+
+                self.is_pelican = True
                 self.advance()
                 
                 if self.current_tok.token == CLBRACKET:
@@ -2612,6 +2629,7 @@ class Parser:
                         
                     program.add_child(pelican_node)
                     self.advance()
+                    self.is_pelican = False
                     return program
                 else:
                     print("DI NAKIKITA YUNG BRACKET: ", self.current_tok)
@@ -2647,6 +2665,12 @@ class Parser:
                 return res, error
 
 
+
+        # Some branches above still append to the local `error` list but return a Program.
+        # Make sure those errors are surfaced via `program.errors` so `semantic.run()` can report them.
+        if error:
+            for err in error:
+                program.error(err)
 
         return program
     # main function definition
@@ -2711,6 +2735,17 @@ class Parser:
         # * basically yung parse lang pero walang craft
 
         while True:
+            if self.in_craft and self.harvest_seen_in_craft:
+                if self.current_tok.token not in (CRBRACKET, NEWLINE, SINGLELINE, MULTILINE_OPEN, MULTILINE_CLOSE, EOF):
+                    error.append(
+                        InvalidSyntaxError(
+                            self.current_tok.pos_start,
+                            self.current_tok.pos_end,
+                            f"Unexpected '{self.current_tok.token}'. 'harvest' must be the last statement in a craft."
+                        )
+                    )
+                    break
+
             if self.is_statement():
                 if self.current_tok.token == MULTILINE_OPEN:
                     while self.current_tok.token != MULTILINE_CLOSE:
@@ -2724,6 +2759,19 @@ class Parser:
                         self.advance()
                 if self.current_tok.token == NEWLINE:
                     self.advance()
+
+                # If we just consumed whitespace/comment after a harvest inside a craft,
+                # re-check the constraint before parsing any further statements.
+                if self.in_craft and self.harvest_seen_in_craft:
+                    if self.current_tok.token not in (CRBRACKET, NEWLINE, SINGLELINE, MULTILINE_OPEN, MULTILINE_CLOSE, EOF):
+                        error.append(
+                            InvalidSyntaxError(
+                                self.current_tok.pos_start,
+                                self.current_tok.pos_end,
+                                f"Unexpected '{self.current_tok.token}'. 'harvest' must be the last statement in a craft."
+                            )
+                        )
+                        break
                 
                 #--INITIALIZATION OF IDENTIFIERS Add first parameter to the function call if it's a number, string, bool, void, or identifier
                 if self.current_tok.token in INTEGER:
@@ -2822,9 +2870,12 @@ class Parser:
                             self.advance()
                     # -- else no other operation for it
                     else:
-                        
                         print("[DEBUG] error token: ", self.current_tok)
-                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator, increment, decrement, or call craft!"))
+                        error.append(InvalidSyntaxError(
+                            self.current_tok.pos_start,
+                            self.current_tok.pos_end,
+                            f"Unexpected '{self.current_tok.token}'. Expected assignment operator (=, +=, -=, *=, /=), increment/decrement (++/--), or function call '(' after identifier."
+                        ))
                         return [], error
                     
                 if self.current_tok.token in (INCRE, DECRE):
@@ -2993,6 +3044,14 @@ class Parser:
                 
                 # harvest statement (return)
                 if self.current_tok.token == HARVEST: # Parse Junimo Code's harvest statement syntax and append its AST node
+                    if self.is_pelican:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Can't call harvest in pelican!"))
+                        break
+
+                    if not self.in_craft:
+                        error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "'harvest' can only be used inside a craft."))
+                        break
+
                     result = ParseResult()
                     self.advance()
                     if self.current_tok.token != INTEGER and self.current_tok.token != LPAREN and self.current_tok.token != IDENTIFIER and self.current_tok.token != TRUE and self.current_tok.token != FALSE and self.current_tok.token != STRING and self.current_tok.token != VOIDEGG and self.current_tok.token != FLOAT:
@@ -3000,21 +3059,18 @@ class Parser:
                         break
                     else:
                         expr = result.register(self.expr()) # Parse as expression if starting with a number
-                        if result.error: 
-                            return res
-                        self.advance()
+                        if result.error:
+                            error.append(result.error)
+                            break
 
-                        # i want to store this in thepelican node
-                        res.append(HarvestCallNode(expr)) # Append the harvest node to the result list
-                        print("EXPR HARVEST: ", type(expr)) 
-                        # if sub_func == True:
-                        #     self.advance()
-                        # else:
-                        #     self.advance()
+                        if self.current_tok.token != TERMINATOR:
+                            error.append(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected dollar sign after harvest expression!"))
+                            break
+
+                        res.append(HarvestCallNode(expr))
+                        self.harvest_seen_in_craft = True
                         self.advance()
-                        # self.advance()
-                        print("[DEBUG] current val after harvest: ", self.current_tok)
-                        return res, error
+                        continue
                         # return res, error
                         
                 # perfection (end statement)
@@ -3245,23 +3301,48 @@ class Parser:
                 fall_node.variable = fall_node_variable
                 if self.current_tok.token == TERMINATOR:
                     self.advance()
-                    # here na yung unary node
-                    
-                    if self.current_tok.token == IDENTIFIER:
-                        unary = PostUnaryNode(CropAccessNode(self.current_tok))
+                    # 3rd clause (update): unary or assignment
+                    update_node = None
+
+                    # Pre-unary: ++Identifier / --Identifier
+                    if self.current_tok.token in (INCRE, DECRE):
+                        operation = self.current_tok
                         self.advance()
+                        if self.current_tok.token != IDENTIFIER:
+                            return None  # keep existing behavior; errors are handled elsewhere
+                        identifier = self.current_tok
+                        self.advance()
+                        update_node = PreUnaryNode(CropAccessNode(identifier), operation)
+
+                    # Identifier-led: Identifier++/-- or Identifier = expr
+                    elif self.current_tok.token == IDENTIFIER:
+                        identifier = self.current_tok
+                        self.advance()
+
                         if self.current_tok.token in (INCRE, DECRE):
-                            unary.operation = self.current_tok
-                            fall_node.unary = unary
+                            operation = self.current_tok
                             self.advance()
-                            #;
-                            self.advance()
-                            #)
-                            # self.advance()
-                            # # {
-                            self.advance()
-                            # call body
-                    fall_node.unary = unary
+                            update_node = PostUnaryNode(CropAccessNode(identifier), operation)
+
+                        elif self.current_tok.token in (EQUAL, PLUS_EQUAL, MINUS_EQUAL, MUL_EQUAL, DIV_EQUAL):
+                            update_node, init_err = self.crop_init(identifier)
+                            if init_err:
+                                return None
+
+                        else:
+                            return None
+
+                    else:
+                        return None
+
+                    fall_node.unary = update_node
+
+                    # Expect closing ')' then opening '{'
+                    if self.current_tok.token == RPAREN:
+                        self.advance()
+                    if self.current_tok.token == CLBRACKET:
+                        self.advance()
+
                     print("fall body: ", self.current_tok)
                     result, body_error = self.body()
                     for item in result:
@@ -4743,6 +4824,26 @@ def run(fn, text):
     # todo semantic parser
     ast = parser.parse()
     print("AST: ", ast)
+
+    # Surface parser-stage errors before interpretation so semantic.run doesn't
+    # silently succeed on invalid syntax.
+    parse_errors = []
+    if isinstance(ast, tuple) and len(ast) == 2:
+        # Some branches in Parser.parse return (res, error_list)
+        _, maybe_errors = ast
+        if maybe_errors:
+            parse_errors.extend(maybe_errors)
+    else:
+        if hasattr(ast, 'errors') and ast.errors:
+            parse_errors.extend(ast.errors)
+
+        if hasattr(ast, 'body') and isinstance(ast.body, list):
+            for child in ast.body:
+                if hasattr(child, 'errors') and child.errors:
+                    parse_errors.extend(child.errors)
+
+    if parse_errors:
+        return None, parse_errors
     # print(ast[1][0].as_string()) #dito raw error
     # print("ast: ", ast)
     #ast is a Program instance
