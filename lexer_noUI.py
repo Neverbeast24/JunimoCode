@@ -1149,14 +1149,14 @@ class Lexer:
                                         ident_count += 1
                                     
                                         if self.current_char == None:
-                                            errors.extend([f'Invalid delimiter for pelican! Cause: {self.current_char}. Expected: ( '])
+                                            errors.extend([f"Invalid delimiter for pelican! Cause: {self.current_char}. Expected: '(' immediately after pelican (no spaces). "])
                                             return [], errors
                                         if self.current_char in '(':
                                             return Token(PELICAN, "pelican"), errors 
                                         elif self.current_char in alpha_num:
                                             continue 
                                         else:                  
-                                            errors.extend([f'Invalid delimiter for pelican! Cause: {self.current_char}. Expected: ( '])
+                                            errors.extend([f"Invalid delimiter for pelican! Cause: {repr(self.current_char)}. Expected: '(' immediately after pelican (no spaces). "])
                                             return [], errors
                                         
                     elif self.current_char == "r": #PERFECTION

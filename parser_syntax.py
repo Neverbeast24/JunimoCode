@@ -8,8 +8,8 @@ from ctypes import windll
 from strings_arrows import *
 
 # Register custom fonts
-windll.gdi32.AddFontResourceW("Fonts\Stardew-Valley-Regular.ttf")
-windll.gdi32.AddFontResourceW("Fonts\StardewValley.ttf")
+windll.gdi32.AddFontResourceW(r"Fonts/Stardew-Valley-Regular.ttf")
+windll.gdi32.AddFontResourceW(r"Fonts/StardewValley.ttf")
 
 # Initialize sound library
 mixer.init()
@@ -48,11 +48,11 @@ number = '123456789'
 all_numbers = zero + number
 
 #alphanumeric and special symbols
-punctuation_symbols = "-!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
+punctuation_symbols = "-!@#$%^&*(}-_=+[]{)\\|:;',<>./?+\""
 alpha_num = all_letters + all_numbers 
 ascii = all_letters + punctuation_symbols + all_numbers
-ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+-" + all_letters + all_numbers
-ascii_comment = all_letters + all_numbers + "-!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
+ascii_string = "!@#$%^&*()-_=+[]{" + "}\\|:;',<>./?+-" + all_letters + all_numbers
+ascii_comment = all_letters + all_numbers + "-!@#$%^&*(-_=+[]{)\\|:;',<>./?+\""
 #operators
 arithmetic_ops = "+-*/%"
 relational_ops = '><==!<=>=!='
@@ -1221,14 +1221,14 @@ class Lexer:
                                         ident_count += 1
 
                                         if self.current_char == None:
-                                            errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for pelican! Cause: {self.current_char}.  '])
+                                            errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for pelican! Cause: {self.current_char}. Expected: '(' immediately after pelican (no spaces). "])
                                             return [], errors
                                         if self.current_char in '(':
                                             return Token(PELICAN, "pelican", pos_start = self.pos), errors
                                         # elif self.current_char in alpha_num:
                                         #     continue
                                         else:
-                                            errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for pelican! Cause: {self.current_char}.  '])
+                                            errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for pelican! Cause: {repr(self.current_char)}. Expected: '(' immediately after pelican (no spaces). "])
                                             self.advance()
                                             return [], errors
 
@@ -3686,6 +3686,30 @@ class Parser:
         print("IN STAR STATEMENT")
         res = []
         error = []
+
+        def _skip_ignorable():
+            # Allow star/stardew/dew clauses to be separated by newlines/comments
+            while True:
+                while self.current_tok.token in (NEWLINE, COMMENT):
+                    self.advance()
+
+                if self.current_tok.token == SINGLELINE:
+                    self.advance()
+                    while self.current_tok.token not in (NEWLINE, EOF):
+                        self.advance()
+                    if self.current_tok.token == NEWLINE:
+                        self.advance()
+                    continue
+
+                if self.current_tok.token == MULTILINE_OPEN:
+                    while self.current_tok.token not in (MULTILINE_CLOSE, EOF):
+                        self.advance()
+                    if self.current_tok.token == MULTILINE_CLOSE:
+                        self.advance()
+                    continue
+
+                break
+
         self.advance()
         if self.current_tok.token == LPAREN:
             self.advance()
@@ -3717,6 +3741,8 @@ class Parser:
                             res.append([f"SUCCESS from star"])
                             self.advance()
 
+                            _skip_ignorable()
+
                             while self.current_tok.token == STARDEW: #elseif
                                 if self.current_tok.token in STARDEW:
                                     # print("this is an elif statement")
@@ -3734,6 +3760,8 @@ class Parser:
                                             res.append(stardew_res)
                                             # print("current token from elseif parse: ", self.current_tok)
                                         #self.advance()
+
+                                _skip_ignorable()
                             # print("token after last elseif: ", self.current_tok)
                             if self.current_tok.token == DEW:
                                 # print('ELSE FOUND')
@@ -3750,6 +3778,7 @@ class Parser:
                                     for dew_res in dew_res:
                                         res.append(dew_res)
                                         # print("current token from else parse: ", self.current_tok)
+                                _skip_ignorable()
                             #self.advance()
                             #added now 
                             # if self.current_tok.token == CRBRACKET:
@@ -4545,40 +4574,6 @@ class StardewLexerGUI:
                         )
                         print(f"[DEBUG] Formatted Error: {formatted_error}")
                         self.terminal_output.insert(tk.END, formatted_error + "\n")
-
-
-                # for err in syntax_error:
-                #     print(f"[DEBUG] Processing syntax error: {err}")  # Debugging: Print raw error object
-                    
-                #     if isinstance(err, list):  # If error is a list, iterate through its elements
-                #         for sub_err in err:
-                #             if hasattr(sub_err, "as_string") and callable(sub_err.as_string):
-                #                 formatted_error = sub_err.as_string()
-                                
-                #                 # Ensure it's a single string, not a tuple
-                #                 if isinstance(formatted_error, tuple):
-                #                     formatted_error = "\n".join(formatted_error)
-
-                #                 print(f"[DEBUG] Formatted Error: {formatted_error}")  # Debugging
-                #                 self.terminal_output.insert(tk.END, formatted_error + "\n")
-                #             else:
-                #                 error_message = f"Error: {str(sub_err)}"
-                #                 print(f"[DEBUG] Fallback Error: {error_message}")  # Debugging
-                #                 self.terminal_output.insert(tk.END, error_message + "\n")
-                #     else:  # If error is a single object
-                #         if hasattr(err, "as_string") and callable(err.as_string):
-                #             formatted_error = err.as_string()
-                            
-                #             # Ensure it's a single string, not a tuple
-                #             if isinstance(formatted_error, tuple):
-                #                 formatted_error = "\n".join(formatted_error)
-
-                #             print(f"[DEBUG] Formatted Error: {formatted_error}")  # Debugging
-                #             self.terminal_output.insert(tk.END, formatted_error + "\n")
-                #         else:
-                #             error_message = f"Error: {str(err)}"
-                #             print(f"[DEBUG] Fallback Error: {error_message}")  # Debugging
-                #             self.terminal_output.insert(tk.END, error_message + "\n")
 
             else:
                 

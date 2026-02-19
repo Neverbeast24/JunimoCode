@@ -1,0 +1,25 @@
+﻿planting$
+farmhouse crop A = 10$
+farmhouse crop B = 3$
+
+pelican (){
+  crop L = [1, 2, 3]$
+  crop X = 0$
+
+  star(((A > B) && (B != 0)) || (A == 10)){
+    add(L, 99)$
+    X = A / B$
+    ship("inside star", X)$
+  }
+
+  stardew((A < B) || (B == 0)){
+    pluck(L, 99)$
+    X = 0$
+    ship("inside stardew", X)$
+  }
+
+  dew{
+    ship("done", X)$
+  }
+}
+perfection$

@@ -56,6 +56,13 @@ def main():
     ))
 
     cases.append((
+        "pelican_space_before_lparen_lex_error",
+        PLANT_PFX + "pelican (){\n}\n" + PLANT_SFX,
+        True,
+        True,
+    ))
+
+    cases.append((
         "unary_missing_dollar_newline",
         PLANT_PFX + "pelican(){\n" + "crop I = 0$\nI++\n}\n" + PLANT_SFX,
         True,

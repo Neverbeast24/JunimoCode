@@ -8,8 +8,8 @@ from ctypes import windll
 from strings_arrows import *
 
 # Register custom fonts
-windll.gdi32.AddFontResourceW("Fonts\Stardew-Valley-Regular.ttf")
-windll.gdi32.AddFontResourceW("Fonts\StardewValley.ttf")
+windll.gdi32.AddFontResourceW(r"Fonts/Stardew-Valley-Regular.ttf")
+windll.gdi32.AddFontResourceW(r"Fonts/StardewValley.ttf")
 
 # Initialize sound library
 mixer.init()
@@ -50,11 +50,11 @@ all_numbers = zero + number
 alpha1 = alpha + all_numbers
 
 #alphanumeric and special symbols
-punctuation_symbols = "~!@#$%^&*(}-_=+[]{)\|:;',<>./?+\""
+punctuation_symbols = "~!@#$%^&*(}-_=+[]{)\\|:;',<>./?+\""
 alpha_num = all_letters + all_numbers 
 ascii = all_letters + punctuation_symbols + all_numbers
-ascii_string = "!@#$%^&*()-_=+[]{" + "}\|:;',<>./?+~" + all_letters + all_numbers
-ascii_comment = all_letters + all_numbers + "~!@#$%^&*(-_=+[]{)\|:;',<>./?+\""
+ascii_string = "!@#$%^&*()-_=+[]{" + "}\\|:;',<>./?+~" + all_letters + all_numbers
+ascii_comment = all_letters + all_numbers + "~!@#$%^&*(-_=+[]{)\\|:;',<>./?+\""
 #operators
 arithmetic_ops = "+-*/%"
 relational_ops = '><==!<=>=!='
@@ -1199,14 +1199,14 @@ class Lexer:
                                         ident_count += 1
 
                                         if self.current_char == None:
-                                            errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for pelican! Cause: {self.current_char}. Expected: open parenthesis '])
+                                            errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for pelican! Cause: {self.current_char}. Expected: '(' immediately after pelican (no spaces). "])
                                             return [], errors
                                         if self.current_char in '(':
                                             return Token(PELICAN, "pelican", pos_start = self.pos), errors
                                         # elif self.current_char in alpha_num:
                                         #     continue
                                         else:
-                                            errors.extend([f'Error at line: {self.pos.ln + 1}. Invalid delimiter for pelican! Cause: {self.current_char}. Expected: open parenthesis '])
+                                            errors.extend([f"Error at line: {self.pos.ln + 1}. Invalid delimiter for pelican! Cause: {repr(self.current_char)}. Expected: '(' immediately after pelican (no spaces). "])
                                             self.advance()
                                             return [], errors
 
@@ -4141,25 +4141,10 @@ class StardewLexerGUI:
                 # self.terminal_output.insert(tk.END, syntax_error.details)
                 for err in syntax_error:
                     self.terminal_output.insert(tk.END, err.as_string())
-                # for err in syntax_error:
-                #     if isinstance(err, list):
-                #         for e in err:
-                #             errorResult, fileDetail, arrowDetail, arrows = e.as_string()
-                #             self.terminal_output.insert(tk.END, errorResult)
-                #             self.terminal_output.insert(tk.END, fileDetail)
-                #             self.terminal_output.insert(tk.END, arrowDetail)
-                #             # errors_text.insert(tk.END, arrows)
-                #     else:
-                #         errorResult, fileDetail, arrowDetail, arrows = err.as_string()
-                #         self.terminal_output.insert(tk.END, errorResult)
-                #         self.terminal_output.insert(tk.END, fileDetail)
-                #         self.terminal_output.insert(tk.END, arrowDetail)
-                #         # errors_text.insert(tk.END, arrows)
             else:
                 
                 # for res in syntax_result:
                 self.terminal_output.insert(tk.END, "SUCCESS from syntax")
-                # errors_text.insert(tk.END, "SUCCESS")
 
 
 if __name__ == "__main__":
